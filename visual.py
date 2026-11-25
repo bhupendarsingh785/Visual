@@ -18,7 +18,7 @@ import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 APP = "VISUAL"
-VERSION = "4.6"
+VERSION = "4.5"
 HOME = os.path.expanduser("~/.visual")
 CONF = os.path.join(HOME, "config.json")
 MEM = os.path.join(HOME, "memory.json")
@@ -55,7 +55,7 @@ PROVIDERS = {
                     "country": "CN", "signup": "modelscope.cn/my/myaccesstoken"},
     "qwen":        {"rpm": 30, "base": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", "model": "qwen-plus", "vision": False, "tools": True,
                     "country": "CN", "signup": "bailian.console.alibabacloud.com"},
-    "deepseek":    {"rpm": 60, "base": "https://api.deepseek.com/v1", "model": "deepseek-v4-flash", "vision": False, "tools": True,
+    "deepseek":    {"rpm": 60, "base": "https://api.deepseek.com/v1", "model": "deepseek-chat", "vision": False, "tools": True,
                     "country": "CN", "signup": "platform.deepseek.com/api_keys (sasta, free nahi)"},
     "moonshot":    {"base": "https://api.moonshot.ai/v1", "model": "kimi-k2.6", "vision": False, "tools": True,
                     "country": "CN", "signup": "platform.moonshot.ai (China wali key ho to base api.moonshot.cn/v1)"},
@@ -310,9 +310,9 @@ def _google_grounded(query):
     if not key: return ""
     for model in list(dict.fromkeys(m for m in (gemini_model("fast"), best_models()[1], "gemini-flash-latest") if m)):
         try:
-            r = json.loads(http(f"{GEM_NATIVE}/models/{model}:generateContent", headers={"x-goog-api-key": key}, timeout=40, data=
+            r = json.loads(http(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
                                 {"contents": [{"parts": [{"text": "Google par khoj kar chhota, taaza, tathya-sahi jawab do (tareekh/number ke saath): " + query}]}],
-                                 "tools": [{"google_search": {}}]}))
+                                 "tools": [{"google_search": {}}]}, timeout=40))
             c = (r.get("candidates") or [{}])[0]
             txt = "".join(p_.get("text", "") for p_ in c.get("content", {}).get("parts", []))
             src = [(ch.get("web") or {}) for ch in (c.get("groundingMetadata") or {}).get("groundingChunks", [])]
@@ -774,10 +774,8 @@ def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho
     last = ""; t0 = time.time()
     for attempt in range(max(1, retries)):   # free limit (429) / bheed (503) par ruk kar dobara; ye kaam chhodne ki wajah nahi
         try:
-            if provider == "gemini": r = gemini_chat(body, pkey(provider), timeout=timeout)
-            else: r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body, {"Authorization": "Bearer " + pkey(provider)}, timeout=timeout))
+            r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body, {"Authorization": "Bearer " + pkey(provider)}, timeout=timeout))
             txt = (r["choices"][0]["message"].get("content") or "").strip()
-            if txt.startswith("(Gemini ne khaali jawab"): txt = ""
             txt = re.sub(r"<think>.*?</think>", "", txt, flags=re.S).strip()      # reasoning models ka andar ka sochna hatao
             router_record(provider, cat, bool(txt), time.time() - t0)
             return txt, ("" if txt else "khaali jawab")
@@ -1474,9 +1472,9 @@ def brains():
     for p, info in PROVIDERS.items():
         if p in avail:
             txt, err = res.get(p, ("", "timeout"))
-            if not txt and err.startswith("429"): txt_mark = "⏳"; err = "abhi limit bhari (key sahi hai, thodi der mein chalega)"
+            if not txt and err.startswith("429"): txt_mark, err = "⏳", "abhi limit bhari (key sahi hai, thodi der mein chalega)"
             else: txt_mark = "✅" if txt else "❌"
-            rows.append(f"{txt_mark} {p} [{info['country']}] {len(_keylist(p))} key, model: {(_PMODELS.get((p, 'chat')) or (info['model'],))[0] if p != 'gemini' else (CFG.get('models', {}).get('gemini') or _DISC.get('fast') or info['model'])} {('' if txt else (err if txt_mark == '⏳' else '-> ' + key_problem(p, err)))}")
+            rows.append(f"{txt_mark} {p} [{info['country']}] {len(_keylist(p))} key, model: {(_PMODELS.get((p, 'chat')) or (info['model'],))[0] if p != 'gemini' else (CFG.get('models', {}).get('gemini') or _DISC.get('fast') or info['model'])} {('' if txt else err[:70])}")
         else:
             rows.append(f"➕ {p} [{info['country']}] key nahi: {info['signup']}")
     board = []
@@ -2255,8 +2253,8 @@ def best_models(force=False):
     key = pkey("gemini")
     if not key: return None, None
     try:
-        r = json.loads(http(GEM_NATIVE + "/models?pageSize=1000", None, {"x-goog-api-key": key}, timeout=20))
-        ids = [m["name"].replace("models/", "") for m in r.get("models", []) if "generateContent" in (m.get("supportedGenerationMethods") or [])]
+        r = json.loads(http(PROVIDERS["gemini"]["base"].rstrip("/") + "/models", None, {"Authorization": "Bearer " + key}, timeout=20))
+        ids = [m["id"].replace("models/", "") for m in r.get("data", [])]
     except Exception as e:
         log_error("best_models", e); return None, None
     def score(mid, kind):
@@ -2327,9 +2325,8 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
                 body["tools"] = [t["schema"] for n, t in TOOLS.items() if tool_names is None or n in tool_names]
             t0 = time.time()
             try:
-                if p == "gemini": r = gemini_chat(body, pkey(p), timeout=180 if smart else 90)
-                else: r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body,
-                                          {"Authorization": "Bearer " + pkey(p)}, timeout=180 if smart else 90))
+                r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body,
+                                    {"Authorization": "Bearer " + pkey(p)}, timeout=180 if smart else 90))
                 LAST_BRAIN.update(name=f"{p}:{r.get('model') or model}", errors=errs[:])
                 m_ = r["choices"][0]["message"]
                 router_record(p, cat, True, time.time() - t0, quality=None if (m_.get("content") or m_.get("tool_calls")) else 0.0)
@@ -2563,109 +2560,23 @@ def neural_tts(text, voice=None):
 # ---------------------------------------------------------------- VISUAL LIVE (Gemini Live API, real-time awaaz)
 _LIVE = {"t": 0, "m": []}
 
-def live_token():
-    """Live ke liye chhota-umr token (Google ka 'ephemeral token'): asli key browser mein nahi jaati, aur nayi AQ. keys ke saath bhi chalta hai."""
-    key = pkey("gemini")
-    if not key: return {"ok": False, "error": "gemini key nahi"}
-    now = datetime.datetime.now(datetime.timezone.utc)
-    iso = lambda d: (now + d).strftime("%Y-%m-%dT%H:%M:%SZ")
-    try:
-        r = json.loads(http(GEM_NATIVE + "/auth_tokens", {"uses": 50, "expireTime": iso(datetime.timedelta(hours=2)),
-                                                          "newSessionExpireTime": iso(datetime.timedelta(minutes=30))},
-                            {"x-goog-api-key": key}, timeout=20))
-        tok = r.get("name") or r.get("token")
-        if not tok: return {"ok": False, "error": "token nahi mila: " + json.dumps(r)[:150]}
-        return {"ok": True, "url": CFG.get("live_ws_base", "wss://generativelanguage.googleapis.com") + "/ws/google.ai.generativelanguage.v1beta.GenerativeService."
-                                   "BidiGenerateContentConstrained?access_token=" + urllib.parse.quote(tok, safe="")}
-    except urllib.error.HTTPError as e:
-        b = e.read().decode(errors="replace")[:200]; log_error("live_token", f"{e.code} {b}"); return {"ok": False, "error": f"{e.code} {b}"}
-    except Exception as e:
-        log_error("live_token", e); return {"ok": False, "error": str(e)[:150]}
-
 def live_models():
     """Google ki list se wahi Live (awaaz) models jo is key par sach mein chalte hain; pehle jaane-pehchaane, phir naye."""
     if _LIVE["m"] and time.time() - _LIVE["t"] < 86400: return _LIVE["m"]
     key = pkey("gemini"); found = []
     try:
-        r = json.loads(http(GEM_NATIVE + "/models?pageSize=1000", None, {"x-goog-api-key": key}, timeout=20))
+        r = json.loads(http("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=" + urllib.parse.quote(key), timeout=20))
         found = [m["name"].replace("models/", "") for m in r.get("models", []) if "bidiGenerateContent" in (m.get("supportedGenerationMethods") or [])]
     except Exception as e:
         log_error("live_models", e)
     if not found: return LIVE_MODELS
     def sc(m):
         v = re.search(r"(\d+(?:\.\d+)?)", m); v = float(v.group(1)) if v else 0
-        return ((len(LIVE_MODELS) - LIVE_MODELS.index(m)) * 3 if m in LIVE_MODELS else 0) + v * 10 + (3 if "native-audio" in m or "live" in m else 0) \
-            - (5 if "exp" in m else 0) - (30 if re.search(r"translate|thinking", m) else 0)
+        return (m in LIVE_MODELS and -LIVE_MODELS.index(m) + 100 or 0) + v * 2 + (3 if "native-audio" in m or "live" in m else 0) - (5 if "exp" in m else 0)
     _LIVE.update(t=time.time(), m=sorted(found, key=lambda m: -sc(m))[:4])
     return _LIVE["m"]
 
-LIVE_MODELS = ["gemini-3.8-live", "gemini-3.1-flash-live-preview", "gemini-2.5-flash-native-audio-preview-12-2025"]   # Google docs Nov 2026: 3.8 Live sifarish, 3.1 purana
-
-# ---------------------------------------------------------------- GEMINI NATIVE (nayi AQ. keys ke liye pakka raasta)
-# Google ab sirf "AQ." auth keys deta hai; ye native generateContent par chalti hain, par OpenAI-jaise raaste (/v1beta/openai)
-# par kai baar 400/401 deti hain. Isliye Gemini ke saare text kaam native API se, key 'x-goog-api-key' header mein.
-GEM_NATIVE = os.environ.get("VISUAL_GEM_NATIVE", "https://generativelanguage.googleapis.com/v1beta")
-
-def _gem_parts(content):
-    if isinstance(content, str): return [{"text": content}] if content else []
-    parts = []
-    for c in content or []:
-        if c.get("type") == "text" and c.get("text"): parts.append({"text": c["text"]})
-        elif c.get("type") == "image_url":
-            u = (c.get("image_url") or {}).get("url", "")
-            m = re.match(r"data:([\w/+.-]+);base64,(.*)", u, re.S)
-            parts.append({"inlineData": {"mimeType": m.group(1), "data": m.group(2)}} if m else {"text": "[tasveer: " + u[:200] + "]"})
-    return parts
-
-def gemini_chat(body, key, timeout=90):
-    """OpenAI chat/completions body -> Gemini generateContent -> OpenAI jaisa message (tool_calls samet)."""
-    sys_txt = []; contents = []; id2name = {}
-    for m in body["messages"]:
-        r = m.get("role")
-        if r == "system": sys_txt.append(m["content"] if isinstance(m["content"], str) else " ".join(p.get("text", "") for p in m["content"])); continue
-        if r == "assistant":
-            parts = _gem_parts(m.get("content") or "")
-            for tc in m.get("tool_calls") or []:
-                fn = tc.get("function", {}); a = fn.get("arguments")
-                try: a = a if isinstance(a, dict) else json.loads(a or "{}")
-                except Exception: a = {}
-                id2name[tc.get("id", fn.get("name"))] = fn.get("name")
-                part = {"functionCall": {"name": fn.get("name"), "args": a}}
-                if tc.get("_sig"): part["thoughtSignature"] = tc["_sig"]       # Gemini 3: bina iske agla kadam 400 deta hai
-                parts.append(part)
-            role = "model"
-        elif r == "tool":
-            nm = id2name.get(m.get("tool_call_id")) or m.get("name") or m.get("tool_call_id") or "tool"
-            parts = [{"functionResponse": {"name": nm, "response": {"result": str(m.get("content"))[:20000]}}}]; role = "user"
-        else:
-            parts = _gem_parts(m.get("content")); role = "user"
-        if not parts: continue
-        if contents and contents[-1]["role"] == role and not any("functionCall" in p for p in parts): contents[-1]["parts"] += parts
-        else: contents.append({"role": role, "parts": parts})
-    req = {"contents": contents, "generationConfig": {"temperature": body.get("temperature", 0.3)}}
-    if body.get("max_tokens"): req["generationConfig"]["maxOutputTokens"] = body["max_tokens"]
-    if sys_txt: req["systemInstruction"] = {"parts": [{"text": "\n\n".join(sys_txt)}]}
-    if body.get("tools"):
-        req["tools"] = [{"functionDeclarations": [dict(name=t["function"]["name"], description=t["function"]["description"][:1000],
-                         **({"parameters": _gem_schema(t["function"]["parameters"])} if t["function"]["parameters"].get("properties") else {}))
-                         for t in body["tools"]]}]
-    r = json.loads(http(f"{GEM_NATIVE}/models/{body['model']}:generateContent", req, {"x-goog-api-key": key}, timeout=timeout))
-    cand = (r.get("candidates") or [{}])[0]
-    text = []; calls = []
-    for i, p in enumerate((cand.get("content") or {}).get("parts", [])):
-        if p.get("thought"): continue
-        if "text" in p: text.append(p["text"])
-        if "functionCall" in p:
-            fc = p["functionCall"]; tc = {"id": f"g{i}_{fc.get('name')}", "type": "function",
-                                          "function": {"name": fc.get("name"), "arguments": json.dumps(fc.get("args") or {}, ensure_ascii=False)}}
-            if p.get("thoughtSignature"): tc["_sig"] = p["thoughtSignature"]
-            calls.append(tc)
-    msg = {"role": "assistant", "content": "".join(text).strip() or (None if calls else "")}
-    if calls: msg["tool_calls"] = calls
-    if not calls and not msg["content"]:
-        fr = cand.get("finishReason") or (r.get("promptFeedback") or {}).get("blockReason") or "?"
-        msg["content"] = f"(Gemini ne khaali jawab diya: {fr})"
-    return {"choices": [{"message": msg}], "model": body["model"]}
+LIVE_MODELS = ["gemini-3.1-flash-live-preview", "gemini-2.5-flash-native-audio-preview-12-2025", "gemini-3.8-live"]
 
 def _gem_schema(sc):
     """OpenAI-style JSON schema -> Gemini schema (type UPPERCASE)."""
@@ -2703,8 +2614,7 @@ def live_config():
               "Jab '[ENGINEER REPORT]' aaye to owner ko 2-3 vaakya mein bolkar batao.")
     url = CFG.get("live_url") or ("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta."
                                   "GenerativeService.BidiGenerateContent?key=" + key)
-    auth = CFG.get("live_auth") or (["key"] if CFG.get("live_url") else ["token", "key"])
-    return {"ok": True, "url": url, "auth": auth, "models": CFG.get("live_models") or live_models(),
+    return {"ok": True, "url": url, "models": CFG.get("live_models") or live_models(),
             "voice": CFG.get("live_voice", "Charon"), "prompt": prompt, "tools": live_tools(), "risky": sorted(RISKY)}
 
 # ---------------------------------------------------------------- web app
@@ -2783,8 +2693,6 @@ class Web(BaseHTTPRequestHandler):
             return self._send(200, "{}")
         if path == "/api/live/config":
             return self._send(200, json.dumps(live_config(), ensure_ascii=False))
-        if path == "/api/live/token":
-            return self._send(200, json.dumps(live_token(), ensure_ascii=False))
         if path == "/api/tts":
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             data = neural_tts(q.get("text", [""])[0], q.get("v", [None])[0])
@@ -2835,8 +2743,6 @@ class Web(BaseHTTPRequestHandler):
             imgs = [u for _, u in PENDING_IMAGES]; PENDING_IMAGES.clear()
             return self._send(200, json.dumps({"result": res[:7000], "images": imgs, "mood": mood_label(),
                                               "restart": name == "self_restart" and RESTART_PENDING["v"]}, ensure_ascii=False))
-        if urllib.parse.urlparse(self.path).path == "/api/livelog":      # Live ki galti errors.log mein (baad mein dekhne ke liye)
-            log_error("live", str(data.get("msg", ""))[:400]); return self._send(200, "{}")
         if urllib.parse.urlparse(self.path).path == "/api/chat":
             steps = []
             reply = chat("web", data.get("text", ""), data.get("image"), events=lambda k, t: steps.append(t), voice=bool(data.get("voice")))
@@ -3007,16 +2913,6 @@ def run_setup():
     if ids: CFG["telegram_owner_ids"] = [i.strip() for i in ids.split(",") if i.strip()]
     save_json(CONF, CFG); os.chmod(CONF, 0o600); print("\nSave ho gaya:", CONF)
 
-def key_problem(p, err):
-    """Galti ka saaf Hindi matlab (taaki pata chale kya karna hai)."""
-    c = (err or "")[:3]
-    if c == "401" or "invalid" in err.lower() and "key" in err.lower(): return "key galat/purani hai. Website se nayi key copy karke dobara daalo (poori, bina space)."
-    if c == "402" or "balance" in err.lower(): return "key sahi hai par account mein balance nahi (ye service free nahi, jaise DeepSeek). Recharge karo ya ise chhod do."
-    if c == "403": return "key ko is API ki ijaazat nahi (website par API/model enable karo)."
-    if c == "404": return "model/raasta nahi mila; VISUAL agli baar khud naya model chunega. Fir bhi na chale to screenshot bhejo."
-    if c == "429": return "key sahi hai, abhi limit bhari hai. Thodi der baad chalegi."
-    return (err or "jawab nahi aaya")[:140] + " (internet? key? screenshot bhejo)"
-
 def run_keys():
     print("VISUAL ke free dimaag (jitne zyada, utna pakka Sach/Sangam). Enter = chhodo, '-' = key hatao.\n"
           "Key kabhi kisi ko mat bhejo; ye sirf is phone ki config mein rehti hai (GitHub par nahi jaati).\n")
@@ -3032,7 +2928,7 @@ def run_keys():
         CFG["keys"][p] = v; BAD_PROVIDER.pop(p, None)
         for i, _k in enumerate(_keylist(p)):
             KEY_IDX[p] = i; print("  ⏳ jaanch...", flush=True); txt, err = llm_one(p, "Sirf 'ok' likho.", timeout=25, retries=1)
-            print(f"  key {i+1}: " + ("✅ chal gayi" if txt else "❌ nahi chali: " + key_problem(p, err)))
+            print(f"  key {i+1}: " + ("✅ chal gayi" if txt else f"❌ nahi chali: {err[:110]} (galat key ya model band? fir bhi save)"))
             BAD_PROVIDER.pop(p, None)
         KEY_IDX[p] = 0
         save_json(CONF, CFG); os.chmod(CONF, 0o600)      # har key turant save: beech mein CTRL+C ho to bhi na khoye

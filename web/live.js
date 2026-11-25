@@ -4,7 +4,7 @@
 (function () {
   const L = window.VLive = { on: false };
   let ws = null, cfg = null, micCtx = null, micStream = null, worklet = null, outCtx = null,
-      playAt = 0, sources = [], modelIdx = 0, setupDone = false, wantOn = false, reconnects = 0, resumeHandle = null, useGS = true, authIdx = 0, lastErr = '',
+      playAt = 0, sources = [], modelIdx = 0, setupDone = false, wantOn = false, reconnects = 0, resumeHandle = null, useGS = true,
       userLine = null, aiLine = null, levelTimer = null;
 
   const WORKLET = `
@@ -60,23 +60,10 @@
   }
 
   // ---------- connection ----------
-  const H = () => ({ 'X-Pin': window.VPIN || '', 'X-Visual-Token': window.VTOKEN || '' });
-  function liveLog(msg) {   // galti server ki errors.log mein: baad mein 'tail ~/.visual/errors.log' se dikhe
-    try { fetch('/api/livelog', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, H()), body: JSON.stringify({ msg }) }) } catch (e) { }
-  }
-  async function connect() {
+  function connect() {
     const model = cfg.models[Math.min(modelIdx, cfg.models.length - 1)];
-    const auths = cfg.auth || ['key'];
     setupDone = false;
-    let url = cfg.url;
-    if (auths[authIdx] === 'token') {        // nayi AQ. key: server se chhota token (key browser tak nahi aati)
-      let t = null;
-      try { t = await fetch('/api/live/token', { headers: H() }).then(r => r.json()); } catch (e) { }
-      if (!t || !t.ok) { lastErr = 'token: ' + (t && t.error || 'nahi mila'); liveLog(lastErr); authIdx++; return connect(); }
-      url = t.url;
-    }
-    if (!wantOn) return;
-    ws = new WebSocket(url);
+    ws = new WebSocket(cfg.url);
     ws.onopen = () => {
       ws.send(JSON.stringify({ setup: {
         model: 'models/' + model,
@@ -104,15 +91,11 @@
     ws.onclose = (ev) => {
       const failedSetup = !setupDone;
       ws = null; setupDone = false;
-      if (failedSetup) { lastErr = (cfg.auth || ['key'])[authIdx] + '/' + cfg.models[Math.min(modelIdx, cfg.models.length - 1)] + ': ' + (ev.reason || ev.code); liveLog(lastErr); }
       if (!wantOn) return;
       if (failedSetup && resumeHandle) { resumeHandle = null; return connect(); }   // purana handle expire: naya session usi model par
       if (failedSetup && useGS) { useGS = false; return connect(); }                  // model Google khoj ke saath na chale to uske bina
       if (failedSetup && modelIdx < cfg.models.length - 1) { modelIdx++; say('step', '⚙ dusra Live model try: ' + cfg.models[modelIdx]); return connect(); }
-      if (failedSetup && authIdx < (cfg.auth || ['key']).length - 1) {   // is tareeke se koi model nahi chala: doosra tareeka (token -> key)
-        authIdx++; modelIdx = 0; useGS = true; resumeHandle = null; say('step', '⚙ Live ka doosra raasta try'); return connect();
-      }
-      if (failedSetup) { say('ai', 'Live mode nahi chal paaya (' + lastErr + '). Purane mode mein chal raha hoon. Ye galti errors.log mein likh di hai.'); L.stop(true); if (window.goLive) window.goLive(true); return; }
+      if (failedSetup) { say('ai', 'Live mode nahi chal paaya (' + (ev.reason || ev.code) + '). Purane mode mein chal raha hoon.'); L.stop(true); if (window.goLive) window.goLive(true); return; }
       if (reconnects++ < 20) setTimeout(() => wantOn && connect(), 600);   // session time limit: chupchaap naya session
     };
   }
@@ -224,7 +207,7 @@
   L.start = async function () {
     if (!cfg) await L.available();
     if (!cfg || !cfg.ok) return false;
-    wantOn = true; L.on = true; modelIdx = 0; reconnects = 0; resumeHandle = null; useGS = true; authIdx = 0;
+    wantOn = true; L.on = true; modelIdx = 0; reconnects = 0; resumeHandle = null; useGS = true;
     try { await startMic(); } catch (e) { say('ai', 'Mic nahi khula: ' + e.message + '. Chrome mein mic Allow karo.'); L.stop(); return false; }
     if (!outCtx) outCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
     try { outCtx.resume() } catch (e) { }

@@ -12,12 +12,6 @@ Dekhta hai (camera + phone ki screen), sunta hai, bolta hai, sochta hai, phone c
 - **Kahin se bhi:** Telegram bot se door baithe bhi chalao; dost bhi baat kar sakte hain (unke liye phone control band).
 - **Suraksha:** SMS, call, WhatsApp, code chalana: pehle poochhta hai, aap "haan" bolo tabhi karta hai. Payment ka aakhri "Pay" khud nahi dabata.
 
-## v4.6: nayi Google "AQ." key + DeepSeek + Live "not found"
-- Google AI Studio ab sirf "AQ." wali nayi keys deta hai. Ye Google ke native raaste par chalti hain, par OpenAI-jaise raaste par kai baar reject hoti hain. Ab VISUAL Gemini ke saare text kaam native API se karta hai (key header mein), tool-calling, tasveer aur Gemini 3 ke "thought signature" samet.
-- Live: pehle Google ka chhota-umr token (asli key browser tak nahi jaati), na chale to purana key wala raasta. Live models Google ki list se, sabse naya (gemini-3.8-live) pehle; 3.1 ab Google ke hisaab se purana. Live fail ho to wajah `~/.visual/errors.log` mein likhi jaati hai.
-- DeepSeek ne `deepseek-chat` naam 24 July 2026 ko band kar diya; ab `deepseek-v4-flash` (aur list se khud chunta hai). Note: DeepSeek free nahi hai, account mein balance chahiye.
-- `visual keys` / `visual brains` ab galti ka saaf matlab batate hain (key galat / balance nahi / limit bhari / model band).
-
 ## v4.5: phone jaisi jaanch (Python 3.14)
 - Saare test phone wale Python 3.14 par bhi chalaye (pehle sirf 3.13 par): sab pass, 79 tools 0 crash.
 - CTRL+C dabane par ab lamba laal error nahi aata, bas "⏹ Band kiya (CTRL+C). Ye galti nahi hai."
