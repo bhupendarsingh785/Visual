@@ -5,13 +5,22 @@ echo "== VISUAL install ho raha hai =="
 pkg update -y
 pkg install -y python termux-api android-tools
 pkg install -y python-pillow || echo "(pillow nahi mila, chalega)"
+pkg install -y git gh || true
+# achhi Hindi neural awaaz (Microsoft Madhur/Swara). Na lage to phone ki awaaz chalegi.
+AIOHTTP_NO_EXTENSIONS=1 YARL_NO_EXTENSIONS=1 MULTIDICT_NO_EXTENSIONS=1 FROZENLIST_NO_EXTENSIONS=1 PROPCACHE_NO_EXTENSIONS=1 pip install edge-tts || echo "(edge-tts nahi laga, phone ki awaaz chalegi)"
 termux-setup-storage || true
 DIR="$(cd "$(dirname "$0")" && pwd)"
 # chhota command: 'visual' likho aur chalu
-cat > "$PREFIX/bin/visual" <<EOF
+cat > "$PREFIX/bin/visual" <<'EOW'
 #!/data/data/com.termux/files/usr/bin/bash
-cd "$DIR" && python visual.py "\$@"
-EOF
+cd ~/visual
+case "$1" in setup|adb|stop|chat) exec python visual.py "$@";; esac
+while true; do
+  python visual.py "$@"; code=$?
+  if [ $code -eq 0 ] || [ $code -eq 130 ]; then break; fi
+  echo "VISUAL ruk gaya (code $code). 3 second mein khud dobara chalu..."; sleep 3
+done
+EOW
 chmod +x "$PREFIX/bin/visual"
 echo ""
 echo "Ab API key daalo (free Gemini key: aistudio.google.com/apikey)"

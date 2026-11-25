@@ -43,7 +43,7 @@ header{display:flex;align-items:center;justify-content:space-between}
 .bar input:focus{border-color:var(--c)}
 .btn{width:46px;height:46px;border-radius:50%;border:1px solid #1d4d6e;background:#071c2a;color:var(--c);font-size:19px;display:grid;place-items:center;flex:none}
 .btn.mic{width:54px;height:54px;background:radial-gradient(circle,#0e5f8c,#06233a);box-shadow:0 0 18px #13a6e055}
-.listening .btn.mic{background:radial-gradient(circle,#ff5d73,#5c1020);color:#fff}
+.btn.mic.on,.listening .btn.mic{background:radial-gradient(circle,#ff5d73,#5c1020);color:#fff}
 video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width:220px;border-radius:12px;border:1px solid var(--c);z-index:5}
 .drawer{font-size:12px;color:var(--m);display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .drawer a{color:var(--c);border:1px solid #16384c;border-radius:12px;padding:3px 9px;white-space:nowrap;text-decoration:none}
@@ -52,7 +52,7 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
 <body>
 <div class="app" id="app">
   <header>
-    <div class="brand">{{NAME}}</div>
+    <div class="brand">{{NAME}} <small id="moodtxt" style="font-size:9px;letter-spacing:.08em;color:var(--c);margin-left:6px"></small> <small id="ver" style="font-size:9px;letter-spacing:.05em;color:#6c8a99"></small></div>
     <div class="chips"><span class="chip" id="cBrain">dimaag</span><span class="chip" id="cPhone">phone</span><span class="chip" id="cScreen">screen</span></div>
   </header>
   <div class="stage">
@@ -60,6 +60,7 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
     <div class="state" id="state">orb dabao aur bolo</div>
   </div>
   <div class="drawer" id="drawer"></div>
+  <div id="tasks" style="font-size:11px;color:var(--m);padding:2px 0"></div>
   <div class="log" id="log"></div>
   <div class="bar">
     <button class="btn" id="cam" title="Camera se dikhao">&#128247;</button>
@@ -72,35 +73,103 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
 <script>
 const $=id=>document.getElementById(id), app=$('app'), log=$('log');
 let pin=new URLSearchParams(location.search).get('pin')||localStorage.getItem('vpin')||'';
+window.VTOKEN='{{TOKEN}}';
 let camStream=null, rec=null, busy=false;
-function setState(s,label){app.className='app '+(s||'');$('state').textContent=label||'orb dabao aur bolo'}
+function setState(s,label){app.className='app '+(s||'');$('state').textContent=label||'mic ek baar dabao, LIVE baat shuru'}
 function linkify(t){return t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])).replace(/(https?:\/\/[^\s)]+)/g,'<a href="$1" target="_blank">$1</a>')}
 function add(cls,text,img){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=linkify(text||'');
  if(img){const i=new Image();i.src=img;d.appendChild(i)} log.appendChild(d);log.scrollTop=log.scrollHeight}
 function step(t){const d=document.createElement('div');d.className='step';d.textContent='⚙ '+t;log.appendChild(d)}
-async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Pin':pin},body:body?JSON.stringify(body):undefined});
+async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Pin':pin,'X-Visual-Token':VTOKEN},body:body?JSON.stringify(body):undefined});
  if(r.status===401){pin=prompt('PIN daalo')||'';localStorage.setItem('vpin',pin);return api(path,body)} return r.json()}
 async function status(){try{const s=await api('/api/status');$('cBrain').classList.toggle('on',s.brain.length>0);
- $('cPhone').classList.toggle('on',s.termux_api);$('cScreen').classList.toggle('on',s.screen);
+ $('cPhone').classList.toggle('on',s.termux_api);$('cScreen').classList.toggle('on',s.screen);if(s.mood)setMood(s.mood);if(s.voice)VOICE=s.voice;$('cBrain').title=(s.last_brain&&s.last_brain.name)||'';$('ver').textContent='v'+(s.version||'?')+((s.last_brain&&s.last_brain.name)?' · '+s.last_brain.name.split(':')[0]:'');
  $('drawer').innerHTML=s.creations.filter(n=>!n.startsWith('_')).slice(-12).map(n=>`<a href="/creations/${encodeURIComponent(n)}" target="_blank">✦ ${n}</a>`).join('')}catch(e){}}
-function say(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(t.replace(/https?:\/\/\S+/g,'link').replace(/[*_#`]/g,'').slice(0,700));
- u.lang='hi-IN';u.rate=1.05;const v=speechSynthesis.getVoices().find(v=>/hi[-_]IN/i.test(v.lang));if(v)u.voice=v;
- u.onstart=()=>setState('speaking','bol raha hoon');u.onend=()=>setState();speechSynthesis.speak(u)}
+let live=false, speaking=false, wakeLock=null;
+const MOODC={'khush':['#7dffb0','#16b86a'],'utsahit':['#ffe27a','#ff9a1a'],'josh mein':['#ffb0f0','#c03bd8'],
+ 'chintit':['#c9b8ff','#5b4bd6'],'udaas':['#9fc3ff','#3157a8'],'shaant':['#bff8ff','#1a7dff']};
+function setMood(m){const c=MOODC[m]||MOODC.shaant;document.documentElement.style.setProperty('--c',c[0]);
+ document.documentElement.style.setProperty('--c2',c[1]);const el=$('moodtxt');if(el)el.textContent=m}
+async function keepAwake(on){try{if(on&&'wakeLock' in navigator){wakeLock=await navigator.wakeLock.request('screen')}else if(wakeLock){wakeLock.release();wakeLock=null}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(live&&document.visibilityState==='visible')keepAwake(true)});
+// ECHO SE BACHAV: bolte waqt mic poori tarah band; bolna khatam hone ke 1.2 s baad hi mic chalu
+let lastSaid='', lastSaidAt=0, lastHeard='', lastHeardAt=0;
+let muteUntil=0;
+function afterSpeak(){
+ if(('speechSynthesis' in window && speechSynthesis.speaking)||(audioEl&&!audioEl.paused&&!audioEl.ended)){setTimeout(afterSpeak,300);return}
+ speaking=false;muteUntil=Date.now()+1200;   // bolne ke baad 1.2 s tak suni awaaz echo maani jaayegi
+ setState(live?'listening':'',live?'sun raha hoon... (bolo "band ho jao" rokne ke liye)':'');
+ if(live&&!rec)startRec()}
+let VOICE=[1,1], audioEl=null, neuralOK=true;
+function sayBrowser(clean,fin){
+ if(!('speechSynthesis' in window)){fin();return}speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(clean);u.lang='hi-IN';u.pitch=VOICE[0];u.rate=VOICE[1];
+ const vs=speechSynthesis.getVoices().filter(v=>/hi[-_]IN/i.test(v.lang));
+ const v=vs.find(v=>/google|neural|natural/i.test(v.name))||vs[0];if(v)u.voice=v;
+ u.onstart=()=>setState('speaking','bol raha hoon');u.onend=fin;u.onerror=fin;
+ setTimeout(fin,6000+clean.length*150);speechSynthesis.speak(u)}
+function say(t){lastSaid=t;lastSaidAt=Date.now();
+ const clean=t.replace(/https?:\/\/\S+/g,'link').replace(/[*_#`|>]/g,'').slice(0,800);
+ speaking=true;let done=false;const fin=()=>{if(!done){done=true;audioEl=null;afterSpeak()}};
+ if(!neuralOK){sayBrowser(clean,fin);return}
+ // pehle achhi neural Hindi awaaz (phone par edge-tts), na mile to browser ki awaaz
+ const a=new Audio('/api/tts?text='+encodeURIComponent(clean));audioEl=a;let fb=false;
+ const fallback=(bad)=>{if(fb||done)return;fb=true;if(bad)neuralOK=false;try{a.pause()}catch(e){}audioEl=null;sayBrowser(clean,fin)};
+ a.onplaying=()=>setState('speaking','bol raha hoon');a.onended=fin;
+ a.onerror=()=>fallback(true);
+ a.play().catch(()=>fallback(false));
+ setTimeout(()=>{if(!fb&&!done&&a.currentTime===0)fallback(false)},9000)}
+// suni hui baat kahin VISUAL ki apni awaaz (echo) ya dohrav to nahi?
+function norm(s){return (s||'').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim()}
+function isEcho(t){const h=norm(t), s=norm(lastSaid);if(!h)return true;
+ if(Date.now()-lastSaidAt<25000&&s){ if(s.includes(h))return true;
+  const hw=h.split(' '), sw=new Set(s.split(' '));const same=hw.filter(w=>sw.has(w)).length;
+  if(hw.length>=3&&same/hw.length>0.6)return true }
+ if(h===norm(lastHeard)&&Date.now()-lastHeardAt<8000)return true;   // wahi baat turant dobara
+ return false}
 async function send(text,image){if(busy||(!text&&!image))return;busy=true;add('me',text||'(tasveer)',image);$('txt').value='';
- setState('thinking','soch raha hoon...');
- try{const r=await api('/api/chat',{text,image});(r.steps||[]).forEach(step);add('ai',r.reply);setState();say(r.reply)}
- catch(e){add('ai','Server se jud nahi paaya. Termux mein "python visual.py" chal raha hai?');setState()}
- busy=false;status()}
-// aawaz
+ setState('thinking','soch raha hoon...');let reply='';
+ try{const r=await api('/api/chat',{text,image,voice:live});if(r.voice)VOICE=r.voice;if(r.mood)setMood(r.mood);if(!r.reply){busy=false;setState();afterSpeak();return}(r.steps||[]).forEach(step);reply=r.reply;add('ai',reply)}
+ catch(e){reply='Server se jud nahi paaya. Termux mein visual app chal raha hai?';add('ai',reply)}
+ busy=false;status();say(reply)}
+// aawaz: LIVE mode = ek baar dabao, lagatar sunta-bolta rahe
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-function listen(){if(!SR){add('ai','Is browser mein mic nahi chalta. Chrome use karo.');return}
- if(rec){rec.stop();return} speechSynthesis.cancel(); rec=new SR();rec.lang='hi-IN';rec.interimResults=true;
- let final='';rec.onresult=e=>{let t='';for(const r of e.results){t+=r[0].transcript;if(r.isFinal)final=t}$('txt').value=t};
- rec.onstart=()=>setState('listening','sun raha hoon...');
- rec.onend=()=>{rec=null;setState();const t=(final||$('txt').value).trim();if(t)send(t,camStream?grab():null)};
- rec.onerror=e=>{rec=null;setState();if(e.error==='not-allowed')add('ai','Mic ki permission do (Chrome site settings).')};rec.start()}
-$('mic').onclick=listen;$('orb').onclick=listen;
+const STOP=/(band ho ja|band karo|so jao|stop listening|बंद हो ज|बंद करो|सो जाओ)/i;
+// EK BAAR CHALU = HAMESHA SUNE: ek hi lagatar (continuous) mic session; band hone par khud dobara chalu.
+let restarts=0, lastStartAt=0;
+function handleHeard(t){
+ t=(t||'').trim(); if(!t)return;
+ if(speaking||Date.now()<muteUntil){return}            // VISUAL khud bol raha tha: ye uski awaaz hai
+ if(STOP.test(t)){goLive(false);add('me',t);add('ai','Theek hai, main ruk gaya. Mic dabao to phir shuru.');say('Theek hai, main ruk gaya.');return}
+ if(busy||isEcho(t))return;
+ lastHeard=t;lastHeardAt=Date.now();send(t,camStream?grab():null)}
+function startRec(){if(!live||rec)return;
+ rec=new SR();rec.lang='hi-IN';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+ rec.onresult=e=>{let interim='';
+  for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i],tx=r[0].transcript;
+   if(r.isFinal)handleHeard(tx);else interim+=tx}
+  if(!speaking&&Date.now()>=muteUntil)$('txt').value=interim};
+ rec.onstart=()=>{lastStartAt=Date.now();if(!speaking&&!busy)setState('listening','sun raha hoon... (bolo "band ho jao" rokne ke liye)')};
+ rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+   if(Date.now()-lastStartAt<1500&&restarts>0){showResume()}else{goLive(false);add('ai','Mic ki permission do: Chrome > upar lock icon > Permissions > Microphone Allow.')}}};
+ rec.onend=()=>{rec=null;$('txt').value='';if(!live)return;
+  // Chrome ne session band kiya (chuppi/time limit): turant dobara chalu, user ko pata bhi na chale
+  restarts++;setTimeout(()=>{if(live&&!rec){try{startRec()}catch(e){showResume()}}},250)};
+ try{rec.start()}catch(e){rec=null;showResume()}}
+function showResume(){ // phone ne bina click mic kholne se roka: sirf tab ek bada button
+ if($('resume'))return;const d=document.createElement('div');d.id='resume';
+ d.style.cssText='position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:9;color:#fff;font-size:18px;text-align:center';
+ d.innerHTML='<div>Phone ne mic rok diya<br><br><b style="font-size:22px;color:var(--c)">Yahan kahin bhi dabao</b><br>phir lagatar sununga</div>';
+ d.onclick=()=>{d.remove();rec=null;startRec()};document.body.appendChild(d)}
+function goLive(on){live=on;keepAwake(on);$('mic').classList.toggle('on',on);
+ if(on){restarts=0;muteUntil=0;startRec()}else{if(rec){const r=rec;rec=null;try{r.abort()}catch(e){}}setState('','mic ek baar dabao, main lagatar sununga')}}
+async function toggle(){
+ if(window.VLive&&VLive.on){VLive.stop();return}
+ if(live){goLive(false);return}
+ window.VPIN=pin;
+ if(window.VLive&&await VLive.available()){$('mic').classList.add('on');if(await VLive.start())return;$('mic').classList.remove('on')}
+ if(!SR){add('ai','Is browser mein mic nahi chalta. Chrome use karo.');return}goLive(true)}
+$('mic').onclick=toggle;$('orb').onclick=toggle;
 $('txt').onkeydown=e=>{if(e.key==='Enter')send($('txt').value.trim(),camStream?grab():null)};
 // camera: live dikhao, bolte waqt frame saath jaata hai
 function grab(){const v=$('vid'),c=document.createElement('canvas'),w=640;c.width=w;c.height=Math.round(v.videoHeight*w/(v.videoWidth||1));
@@ -110,8 +179,17 @@ $('cam').onclick=async()=>{if(camStream){camStream.getTracks().forEach(t=>t.stop
  add('ai','Camera chalu. Ab jo bologe, main saath mein dekhunga bhi. Dobara dabao to band.')}
  catch(e){$('file').click()}};
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>send($('txt').value.trim()||'Ye dekho',r.result);r.readAsDataURL(f)};
-add('ai','Namaste {{OWNER}}! Main {{NAME}} hoon. Mic dabao aur bolo: "WhatsApp kholo", "aaj ki khabar batao", "meri screen dekho", "ek chhota game banao"...');
+add('ai','Namaste {{OWNER}}! Main {{NAME}} hoon. Mic EK BAAR dabao: LIVE baat shuru. Seedhe bolte raho, beech mein tok bhi sakte ho. Rokna ho to "band ho jao" bolo ya mic dobara dabao.');
 status();speechSynthesis&&speechSynthesis.getVoices();
+// Engineer ke kaam: haal dikhao, pura hone par batao (Live ho to bolkar)
+async function pollTasks(){try{const ts=await api('/api/tasks');
+ $('tasks').innerHTML=ts.filter(t=>t.status==='chal raha').map(t=>'🛠 Engineer: '+t.goal.slice(0,50)+' … <i>'+(t.steps.slice(-2).join(', '))+'</i>').join('<br>');
+ for(const t of ts){if(t.status!=='chal raha'&&!t.announced){
+   add('ai','🛠 Engineer report:\n'+t.report);
+   if(!(window.VLive&&VLive.on&&VLive.announce(t.report)))say(t.report.split('\n').slice(0,3).join('. '));
+   fetch('/api/tasks/announced/'+t.id,{headers:{'X-Pin':pin,'X-Visual-Token':VTOKEN}});status()}}}catch(e){}}
+setInterval(pollTasks,4000);
 </script>
+<script src="/live.js"></script>
 </body>
 </html>

@@ -12,6 +12,95 @@ Dekhta hai (camera + phone ki screen), sunta hai, bolta hai, sochta hai, phone c
 - **Kahin se bhi:** Telegram bot se door baithe bhi chalao; dost bhi baat kar sakte hain (unke liye phone control band).
 - **Suraksha:** SMS, call, WhatsApp, code chalana: pehle poochhta hai, aap "haan" bolo tabhi karta hai. Payment ka aakhri "Pay" khud nahi dabata.
 
+## v3.6: poori jaanch (audit) ke baad
+- **Har tool asli mein chala kar jaancha** (75 tools, nakli phone par). AI ke galat inputs ab crash nahi karte:
+  text→number/haan-na, faltu keys hatana, zaroori input ki kami saaf batana, alag format ke arguments samajhna.
+- **Suraksha:** koi doosri website VISUAL ko chupke hukm (SMS/call) nahi de sakti, na API key padh sakti.
+  Sirf VISUAL ka apna page (gupt token + origin jaanch) hukm de sakta hai.
+- **Free limit (429):** model ko kuch der chhod kar doosra, sab band hon to intezaar karke dobara; kaam adhoora nahi.
+
+## v3.3: ADVANCED self-upgrade (quality gate ke saath)
+Bada upgrade ab is tareeke se hota hai (jaise badi AI labs karti hain), aur **code isse zabardasti karwata hai**:
+1. **Research** (best tareeke, asli libraries)  2. **SPEC** (poora design, advanced features, test)
+3. **Build**: kai files ka plugin (`plugins/<naam>/plugin.py` + modules + `test_*.py`)  4. **Test**: asli unittest
+5. **Critic**: alag sakht reviewer, SCORE 0-10. **8 se kam = sudhaar karo**, phir dobara test + critic.
+**Quality Gate:** jab tak SPEC + tests pass + score >= 8 na ho, Engineer "ho gaya" nahi bol sakta. Upgrade ke liye dugne kadam.
+Report mein critic score aur test nateeja aata hai.
+
+## Data GitHub mein (v3.2)
+- VISUAL ka data (yaadein `memory.json`, baatcheet `convo.jsonl`, banayi cheezein `creations/`, settings bina keys ke)
+  aapke **PRIVATE** repo `visual-data` mein har 30 minute apne aap jaata hai. Bolo "data sync karo" to turant.
+- **Suraksha:** repo private na ho to data nahi bhejta; API keys/password kabhi nahi jaate (har file jaanch kar key hata deta hai).
+- **Naya phone:** VISUAL install karke `gh auth login`, phir `visual restore` → saari yaadein wapas. Keys `visual setup` se dobara.
+- Code repo `Visual` public hai to use private karne ke liye: `gh repo edit bhupendarsingh785/Visual --visibility private --accept-visibility-change-consequences`
+
+## v3.1: poori jaanch ke baad mazboot
+- **Live mein Dil + yaad:** har baat server par darj (mood, apnapan, yaad); reconnect par pichhli baatcheet yaad rehti hai; `recall` se purani baatein.
+- **Live mein sankat-suraksha:** khud ko nuksaan ki baat pakad kar Live ko turant dhyaan + Tele-MANAS 14416 ka nirdesh.
+- **Live camera:** camera chalu ho to har second ek tasveer, VISUAL dekh kar baat karta hai.
+- **Kisi bhi API se judna:** `call_api` (key `{{NAAM}}` se lagti hai, output mein kabhi nahi dikhti).
+- **Crash ho to khud dobara chalu:** `visual` command 3 second mein restart karta hai.
+- **Update:** zip download karke `bash ~/visual/update.sh` (sabse nayi zip khud dhoondhta hai).
+
+## v3.0 ENGINEER: do dimaag (asli advanced agent ka tareeka)
+- **Live (bolne wala dimaag):** tez baat + chhote kaam (40 chune hue tools, taaki galat tool na chune).
+- **Engineer (gehra dimaag):** bada kaam (app/system, coding, debugging, khud ka upgrade, integration, gehri research) peeche chalta hai.
+  Aapki key par jo **sabse taaqatwar model** mile wo khud chunta hai (jaise koi "pro" model), aur
+  **plan → code → jaanch (verify_code / chala kar) → galti ki asli wajah → theek → dobara jaanch** karta hai, 60 kadam tak.
+  Kaam pura hone par Live **bolkar** batata hai; screen par report (KYA HUA / KAISE CHALAYE / JAANCH / LINK / KAMI).
+- **Khud ki galti dhoondhna:** har error ki diary (`~/.visual/errors.log`), `self_diagnose` (dimaag, internet, phone, GitHub, awaaz, plugins),
+  `self_errors` (trace ke saath). Engineer inhi se apni galti dhoondh kar self_edit/self_plugin se theek karta hai.
+- Settings: `smart_model` (khud chunna band karke koi model fix karo), `engineer_steps`, `live_tool_names`.
+
+## Sach Engine (v2.2): jhooth pakdo, sach nikaalo
+- **cross_check**: ek sawaal kai free models (Gemini, OpenRouter, Groq, Mistral, Cerebras: jinki key ho) se alag-alag + internet saboot;
+  jahan mel na khaaye wahi jhooth. Nateeja: SACH / BHAROSA (ucch-madhyam-kam) / GALAT-SHAK / SOURCES.
+- **check_packages**: AI models aksar nakli library ke naam bana dete hain; har package asli PyPI/npm par jaancha jaata hai.
+- **check_url**: API link zinda hai ya nahi.
+- **verify_code**: syntax, imports ki libraries asli hain ya nahi, tests. "Ho gaya" isi ke baad.
+- **Internet hamesha**: DuckDuckGo → DuckDuckGo lite → Wikipedia (English/Hindi).
+- Zyada free keys = zyada pakka cross-check (`visual setup` mein Mistral/Cerebras key optional).
+
+## Khud ko upgrade (v2.1)
+Bolo: *"khud mein mausam batane ka system jodo"*, *"Spotify se connect ho jao"*, *"apni programming advance karo"*.
+VISUAL khud: apna code padhta hai → plugin (`plugins/*.py`) ya main code badalta hai → **backup + test** →
+fail ho to **purana wapas** → pass ho to **khud restart** + GitHub push → Live naye kaam ke saath dobara judta hai.
+Suraksha ke niyam (khatarnak command rokna, key bachana, SMS/call se pehle poochhna, helpline) koi upgrade nahi hata sakta.
+Galat laga to bolo: *"pichhla upgrade wapas lo"* (self_rollback).
+
+## VISUAL LIVE (v2.0): videos jaisa tez, real-time baat
+- **Mic ek baar dabao**: awaaz seedhe Google **Gemini Live** tak stream hoti hai, jawab turant awaaz mein (alag-alag text/TTS ke kadam nahi).
+- **Beech mein tok sakte ho**: aap bolo to VISUAL turant chup hoke sunta hai.
+- **Phone ka echo-cancel**: VISUAL ki apni awaaz mic mein wapas nahi jaati.
+- **Saare tools Live se**: phone, apps, GitHub, builder, research; SMS/call jaise kaam se pehle screen par Haan/Nahi.
+- Free models (Google pricing ke hisaab se): `gemini-3.1-flash-live-preview`, `gemini-2.5-flash-native-audio-preview-12-2025`; ek na chale to doosra apne aap.
+- Live na chale (key/limit) to purana mode apne aap chalu.
+- Settings: `live_voice` (Charon, Puck, Kore, Fenrir, Aoede), `live_models`, `live_mode: false` (Live band).
+
+## Dil (v1.5): samajh, ehsaas aur apnapan
+Research (empathetic agents: mood pehchaan + pakki personality + yaad + aage ki soch) ke hisaab se:
+- **Mood pehchaanta hai:** udaas, khush, gussa, tension, thakaan, utsah (Hindi + Hinglish + emoji), aur usi hisaab se jawab deta hai.
+- **Apna mood:** khush / utsahit / shaant / chintit. Baaton se badalta hai; orb ka rang aur awaaz (pitch/speed) usi se badalte hain.
+- **Apnapan:** zaroori baatein yaad (exam, interview) aur baad mein "kaisa gaya?"; kaafi din baad aao to khushi se swagat.
+- **Sachcha saathi:** chaploosi nahi, galat ho to pyaar se bolega; jaate waqt guilt nahi; kabhi nahi kahega ki wo insaan hai.
+- **Sankat mein:** khud ko nuksaan ki baat par sabse pehle dhyaan se sunta hai aur Tele-MANAS 14416 (free, 24x7) batata hai.
+- **Soch:** mushkil kaam se pehle `think`, baad mein khud jaanch.
+- **Achhi Hindi awaaz:** Microsoft neural (Madhur/Swara, edge-tts, internet chahiye); awaaz wali baat mein jawab Devanagari Hindi mein.
+- **Gehri research:** `deep_research` = kai khoj + pages padh kar source ke saath jawab.
+- **Live deploy:** `deploy_web` = GitHub Pages link (repo public karna padta hai, pehle poochhta hai).
+
+## Builder agent (v1.4): bolo, aur poora project ban jaaye
+Bas bolo: *"VISUAL, ek doctor appointment app banao"* ya *"music player banao, background music ke saath"*.
+VISUAL khud:
+1. Plan banata hai (features, screens, data), aur khud tay karta hai ki kya chahiye.
+2. `~/visual-projects/<naam>` mein alag project banata hai, code likhta hai, zaroori packages (pip/pkg/npm) install karta hai.
+3. Free music/image/icon khud dhoondh kar download karta hai (licence credit README mein).
+4. Code chala kar test karta hai, error aaye to khud theek karta hai.
+5. Aapke GitHub par **alag private repo** banakar push karta hai aur link deta hai (phone par `gh auth login` ek baar).
+6. Preview: `http://127.0.0.1:8765/p/<project>/`
+
+Suraksha: system mitane wale command apne aap rukte hain; project folder ke bahar likhna mana; API key code mein mili to GitHub par push nahi hota (key `save_secret` se phone par hi rehti hai).
+
 ## Install (10 minute, ek baar)
 1. **F-Droid** se do apps: **Termux** aur **Termux:API** (Play Store wala Termux purana hai).
 2. Termux kholo, ye chalao:
