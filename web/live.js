@@ -4,7 +4,7 @@
 (function () {
   const L = window.VLive = { on: false };
   let ws = null, cfg = null, micCtx = null, micStream = null, worklet = null, outCtx = null,
-      playAt = 0, sources = [], modelIdx = 0, setupDone = false, wantOn = false, reconnects = 0,
+      playAt = 0, sources = [], modelIdx = 0, setupDone = false, wantOn = false, reconnects = 0, resumeHandle = null, useGS = true,
       userLine = null, aiLine = null, levelTimer = null;
 
   const WORKLET = `
@@ -70,8 +70,12 @@
         generationConfig: { responseModalities: ['AUDIO'],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: cfg.voice } } } },
         systemInstruction: { parts: [{ text: cfg.prompt }] },
-        tools: [{ functionDeclarations: cfg.tools }],
-        inputAudioTranscription: {}, outputAudioTranscription: {}
+        tools: useGS ? [{ functionDeclarations: cfg.tools }, { googleSearch: {} }] : [{ functionDeclarations: cfg.tools }],   // Google khoj seedhe Live mein
+        inputAudioTranscription: {}, outputAudioTranscription: {},
+        // lambi baat: bina iske audio session ~15 min aur camera ke saath sirf ~2 min mein khatam (Google docs)
+        contextWindowCompression: { slidingWindow: {} },
+        // har ~10 min server connection badalta hai: handle se wahi baat-cheet aage chalti hai (yaad nahi tootti)
+        sessionResumption: resumeHandle ? { handle: resumeHandle } : {}
       } }));
     };
     ws.onmessage = async (ev) => {
@@ -80,19 +84,23 @@
       if (m.setupComplete) { setupDone = true; reconnects = 0; ui('listening', 'LIVE: bas bolo... (bolo "band ho jao")'); return; }
       if (m.serverContent) handleContent(m.serverContent);
       if (m.toolCall) handleTools(m.toolCall.functionCalls || []);
-      if (m.goAway) { /* session khatam hone wala: band hone par apne aap naya */ }
+      if (m.sessionResumptionUpdate && m.sessionResumptionUpdate.resumable && m.sessionResumptionUpdate.newHandle)
+        resumeHandle = m.sessionResumptionUpdate.newHandle;
+      if (m.goAway) { try { ws.close(4000, 'goaway') } catch (e) { } }   // connection jaane wala: turant handle ke saath naya
     };
     ws.onclose = (ev) => {
       const failedSetup = !setupDone;
       ws = null; setupDone = false;
       if (!wantOn) return;
+      if (failedSetup && resumeHandle) { resumeHandle = null; return connect(); }   // purana handle expire: naya session usi model par
+      if (failedSetup && useGS) { useGS = false; return connect(); }                  // model Google khoj ke saath na chale to uske bina
       if (failedSetup && modelIdx < cfg.models.length - 1) { modelIdx++; say('step', '⚙ dusra Live model try: ' + cfg.models[modelIdx]); return connect(); }
       if (failedSetup) { say('ai', 'Live mode nahi chal paaya (' + (ev.reason || ev.code) + '). Purane mode mein chal raha hoon.'); L.stop(true); if (window.goLive) window.goLive(true); return; }
       if (reconnects++ < 20) setTimeout(() => wantOn && connect(), 600);   // session time limit: chupchaap naya session
     };
   }
 
-  let curUser = '', curAi = '', camTimer = null;
+  let curUser = '', curAi = '', camTimer = null, toolsThisTurn = 0, fixes = 0;
   async function heard(who, text) {   // baat server tak: yaad, mood, sankat ki pehchaan
     if (!text.trim()) return;
     try {
@@ -119,7 +127,19 @@
     }
     if (sc.turnComplete) {
       if (curUser) { heard('user', curUser); curUser = ''; }
+      // SACHCHAI JAANCH: kaam karne ka daava kiya par koi tool nahi chala = jhooth. Turant sudharwao.
+      // kaam ka shabd + 'ho gaya/kar diya/kar raha/karunga' paas-paas ho tabhi daava maano ("shaam ho gayi" jaisi baat par nahi)
+      const claim = /(delete|डिलीट|mita|मिटा|upgrade|अपग्रेड|update|अपडेट|install|इंस्टॉल|bana|बना|bhej|भेज|khol|खोल|call|कॉल|save|सेव|set |सेट|chalu|चालू|band|बंद|jod|जोड़|fix|ठीक|sudhaar|सुधार|deploy|डिप्लॉय|push|पुश)[^.!?।\n]{0,30}(kar diya|kar di(?![a-z])|diya|दिया|कर दी|ho gaya|ho gayi|हो गया|हो गई|kar raha|kar rahi|कर रहा|कर रही|karunga|karungi|करूँगा|करूंगा|कर दूँगा|कर दूंगा|kar dunga|shuru|शुरू)/i;
+      if (curAi && claim.test(curAi) && toolsThisTurn === 0 && fixes < 2) {
+        fixes++;
+        say('step', '⚠ VISUAL ne bina kaam kiye daava kiya, sudharwa raha hoon');
+        if (ws && ws.readyState === 1) ws.send(JSON.stringify({ realtimeInput: { text:
+          '[SACHCHAI JAANCH] Tumne abhi kaha "' + curAi.slice(0, 120) + '" par koi tool nahi chala, yani asal mein kuch nahi hua. ' +
+          'Abhi sahi tool chalao (bada kaam ho to agent_task, delete ho to delete wala tool). Agar aisa tool hai hi nahi to owner ko saaf bolo ' +
+          '"ye main abhi nahi kar sakta". Bina tool ke kabhi mat kaho ki kaam ho gaya.' } }));
+      } else if (toolsThisTurn > 0) fixes = 0;
       if (curAi) { heard('visual', curAi); curAi = ''; }
+      toolsThisTurn = 0;
       userLine = null; aiLine = null;
     }
     const log = document.getElementById('log'); if (log) log.scrollTop = log.scrollHeight;
@@ -148,6 +168,7 @@
   }
 
   async function handleTools(calls) {
+    toolsThisTurn += calls.length;
     const responses = [];
     for (const c of calls) {
       say('step', '⚙ ' + c.name);
@@ -186,7 +207,7 @@
   L.start = async function () {
     if (!cfg) await L.available();
     if (!cfg || !cfg.ok) return false;
-    wantOn = true; L.on = true; modelIdx = 0; reconnects = 0;
+    wantOn = true; L.on = true; modelIdx = 0; reconnects = 0; resumeHandle = null; useGS = true;
     try { await startMic(); } catch (e) { say('ai', 'Mic nahi khula: ' + e.message + '. Chrome mein mic Allow karo.'); L.stop(); return false; }
     if (!outCtx) outCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
     try { outCtx.resume() } catch (e) { }

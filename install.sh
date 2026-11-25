@@ -14,7 +14,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 cat > "$PREFIX/bin/visual" <<'EOW'
 #!/data/data/com.termux/files/usr/bin/bash
 cd ~/visual
-case "$1" in setup|adb|stop|chat) exec python visual.py "$@";; esac
+case "$1" in setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
 while true; do
   python visual.py "$@"; code=$?
   if [ $code -eq 0 ] || [ $code -eq 130 ]; then break; fi

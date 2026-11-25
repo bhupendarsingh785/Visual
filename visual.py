@@ -13,36 +13,68 @@ Sirf Python standard library. Chalao:
     python visual.py adb        -> screen control (wireless debugging) jodo
     python visual.py setup      -> API key / naam set karo
 """
-import base64, datetime, html, json, os, re, shutil, subprocess, sys, threading, time
+import base64, datetime, html, json, math, os, random, re, shutil, subprocess, sys, threading, time
 import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 APP = "VISUAL"
-VERSION = "3.6 ENGINEER"
+VERSION = "4.2"
 HOME = os.path.expanduser("~/.visual")
 CONF = os.path.join(HOME, "config.json")
 MEM = os.path.join(HOME, "memory.json")
 CREATIONS = os.path.join(HOME, "creations")
 SHOTS = os.path.join(HOME, "shots")
 HERE = os.path.dirname(os.path.abspath(__file__))
+# sab free providers ki key ki shakal (Google, OpenAI-jaisi sk-, GitHub, Groq, NVIDIA, Cerebras, HuggingFace, OpenRouter)
+KEY_PAT = re.compile(r"(AIza[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|gsk_[A-Za-z0-9]{30,}"
+                     r"|nvapi-[A-Za-z0-9_-]{30,}|csk-[A-Za-z0-9]{30,}|hf_[A-Za-z0-9]{30,})")
 os.makedirs(CREATIONS, exist_ok=True); os.makedirs(SHOTS, exist_ok=True)
 
+# Free (ya free-tier) dimaag: India, China, America, Europe. Sab OpenAI-compatible. Key ho to apne aap judte hain.
+# Research: awesome-freellm-apis / cheahjs free-llm-api-resources (2026), Sarvam docs, GitHub Models docs.
 PROVIDERS = {
-    "gemini":     {"base": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-2.5-flash", "vision": True},
-    "groq":       {"base": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile", "vision": False},
-    "openrouter": {"base": "https://openrouter.ai/api/v1", "model": "openrouter/free", "vision": True},
-    # optional: aur free dimaag (key ho to cross-check mein judte hain)
-    "mistral":    {"base": "https://api.mistral.ai/v1", "model": "mistral-small-latest", "vision": False},
-    "cerebras":   {"base": "https://api.cerebras.ai/v1", "model": "llama-3.3-70b", "vision": False},
+    "gemini":      {"rpm": 10, "base": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-2.5-flash", "vision": True, "tools": True,
+                    "country": "US", "signup": "aistudio.google.com/apikey"},
+    "groq":        {"rpm": 30, "base": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile", "vision": False, "tools": True,
+                    "country": "US", "signup": "console.groq.com/keys"},
+    "openrouter":  {"rpm": 20, "base": "https://openrouter.ai/api/v1", "model": "openrouter/free", "vision": True, "tools": True,
+                    "country": "US", "signup": "openrouter.ai/keys"},
+    "github":      {"rpm": 10, "base": "https://models.github.ai/inference", "model": "openai/gpt-4.1-mini", "vision": True, "tools": True,
+                    "country": "US", "signup": "(GitHub login se apne aap: gh auth login)", "models_url": "https://models.github.ai/catalog/models"},
+    "cerebras":    {"rpm": 30, "base": "https://api.cerebras.ai/v1", "model": "llama-3.3-70b", "vision": False, "tools": True,
+                    "country": "US", "signup": "cloud.cerebras.ai"},
+    "nvidia":      {"rpm": 40, "base": "https://integrate.api.nvidia.com/v1", "model": "meta/llama-3.3-70b-instruct", "vision": False, "tools": True,
+                    "country": "US", "signup": "build.nvidia.com"},
+    "mistral":     {"rpm": 60, "base": "https://api.mistral.ai/v1", "model": "mistral-small-latest", "vision": False, "tools": True,
+                    "country": "EU", "signup": "console.mistral.ai/api-keys"},
+    "zhipu":       {"rpm": 30, "base": "https://open.bigmodel.cn/api/paas/v4", "model": "glm-4.7-flash", "vision": False, "tools": True,
+                    "country": "CN", "signup": "open.bigmodel.cn/usercenter/apikeys"},
+    "siliconflow": {"rpm": 30, "base": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen2.5-7B-Instruct", "vision": False, "tools": True,
+                    "country": "CN", "signup": "cloud.siliconflow.cn/account/ak"},
+    "modelscope":  {"rpm": 20, "base": "https://api-inference.modelscope.cn/v1", "model": "Qwen/Qwen3-32B", "vision": False, "tools": True,
+                    "country": "CN", "signup": "modelscope.cn/my/myaccesstoken"},
+    "qwen":        {"rpm": 30, "base": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", "model": "qwen-plus", "vision": False, "tools": True,
+                    "country": "CN", "signup": "bailian.console.alibabacloud.com"},
+    "deepseek":    {"rpm": 60, "base": "https://api.deepseek.com/v1", "model": "deepseek-chat", "vision": False, "tools": True,
+                    "country": "CN", "signup": "platform.deepseek.com/api_keys (sasta, free nahi)"},
+    "moonshot":    {"base": "https://api.moonshot.ai/v1", "model": "kimi-k2.6", "vision": False, "tools": True,
+                    "country": "CN", "signup": "platform.moonshot.ai (China wali key ho to base api.moonshot.cn/v1)"},
+    "upstage":     {"base": "https://api.upstage.ai/v1/solar", "model": "solar-pro", "vision": False, "tools": False,
+                    "country": "KR", "signup": "console.upstage.ai ($10 trial credit)"},
+    "cohere":      {"base": "https://api.cohere.ai/compatibility/v1", "model": "command-a-03-2025", "vision": False, "tools": True,
+                    "country": "CA", "signup": "dashboard.cohere.com (trial key free)"},
+    "sarvam":      {"rpm": 20, "base": "https://api.sarvam.ai/v1", "model": "sarvam-105b", "vision": False, "tools": False,
+                    "country": "IN", "signup": "dashboard.sarvam.ai"},
 }
 
 DEFAULT_CONF = {
     "assistant_name": APP,
     "owner_name": "Arjun",
     "language": "hi-IN",
-    "keys": {"gemini": "", "groq": "", "openrouter": "", "mistral": "", "cerebras": ""},
+    "keys": {p_: "" for p_ in PROVIDERS},
     "models": {},                 # jaise {"gemini": "gemini-2.5-flash"} badalna ho to
-    "provider_order": ["gemini", "openrouter", "groq", "mistral", "cerebras"],
+    "provider_order": ["gemini", "github", "groq", "openrouter", "cerebras", "nvidia", "mistral", "zhipu", "siliconflow",
+                       "modelscope", "qwen", "moonshot", "deepseek", "cohere", "upstage", "sarvam"],
     "web_host": "127.0.0.1", "web_port": 8765, "web_pin": "",
     "telegram_token": "", "telegram_owner_ids": [], "telegram_guest_chat": True,
     "adb_target": "",            # jaise "localhost:37123" (python visual.py adb)
@@ -85,6 +117,13 @@ CFG = load_json(CONF, DEFAULT_CONF)
 for _k in DEFAULT_CONF["keys"]: CFG["keys"].setdefault(_k, "")
 for _p in DEFAULT_CONF["provider_order"]:
     if _p not in CFG.get("provider_order", []): CFG.setdefault("provider_order", []).append(_p)
+# Kisi bhi desh ki koi bhi OpenAI-jaisi API (visual keys mein 'aur API jodo'): config se PROVIDERS mein judti hai
+for _n, _c in (CFG.get("custom_providers") or {}).items():
+    if isinstance(_c, dict) and _c.get("base") and _c.get("model"):
+        PROVIDERS[_n] = {"base": _c["base"], "model": _c["model"], "vision": bool(_c.get("vision")), "tools": _c.get("tools", True) is not False,
+                         "country": _c.get("country", "?"), "signup": _c.get("signup", "(aapki jodi hui)"), "custom": True}
+        CFG["keys"].setdefault(_n, "")
+        if _n not in CFG["provider_order"]: CFG["provider_order"].append(_n)
 for _p in PROVIDERS:
     k = os.environ.get(_p.upper() + "_API_KEY")
     if k: CFG["keys"][_p] = k
@@ -94,8 +133,12 @@ def save_mem():
     with _lock: save_json(MEM, MEMORY)
 
 # ---------------------------------------------------------------- helpers
+SANDBOX_BLOCK = re.compile(r"termux-(sms-send|telephony-call|camera|microphone|torch|volume|brightness|clipboard-set|notification)|\badb\b|\bam\s+start|wa\.me|termux-open-url", re.I)
+
 def sh(cmd, timeout=40, inp=None):
     """Command chalao, output text lautao."""
+    if os.environ.get("VISUAL_SANDBOX") and SANDBOX_BLOCK.search(cmd if isinstance(cmd, str) else " ".join(map(str, cmd))):
+        return "[sandbox test: asli phone ka kaam band, nakli 'ok']"
     try:
         r = subprocess.run(cmd, input=inp, capture_output=True, text=True, timeout=timeout,
                            shell=isinstance(cmd, str))
@@ -154,9 +197,25 @@ def adb(*args, timeout=30, binary=False):
         r = subprocess.run(cmd, capture_output=True, timeout=timeout)
         return r.stdout
     out = sh(cmd, timeout)
-    if "not found" in out or "offline" in out:
+    if re.search(r"not found|offline|no devices|cannot connect|failed to connect|unauthorized", out):
         sh(["adb", "connect", t], 15); out = sh(cmd, timeout)
+        if re.search(r"not found|offline|no devices|cannot connect|failed to connect", out):
+            nt = adb_rediscover()                    # phone restart/Wi-Fi badalne par port badal jaata hai: khud dhoondho
+            if nt: out = sh(["adb", "-s", nt] + list(args), timeout)
+            else: out += "\n(Screen control toot gaya. Wireless debugging ON hai? Nahi juda to Termux mein: visual adb)"
     return out
+
+def adb_rediscover():
+    """Wireless debugging ka naya port mDNS se dhoondh kar dobara jodo (pairing ek baar hi chahiye)."""
+    lst = sh(["adb", "mdns", "services"], 15)
+    found = re.findall(r"_adb-tls-connect\._tcp\.?\s+(\d+\.\d+\.\d+\.\d+:\d+)", lst)
+    old_ip = (CFG.get("adb_target") or "").split(":")[0]
+    found.sort(key=lambda a: a.split(":")[0] != old_ip)
+    for cand in found + ["localhost:" + a.split(":")[1] for a in found]:
+        r = sh(["adb", "connect", cand], 15)
+        if "connected" in r and "cannot" not in r and "failed" not in r:
+            CFG["adb_target"] = cand; save_json(CONF, CFG); return cand
+    return ""
 
 # ---------------------------------------------------------------- images (vision)
 _screen_scale = {"sx": 1.0, "sy": 1.0}
@@ -221,6 +280,8 @@ def set_reminder(minutes, text):
     return "reminder laga: " + datetime.datetime.fromtimestamp(due).strftime("%d %b %I:%M %p")
 
 def reminder_loop():
+    try: trash_cleanup()
+    except Exception: pass
     while True:
         now = time.time(); fire = []
         with _lock:
@@ -243,29 +304,48 @@ def _wiki_search(query, lang="en"):
     except Exception as e:
         return ""
 
+def _google_grounded(query):
+    """Gemini + Google Search (free key ki seema ke andar): taaza jawab + asli source links."""
+    key = pkey("gemini")
+    if not key: return ""
+    for model in ("gemini-2.5-flash", "gemini-2.5-flash-lite"):
+        try:
+            r = json.loads(http(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
+                                {"contents": [{"parts": [{"text": "Google par khoj kar chhota, taaza, tathya-sahi jawab do (tareekh/number ke saath): " + query}]}],
+                                 "tools": [{"google_search": {}}]}, timeout=40))
+            c = (r.get("candidates") or [{}])[0]
+            txt = "".join(p_.get("text", "") for p_ in c.get("content", {}).get("parts", []))
+            src = [(ch.get("web") or {}) for ch in (c.get("groundingMetadata") or {}).get("groundingChunks", [])]
+            src = [f"- {w.get('title', '')}\n  {w.get('uri', '')}" for w in src if w.get("uri")][:6]
+            if txt and src: return f"(Google khoj)\n{txt.strip()[:1800]}\nSOURCES:\n" + "\n".join(src)
+        except Exception as e:
+            log_error("google-grounded", e)
+    return ""
+
 @tool("Internet par khojo (taaza khabar, jaankari, daam, mausam)", {"query": S("kya khojna hai")})
 def web_search(query):
-    """Khula internet: DuckDuckGo -> DuckDuckGo lite -> Wikipedia (ek fail ho to doosra)."""
+    """Khula internet: DuckDuckGo -> DuckDuckGo lite -> Google (Gemini grounding) -> Wikipedia. Ek fail ho to agla."""
+    out = []
     try:
         page = http("https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(query), timeout=25)
-    except Exception as e:
+    except Exception:
         page = ""
-    if "result__a" not in page:
-        try:
-            lite = http("https://lite.duckduckgo.com/lite/?q=" + urllib.parse.quote(query), timeout=25)
-            links = re.findall(r'<a[^>]+href="(https?://[^"]+)"[^>]*class=.result-link.[^>]*>(.*?)</a>', lite, re.S)
-            if links: return "\n".join(f"- {strip_html(t)}\n  {u}" for u, t in links[:6])
-        except Exception: pass
-        w = _wiki_search(query) or _wiki_search(query, "hi")
-        return w or "search fail: internet ya search engine se jawab nahi mila"
-    out = []
     for m in re.finditer(r'class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>.*?class="result__snippet"[^>]*>(.*?)</a>', page, re.S):
         url = m.group(1)
         q = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("uddg")
         if q: url = q[0]
         out.append(f"- {strip_html(m.group(2))}\n  {strip_html(m.group(3))}\n  {url}")
         if len(out) >= 6: break
-    return "\n".join(out) or "kuch nahi mila"
+    if out: return "\n".join(out)
+    try:
+        lite = http("https://lite.duckduckgo.com/lite/?q=" + urllib.parse.quote(query), timeout=25)
+        links = re.findall(r'<a[^>]+href="(https?://[^"]+)"[^>]*class=.result-link.[^>]*>(.*?)</a>', lite, re.S)
+        if links: return "\n".join(f"- {strip_html(t)}\n  {u}" for u, t in links[:6])
+    except Exception: pass
+    g = _google_grounded(query)
+    if g: return g
+    w = _wiki_search(query) or _wiki_search(query, "hi")
+    return w or "search fail: internet ya search engine se jawab nahi mila"
 
 @tool("Kisi web page ka text padho", {"url": S("page ka link")})
 def read_webpage(url):
@@ -325,7 +405,10 @@ def battery(): return sh(["termux-battery-status"])
 def torch(on): return sh(["termux-torch", "on" if on else "off"])
 
 @tool("Volume set karo", {"stream": S("music, ring, alarm, notification, call"), "level": N("0-15")})
-def set_volume(stream, level): return sh(["termux-volume", stream, str(int(level))])
+def set_volume(stream, level):
+    st = {"gaana": "music", "media": "music", "ringtone": "ring", "ghanti": "ring", "alarm": "alarm", "notification": "notification",
+          "call": "call", "system": "system", "music": "music", "ring": "ring"}.get(str(stream).lower().strip(), "music")
+    return sh(["termux-volume", st, str(max(0, min(15, int(level))))])
 
 @tool("Screen brightness 0-255 set karo", {"level": N("0-255 ya -1 auto")})
 def brightness(level): return sh(["termux-brightness", "auto" if int(level) < 0 else str(int(level))])
@@ -505,14 +588,17 @@ def _slug(name):
     s = re.sub(r"[^a-zA-Z0-9._-]+", "-", name.strip()).strip("-").lower()
     return s or "project"
 
+class UserErr(ValueError):
+    """Saaf sandesh wali galti (input galat / cheez nahi mili): code ka bug nahi, isliye error diary mein nahi jaati."""
+
 def _proj(name):
     p = os.path.join(PROJECTS, _slug(name))
-    if not os.path.isdir(p): raise ValueError(f"project '{name}' nahi mila. Pehle project_create chalao. Projects: {', '.join(os.listdir(PROJECTS)) or 'koi nahi'}")
+    if not os.path.isdir(p): raise UserErr(f"project '{name}' nahi mila. Pehle project_create chalao. Projects: {', '.join(os.listdir(PROJECTS)) or 'koi nahi'}")
     return p
 
 def _inside(root, rel):
     p = os.path.realpath(os.path.join(root, rel))
-    if not (p == root or p.startswith(os.path.realpath(root) + os.sep)): raise ValueError("project folder ke bahar file nahi")
+    if not (p == root or p.startswith(os.path.realpath(root) + os.sep)): raise UserErr("ROKA: project folder ke bahar ki file nahi chhu sakta")
     return p
 
 def _env():
@@ -554,6 +640,7 @@ def project_write(project, path, content):
 @tool("Project ki file padho", {"project": S("project"), "path": S("file path")})
 def project_read(project, path):
     f = _inside(_proj(project), path)
+    if not os.path.isfile(f): return f"'{path}' file nahi hai. Project ki files:\n" + project_files(project)
     with open(f, encoding="utf-8", errors="replace") as fh: return fh.read()[:12000]
 
 @tool("Project ki saari files ki list", {"project": S("project")})
@@ -614,7 +701,7 @@ def github_publish(project, repo="", private=True, message="VISUAL update"):
     st = _run("gh auth status", root, 30)
     if "Logged in" not in st and "logged in" not in st: return "GitHub login nahi hai. Termux mein chalao: gh auth login\n" + st
     # commit se PEHLE har file jaancho: key mili to kuch commit/push nahi
-    pat = re.compile(r"(AIza[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|gsk_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})")
+    pat = KEY_PAT
     hits = []
     for d, ds, fs in os.walk(root):
         ds[:] = [x for x in ds if x not in (".git", "node_modules", ".venv", "__pycache__")]
@@ -677,17 +764,41 @@ def deploy_web(project, confirm_public=False):
     return f"{r[-500:]}\nLive link (1-2 minute mein khulega): https://{user}.github.io/{repo}/"
 
 # ---------------------------------------------------------------- SACH ENGINE (jhooth pakadna, sach nikaalna)
-def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho to 'PAKKA NAHI' likho. Kuch gadho mat.", timeout=60):
+def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho to 'PAKKA NAHI' likho. Kuch gadho mat.", timeout=60,
+            purpose="chat", temperature=0.2, max_tokens=None):
     """Ek hi provider se seedha jawab (tools ke bina). (text, error)"""
-    info = PROVIDERS[provider]; model = CFG.get("models", {}).get(provider) or info["model"]
-    body = {"model": model, "temperature": 0.2, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}
-    try:
-        r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body, {"Authorization": "Bearer " + CFG["keys"][provider]}, timeout=timeout))
-        return (r["choices"][0]["message"].get("content") or "").strip(), ""
-    except urllib.error.HTTPError as e:
-        return "", f"{e.code} {e.read().decode()[:150]}"
-    except Exception as e:
-        return "", str(e)[:150]
+    info = PROVIDERS[provider]; mp = "code" if purpose in ("code", "reason") else "chat"; cat = _cat_of_purpose(purpose)
+    model = provider_model(provider, mp) if provider != "gemini" or CFG.get("models", {}).get("gemini") else (best_models()[0] if mp == "code" and best_models()[0] else (CFG.get("models", {}).get("gemini") or info["model"]))
+    body = {"model": model, "temperature": temperature, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}
+    if max_tokens: body["max_tokens"] = max_tokens
+    last = ""; t0 = time.time()
+    for attempt in range(3):              # free limit (429) / bheed (503) par ruk kar dobara; ye kaam chhodne ki wajah nahi
+        try:
+            r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body, {"Authorization": "Bearer " + pkey(provider)}, timeout=timeout))
+            txt = (r["choices"][0]["message"].get("content") or "").strip()
+            txt = re.sub(r"<think>.*?</think>", "", txt, flags=re.S).strip()      # reasoning models ka andar ka sochna hatao
+            router_record(provider, cat, bool(txt), time.time() - t0)
+            return txt, ("" if txt else "khaali jawab")
+        except urllib.error.HTTPError as e:
+            eb = e.read().decode(errors="replace"); last = f"{e.code} {eb[:150]}"
+            if e.code in (401, 403):
+                if attempt < 2 and rotate_key(provider): continue          # ye key kharab: agli key
+                BAD_PROVIDER[provider] = time.time() + 1800; break
+            if e.code == 429 and attempt < 2 and rotate_key(provider): continue     # doosri key turant
+            if e.code in (429, 500, 502, 503) and attempt < 2:
+                if provider == "gemini" and e.code == 429:            # bada model limit par: tez model se
+                    fm = best_models()[1] or info["model"]
+                    if body["model"] != fm: body["model"] = fm; continue
+                time.sleep(min(_retry_after(eb, 15 * (attempt + 1)), 45)); continue
+            if e.code == 404 and provider != "gemini" and body["model"] != info["model"]:
+                body["model"] = info["model"]; continue                  # chuna model band ho gaya: default se
+            break
+        except Exception as e:
+            last = str(e)[:150]
+            if attempt < 1 and "timed out" not in last: time.sleep(3); continue
+            break
+    if not last.startswith("429"): router_record(provider, cat, False)
+    return "", last
 
 def _parallel(fns, timeout=90):
     out = [None] * len(fns); ths = []
@@ -699,14 +810,27 @@ def _parallel(fns, timeout=90):
 @tool("SACH ENGINE: ek sawaal ko kai alag AI models se alag-alag poochho + internet ke saboot se milao, jhooth/galti pakdo, aur sabse sachcha jawab bharose ke level ke saath do. "
       "Zaroori tathya, number, code/library/API ki jaankari, ya jab model par shak ho tab use karo.",
       {"question": S("kya pakka karna hai"), "web": {"type": "boolean", "description": "internet saboot bhi lo (default haan)", "optional": True}})
+def _judge_feedback(verdict, provs, cat):
+    """Nyaayadhish ne jis model ko galat/shak wala kaha uska 'sahi-pan' number ghatao, baaki ka badhao (router seekhta hai)."""
+    m = re.search(r"(GALAT/SHAK|MATBHED/SHAK)\s*:\s*(.*?)(?:\n[A-Z]+:|$)", verdict or "", re.S)
+    if not m or len(provs) < 2: return []
+    line = m.group(2).lower(); bad = []
+    if not re.search(r"^\s*(-|koi nahi|none|nahi|kuch nahi|n/a)\s*$", line):
+        bad = [p for p in provs if re.search(r"\b%s\b" % re.escape(p), line)]          # naam se pakka
+        if not bad:                                                                     # naam nahi to 'Model N' se
+            bad = [p for i, p in enumerate(provs) if re.search(r"model\s*%d\b" % (i + 1), line)]
+    for p in provs: router_record(p, cat, True, None, quality=0.2 if p in bad else 0.85)
+    return bad
+
 def cross_check(question, web=True):
-    provs = providers_available()[:4]
+    provs = route("fact", k=6)
     if not provs: return "koi AI key nahi"
-    jobs = [lambda p=p: (p, *llm_one(p, question)) for p in provs]
+    jobs = [lambda p=p: (p, *llm_one(p, question, purpose="fact")) for p in provs]
     if web is not False: jobs.append(lambda: ("WEB", deep_research(question), ""))
     res = _parallel(jobs)
     answers = [(p, a, e) for (p, a, e) in [r for r in res if r] if p != "WEB"]
     evidence = next((a for (p, a, e) in [r for r in res if r] if p == "WEB"), "")
+    if "http" not in (evidence or ""): evidence = ""          # khoj fail hui to 'internet saboot' ka daava nahi
     good = [(p, a) for p, a, e in answers if a]
     if not good: return "Kisi model se jawab nahi mila: " + "; ".join(f"{p}: {e}" for p, a, e in answers)
     blocks = "\n\n".join(f"### Model {i+1} ({p})\n{a[:3000]}" for i, (p, a) in enumerate(good))
@@ -715,9 +839,11 @@ def cross_check(question, web=True):
              "Tum ek sakht jaanchne wale ho. Har mukhya baat ko saboot aur doosre jawabon se milao. Jahan models aapas mein ya saboot se mel nahi khaate, "
              "wahi jhooth/galti hai. Jo saboot mein na ho use pakka mat bolo. Output bilkul is format mein:\n"
              "SACH: <sabse sahi jawab, chhota>\nBHAROSA: <ucch|madhyam|kam> (kyun)\nGALAT/SHAK: <kis model ki kaunsi baat galat ya bina saboot>\nSOURCES: <saboot ke links>")
-    verdict, err = llm_one(provs[0], judge, system="Tum sach jaanchne wale nyaayadhish ho. Sirf saboot par chalo.", timeout=90)
-    agree = f"{len(good)} model ne jawab diya" + (f", {len(answers)-len(good)} fail" if len(answers) > len(good) else "")
-    return (verdict or ("Nyaayadhish fail: " + err + "\n\n" + blocks[:3000])) + f"\n\n({agree}; web saboot: {'haan' if evidence else 'nahi'})"
+    judge_p = route("reason", explore=False)[0]
+    verdict, err = llm_one(judge_p, judge, system="Tum sach jaanchne wale nyaayadhish ho. Sirf saboot par chalo.", timeout=90, purpose="reason")
+    bad = _judge_feedback(verdict, [p for p, _ in good], "fact")
+    agree = f"{len(good)} model ne jawab diya ({', '.join(p for p, _ in good)})" + (f", {len(answers)-len(good)} fail" if len(answers) > len(good) else "")
+    return (verdict or ("Nyaayadhish fail: " + err + "\n\n" + blocks[:3000])) + f"\n\n({agree}; nyaayadhish: {judge_p}; galat pakde: {', '.join(bad) or 'koi nahi'}; web saboot: {'haan' if evidence else 'nahi'})"
 
 STDLIB = set(getattr(sys, "stdlib_module_names", ())) | {"__future__"}
 
@@ -871,6 +997,9 @@ def self_read(path, find=""):
       {"name": S("plugin naam, jaise weather"), "code": S("poora python code")})
 def self_plugin(name, code):
     fn = _slug(name).replace("-", "_") + ".py"; p = os.path.join(PLUGINS, fn)
+    if "@tool(" not in code: return "Plugin mein koi @tool(...) nahi hai, yani koi naya kaam judega hi nahi. Pehle @tool wala function likho."
+    if os.path.isdir(os.path.join(PLUGINS, fn[:-3])):
+        return f"'{fn[:-3]}' naam ka bada plugin (folder) pehle se hai; dono takrayenge. Use plugin_file se badlo ya alag naam do."
     bk = _backup("plugin-" + name)
     with open(p, "w", encoding="utf-8") as f: f.write(code)
     ok, out = _self_check()
@@ -983,8 +1112,8 @@ CRITIC_SYS = ("Tum ek bahut sakht senior engineer CRITIC ho (duniya ke best prod
               "SCORE: <0-10>\nKAMIYAN:\n- ...\nSUDHAAR (theek kya karna hai, saaf):\n- ...")
 
 @tool("UPGRADE kadam 5: sakht CRITIC (alag nazar) se plugin ki review: SCORE 0-10 + kamiyan + sudhaar. Score 8 se kam ho to sudhaar karke dobara test + critic.",
-      {"name": S("plugin naam")})
-def critic_review(name):
+      {"name": S("plugin naam"), "avoid": S("is provider ko critic mat banao (jisne code likha)", optional=True)})
+def critic_review(name, avoid=""):
     d = _pdir(name); parts = []
     for f in sorted(os.listdir(d)):
         fp = os.path.join(d, f)
@@ -994,7 +1123,9 @@ def critic_review(name):
     provs = providers_available()
     if not provs: return "koi AI key nahi"
     # critic doosre provider se ho to aur behtar (alag nazar); warna smart model
-    critic_p = next((p for p in provs[1:] if p in ("openrouter", "mistral", "groq", "cerebras")), provs[0])
+    # critic: code samajhne mein sabse achha, par jisne code likha wo nahi (alag nazar)
+    others = route("code", explore=False, exclude=(avoid,)) or provs
+    critic_p = next((p for p in others if p != "gemini"), others[0])
     if critic_p == "gemini":
         sm, _ = best_models(); old = CFG.setdefault("models", {}).get("gemini")
         if sm: CFG["models"]["gemini"] = sm
@@ -1010,8 +1141,374 @@ def critic_review(name):
     if t: t["critic"] = score; t["critic_rounds"] = t.get("critic_rounds", 0) + 1
     return f"(critic: {critic_p})\n{txt[:5000]}"
 
+# ---------------------------------------------------------------- SANGAM: kai desh ke free dimaag milkar code + jawab
+# Research aadhaar: CodeT (alag se bane test + kai namoone, chala kar jo sabse zyada test paas kare wahi chuno, galat test pakdo)
+# aur Mixture-of-Agents (kai models ke jawab -> doosri parat sudhaare -> ek aggregator milaaye). Sab kuch asli chala kar jaancha jata hai.
+VTEST_PY = '''"""VISUAL test helper (apne aap bana). Test mein:  from vtest import V   phir  V.TOOLS["tool_naam"]["fn"](...)  ya  V.run_tool("tool_naam", {...})
+NEW_TOOLS = is plugin ne jo naye tools jode."""
+import os, sys
+os.environ.setdefault("VISUAL_SELFTEST", "1")
+_D = os.path.dirname(os.path.abspath(__file__))
+if _D not in sys.path: sys.path.insert(0, _D)
+import visual as V
+_before = set(V.TOOLS)
+V.__dict__["PLUGIN_DIR"] = _D
+_entry = os.path.join(_D, "plugin.py")
+exec(compile(open(_entry, encoding="utf-8").read(), _entry, "exec"), V.__dict__)
+NEW_TOOLS = sorted(set(V.TOOLS) - _before) or sorted(n for n in V.TOOLS if V.TOOLS[n]["fn"].__code__.co_filename == _entry)
+'''
+
+# AI ka code chalane se pehle: phone/data mitane wali cheezein pakdo
+AI_CODE_RISK = re.compile(r"rm\s+-rf|shutil\.rmtree\(\s*(['\"]/|os\.path\.expanduser|HOME|os\.environ)|/sdcard|/storage/emulated|os\.system\(|"
+                         r"\bsudo\b|mkfs|subprocess\.\w+\([^)]*termux-(sms-send|telephony-call)|CFG\s*\[\s*['\"]keys['\"]\s*\]\s*=", re.I)
+
+FILE_BLOCK = re.compile(r"###\s*FILE:\s*([\w./-]+)\s*\n(.*?)\n\s*###\s*END", re.S)
+
+def _parse_files(txt):
+    files = {}
+    for path, body in FILE_BLOCK.findall(txt or ""):
+        body = re.sub(r"^\s*```[\w+-]*\s*\n", "", body); body = re.sub(r"\n\s*```\s*$", "", body)
+        path = path.strip().lstrip("./")
+        if ".." in path or path.startswith("/") or path in ("vtest.py", "spec_check.py"): continue
+        files[path] = body.rstrip() + "\n"
+    return files
+
+PLUGIN_RULES = """VISUAL plugin ke niyam (inhe todoge to code fail hoga):
+- Entry file 'plugin.py'. Usme naye kaam aise:  @tool("kya karta hai", {"x": S("matlab"), "n": N("ginti", optional=True)})  def naam(x, n=1): ... return "Hindi/Hinglish nateeja (string)"
+- plugin.py VISUAL ke andar exec hota hai: tool, S, N, sh, http, _run, CFG, MEMORY, HOME, PLUGIN_DIR, web_search, run_tool, log_error, save_json, load_json PEHLE SE milte hain (import mat karo).
+- Baaki modules (jaise engine.py) alag file mein; plugin.py mein 'import engine' chalega (folder sys.path par hai). Modules ko VISUAL helpers chahiye to function argument se do.
+- Python standard library pehle. Bahar ki library tabhi jab bilkul zaroori ho aur asli ho (Termux/Android par chalni chahiye). Internet/API galti par crash nahi, saaf Hindi galti sandesh.
+- os.system, rm -rf, /sdcard ko chhuna, shutil.rmtree(HOME...) mana hai (aisa code chalaya hi nahi jayega). Command chahiye to _run(cmd, folder) ya sh([...]).
+- Kabhi API key code mein mat likho: CFG["keys"] ya load_json(os.path.join(HOME,"secrets.json"),{}) se lo.
+- Apne test 'test_<kuch>.py' (unittest). Test mein:  from vtest import V   aur  V.TOOLS["naam"]["fn"](...). Network wale hisse ko unittest.mock se nakli karo.
+OUTPUT sirf is format mein, har file ke liye (aur kuch nahi):
+### FILE: plugin.py
+<poora code>
+### END
+"""
+
+def _ctx_note(msg):
+    t = getattr(_CTX, "task", None)
+    if t: t["steps"].append(msg[:60]); t["last_step_at"] = time.time()
+
+def _code_pool(k):
+    """k namoono ke liye (provider, temperature) jode: pehle alag-alag desh/company, phir temperature badal kar."""
+    provs = route("code")              # code mein jo sabse achha nikla wo pehle; kabhi-kabhi naya aazmaata hai
+    if not provs: return []
+    out = []; temps = [0.2, 0.6, 0.9]
+    for i in range(k): out.append((provs[i % len(provs)], temps[(i // len(provs)) % 3]))
+    return out
+
+def _run_unittest(d, target, env, timeout=150):
+    cmd = [sys.executable, "-m", "unittest"] + (["discover", "-p", "test*.py"] if target == "discover" else [target]) + ["-v"]
+    try:
+        r = subprocess.run(cmd, cwd=d, env=env, capture_output=True, text=True, timeout=timeout)
+        out = r.stdout + r.stderr
+    except subprocess.TimeoutExpired:
+        return {}, 0, "TIMEOUT: test " + str(timeout) + "s mein khatam nahi hue (anant loop/network?)"
+    res = {}
+    for m in re.finditer(r"^(test\w*) \(([\w.]+?)\)(?:\n[^\n]*?)? \.\.\. (ok|FAIL|ERROR|skipped|expected failure|unexpected success)", out, re.M):
+        res[m.group(2).split(".")[-1] if m.group(2).endswith(m.group(1)) else m.group(1)] = m.group(3)
+    n = re.search(r"Ran (\d+) test", out); n = int(n.group(1)) if n else 0
+    return res, n, out
+
+def _sandbox_eval(files, spec_tests):
+    """Ek namoone ko alag jagah (asli ~/.visual ko chhue bina) chala kar number do."""
+    import tempfile
+    base = tempfile.mkdtemp(prefix="sangam-"); d = os.path.join(base, "p"); home = os.path.join(base, "home")
+    os.makedirs(d); os.makedirs(home)
+    try:
+        for path, body in files.items():
+            fp = os.path.join(d, path); os.makedirs(os.path.dirname(fp), exist_ok=True)
+            with open(fp, "w", encoding="utf-8") as f: f.write(body)
+        with open(os.path.join(d, "vtest.py"), "w", encoding="utf-8") as f: f.write(VTEST_PY)
+        if spec_tests:
+            with open(os.path.join(d, "spec_check.py"), "w", encoding="utf-8") as f: f.write(spec_tests)
+        ev = {"compile": [], "loads": False, "new_tools": [], "spec": {}, "spec_n": 0, "own_ok": 0, "own_n": 0, "log": ""}
+        if "plugin.py" not in files: ev["log"] = "plugin.py nahi diya"; return ev
+        for path in files:
+            if path.endswith(".py"):
+                try: compile(files[path], path, "exec")
+                except SyntaxError as e: ev["compile"].append(f"{path}:{e.lineno}: {e.msg}")
+        if ev["compile"]: ev["log"] = "SYNTAX: " + "; ".join(ev["compile"]); return ev
+        bad = [pth for pth, body in files.items() if AI_CODE_RISK.search(body)]
+        if bad: ev["log"] = "KHATARNAK CODE (chalaya nahi): " + ", ".join(bad) + " -> " + AI_CODE_RISK.search(files[bad[0]]).group(0)[:60]; return ev
+        env = dict(os.environ); env.update({"VISUAL_SELFTEST": "1", "VISUAL_SANDBOX": "1", "HOME": home, "PYTHONPATH": d + os.pathsep + HERE, "PYTHONDONTWRITEBYTECODE": "1"})
+        try:
+            r = subprocess.run([sys.executable, "-c", "import vtest; print('NEW', ','.join(vtest.NEW_TOOLS))"], cwd=d, env=env,
+                               capture_output=True, text=True, timeout=90)
+            m = re.search(r"^NEW (.*)$", r.stdout, re.M)
+            if m and m.group(1).strip():
+                ev["loads"] = True; ev["new_tools"] = m.group(1).strip().split(",")
+            else:
+                ev["log"] = "LOAD FAIL (VISUAL mein jud nahi paaya / koi @tool nahi): " + (r.stdout + r.stderr)[-1500:]; return ev
+        except subprocess.TimeoutExpired:
+            ev["log"] = "LOAD TIMEOUT (import par atak gaya)"; return ev
+        logs = []
+        if spec_tests:
+            res, n, out = _run_unittest(d, "spec_check", env); ev["spec"] = res; ev["spec_n"] = n
+            if any(v != "ok" for v in res.values()) or n == 0: logs.append("SPEC TESTS:\n" + out[-2500:])
+        own = [p for p in files if re.match(r"(.*/)?test\w*\.py$", p)]
+        if own:
+            res2, n2, out2 = _run_unittest(d, "discover", env)
+            ev["own_n"] = len(res2) or n2; ev["own_ok"] = sum(1 for v in res2.values() if v == "ok")
+            if ev["own_ok"] < ev["own_n"]: logs.append("APNE TESTS:\n" + out2[-1500:])
+        ev["log"] = "\n".join(logs)[-4000:]
+        return ev
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+def _score(ev, valid_tests):
+    if not ev or not ev.get("loads"): return 0.0
+    if valid_tests:
+        spec = sum(1 for t in valid_tests if ev["spec"].get(t) == "ok") / len(valid_tests)
+    else:
+        spec = 0.5
+    own = (ev["own_ok"] / ev["own_n"]) if ev["own_n"] else 0.0
+    return round(0.15 + 0.65 * spec + 0.20 * own, 3)
+
+def _gen_tests(spec, writer):
+    prompt = (f"SPEC:\n{spec[:12000]}\n\nIs SPEC ke liye ek sakht, asli unittest file likho (spec_check.py). Tool ke NAAM aur argument spec se lo. "
+              "Har mukhya feature, galat input, aur edge case ka test. Network/phone ko unittest.mock se nakli karo (asli internet par nirbhar mat raho). "
+              "Test mein VISUAL aise milta hai:  from vtest import V  ;  V.TOOLS['naam']['fn'](...)  (tool ka nateeja string hota hai). "
+              "Sirf aisi cheez jaancho jo spec mein saaf likhi ho; andaaze wala exact text match mat karo (mukhya shabd/number jaancho).\n"
+              "Output:\n### FILE: spec_check.py\n<code>\n### END")
+    txt, err = llm_one(writer, prompt, system="Tum QA engineer ho. Sirf test code do.", timeout=180, purpose="code", temperature=0.2)
+    f = _parse_files_any(txt, "spec_check.py")
+    if f:
+        try: compile(f, "spec_check.py", "exec"); return f, ""
+        except SyntaxError as e: return "", f"test file syntax galat ({e.msg})"
+    return "", err or "test nahi bane"
+
+def _parse_files_any(txt, name):
+    txt = txt or ""
+    m = re.search(r"###\s*FILE:\s*" + re.escape(name) + r"\s*\n(.*?)\n\s*###\s*END", txt, re.S)
+    if m: body = m.group(1)
+    else:
+        m = re.search(r"```(?:python)?\s*\n(.*?)```", txt, re.S)
+        body = m.group(1) if m else ""
+    if not body.strip(): return ""
+    body = re.sub(r"^\s*```[\w+-]*\s*\n", "", body); body = re.sub(r"\n\s*```\s*$", "", body)
+    return body.rstrip() + "\n"
+
+def _gen_candidate(p, temp, spec, tests, extra=""):
+    prompt = (f"{PLUGIN_RULES}\nSPEC:\n{spec[:12000]}\n\n" + (f"Ye TEST (spec_check.py) paas hone chahiye; tool naam/argument inhi se milao:\n{tests[:9000]}\n\n" if tests else "")
+              + extra + "\nAb poora, asli, advanced kaam karne wala plugin likho (sirf naam ka nahi). Apne test_*.py bhi do.")
+    txt, err = llm_one(p, prompt, system="Tum duniya ke best Python engineer ho. Sach-sach, chalne wala code. Bani hui library/API nahi.",
+                       timeout=240, purpose="code", temperature=temp)
+    return _parse_files(txt), err
+
+@tool("SANGAM CODE (sabse pakka tareeka): kai alag desh/company ke free AI se ek hi plugin ke kai namoone banwao, alag se bane sakht test par "
+      "asli chala kar jaancho, sabse achha chuno, galti wale ko doosre models se sudhaarwao, sabse achhe do ko milao, phir install + plugin_test + critic. "
+      "Bada upgrade/naya feature BANANE ke liye plugin_file se pehle ye use karo. Lamba chalta hai (minute).",
+      {"name": S("plugin naam"), "spec": S("poora SPEC (khaali ho to plugins/<naam>/SPEC.md)", optional=True),
+       "k": N("kitne namoone (default 4)", optional=True), "rounds": N("sudhaar chakkar (default 3)", optional=True)})
+def ensemble_code(name, spec="", k=4, rounds=3):
+    d = _pdir(name)
+    if not spec:
+        sp = os.path.join(d, "SPEC.md")
+        if os.path.exists(sp): spec = open(sp, encoding="utf-8").read()
+    if not spec or len(spec) < 40: return "SPEC chahiye (pehle upgrade_spec likho ya spec do)."
+    provs = route("code", explore=False)          # code mein sabse achhe pehle (asli nateejon se seekha hua)
+    if not provs: return "koi AI key nahi (visual keys)"
+    k = max(2, min(int(k or 4), 8)); rounds = max(0, min(int(rounds or 3), 6))
+    with open(os.path.join(d, "SPEC.md"), "w", encoding="utf-8") as f: f.write(spec)
+    t = getattr(_CTX, "task", None)
+    if t: t["spec"] = True
+    log = [f"dimaag uplabdh: {', '.join(provs)}"]
+    # 1) test alag dimaag se (code likhne walon se alag ho to behtar)
+    writer = next((p for p in route("reason", explore=False) if p != provs[0]), provs[0])   # test alag dimaag likhe
+    _ctx_note("sangam: test likh raha"); tests, terr = _gen_tests(spec, writer)
+    log.append(f"test likhne wala: {writer} -> " + ("ban gaye" if tests else "FAIL " + terr))
+    # 2) k namoone ek saath
+    _ctx_note(f"sangam: {k} namoone"); pool = _code_pool(k)
+    gens = _parallel([lambda p=p, tp=tp: (p, tp, *_gen_candidate(p, tp, spec, tests)) for p, tp in pool], timeout=300)
+    cands = []
+    for g in gens:
+        if not g: continue
+        p, tp, files, err = g
+        if files: cands.append({"by": f"{p}@{tp}", "files": files})
+        else: log.append(f"{p}@{tp}: namoona nahi mila {err[:80]}")
+    if not cands: return "❌ Koi bhi model code nahi de paaya.\n" + "\n".join(log)
+    # 3) sab ko asli chala kar jaancho
+    _ctx_note("sangam: jaanch")
+    for c in cands: c["ev"] = _sandbox_eval(c["files"], tests)
+    # galat test pakdo (CodeT): jis test ko koi bhi chalne wala namoona paas na kare, wo test shayad khud galat
+    loaded = [c for c in cands if c["ev"]["loads"]]
+    all_tests = sorted({tn for c in cands for tn in c["ev"]["spec"]})
+    # sirf wahi test hatao jo SAB chalne wale namoono mein 'FAIL' (assert galat) hue; ERROR (tool/feature hi nahi) wale kabhi nahi hatte,
+    # warna sab models ek hi feature bhoolen to adhoora plugin 10/10 dikhta
+    def _suspect(tn): return all(c["ev"]["spec"].get(tn) == "FAIL" for c in loaded)
+    valid = [tn for tn in all_tests if not _suspect(tn)] if len(loaded) >= 2 else all_tests
+    dropped = [tn for tn in all_tests if tn not in valid]
+    if dropped: log.append(f"⚠ ye test kisi namoone se paas nahi hue, shayad test hi galat (ginti se bahar): {', '.join(dropped[:8])}")
+    for c in cands:
+        c["score"] = _score(c["ev"], valid)
+        router_record(re.split(r"[@-]", c["by"])[0], "code", True, None, quality=c["score"])     # kis AI ka code kitna sahi chala: yaad
+    cands.sort(key=lambda c: -c["score"])
+    log.append("namoone: " + "; ".join(f"{c['by']}={c['score']}" + ("" if c['ev']['loads'] else " (load fail)") for c in cands))
+    best = cands[0]
+    # 4) sudhaar chakkar: galti ka trace doosre dimaag ko
+    for r in range(rounds):
+        if best["score"] >= 0.999: break
+        fixers = [p for p in provs if not best["by"].startswith(p)] or provs
+        fixer = fixers[r % len(fixers)]
+        _ctx_note(f"sangam: sudhaar {r+1} ({fixer})")
+        code_now = "".join(f"### FILE: {pth}\n{body}### END\n" for pth, body in best["files"].items())
+        extra = (f"PICHHLA CODE (isme galti hai):\n{code_now[:24000]}\n\nJAANCH KA NATEEJA / GALTI TRACE:\n{best['ev']['log'][:5000] or 'load/test fail'}\n\n"
+                 "Asli wajah dhoondh kar theek karo (test ko dhokha dene wala jugaad nahi). Saari files dobara poori do.")
+        files, err = _gen_candidate(fixer, 0.2, spec, tests, extra)
+        if not files: log.append(f"sudhaar {r+1} ({fixer}): jawab nahi {err[:60]}"); continue
+        c = {"by": f"{fixer}-fix{r+1}", "files": {**best["files"], **files}}
+        c["ev"] = _sandbox_eval(c["files"], tests); c["score"] = _score(c["ev"], valid)
+        router_record(fixer, "code", True, None, quality=c["score"])
+        log.append(f"sudhaar {r+1} ({fixer}): {best['score']} -> {c['score']}")
+        if c["score"] > best["score"]: best = c
+        cands.append(c)
+    # 5) Mixture-of-Agents: sabse achhe do ko milao, tabhi lo jab number gire nahi
+    top = sorted([c for c in cands if c["ev"]["loads"]], key=lambda c: -c["score"])[:2]
+    if len(top) == 2 and top[1]["score"] > 0.3 and best["score"] < 0.999:
+        agg = next((p for p in provs if not best["by"].startswith(p)), provs[0])
+        _ctx_note(f"sangam: milaan ({agg})")
+        both = "\n\n".join(f"=== NAMOONA {i+1} (score {c['score']}) ===\n" + "".join(f"### FILE: {pth}\n{b}### END\n" for pth, b in c["files"].items())[:16000]
+                           + f"\nGALTI:\n{c['ev']['log'][:1500]}" for i, c in enumerate(top))
+        files, err = _gen_candidate(agg, 0.2, spec, tests, f"Do alag models ke namoone (dono mein kuch sahi, kuch galat):\n{both}\n\n"
+                                    "Dono ki sabse achhi baatein milakar EK behtar, poora version banao.")
+        if files:
+            c = {"by": f"{agg}-milaan", "files": files}; c["ev"] = _sandbox_eval(files, tests); c["score"] = _score(c["ev"], valid)
+            log.append(f"milaan ({agg}): {c['score']}")
+            if c["score"] >= best["score"]: best = c
+    if not best["ev"]["loads"]:
+        return "❌ Koi namoona VISUAL mein load nahi hua (install NAHI kiya).\n" + "\n".join(log) + "\n\nAakhri galti:\n" + best["ev"]["log"][:1500]
+    # 6) install (purane ka backup), phir asli VISUAL ke saath plugin_test + alag critic
+    _backup("plugin-" + name)
+    for f_ in os.listdir(d):
+        if f_ != "SPEC.md":
+            fp = os.path.join(d, f_); shutil.rmtree(fp, ignore_errors=True) if os.path.isdir(fp) else os.remove(fp)
+    for pth, body in best["files"].items():
+        fp = _inside(d, pth); os.makedirs(os.path.dirname(fp), exist_ok=True)
+        with open(fp, "w", encoding="utf-8") as f: f.write(body)
+    with open(os.path.join(d, "vtest.py"), "w", encoding="utf-8") as f: f.write(VTEST_PY)
+    if tests:
+        valid_src = tests
+        if dropped:      # jo test kisi bhi namoone se paas nahi hua, use chhupaao nahi: saaf 'skip' likh kar rakho
+            valid_src += ("\n\n# SANGAM: ye test kisi bhi AI namoone se paas nahi hue; shayad test khud galat. Isliye skip (hataya nahi).\n"
+                          "import unittest as _u\n_DROPPED = " + repr(dropped) + "\n"
+                          "for _c in list(globals().values()):\n"
+                          "    if isinstance(_c, type) and issubclass(_c, _u.TestCase):\n"
+                          "        for _t in _DROPPED:\n"
+                          "            if _t in _c.__dict__: setattr(_c, _t, _u.skip('Sangam: shayad galat test')(_c.__dict__[_t]))\n")
+        with open(os.path.join(d, "test_spec_check.py"), "w", encoding="utf-8") as f: f.write(valid_src)
+    _ctx_note("sangam: install + plugin_test"); pt = plugin_test(name)
+    if dropped and "FAIL" in pt.splitlines()[0]:
+        pt += "\n(Note: kuch spec test shayad khud galat the: " + ", ".join(dropped[:6]) + ")"
+    _ctx_note("sangam: critic"); cr = critic_review(name, avoid=best["by"].split("@")[0].split("-")[0])
+    sp = sum(1 for tn in valid if best["ev"]["spec"].get(tn) == "ok")
+    head = (f"SANGAM NATEEJA: jeeta {best['by']} | score {best['score']} | spec test {sp}/{len(valid)} | apne test {best['ev']['own_ok']}/{best['ev']['own_n']} | "
+            f"naye tools: {', '.join(best['ev']['new_tools'])}")
+    return head + "\n" + "\n".join(log) + "\n\n--- plugin_test ---\n" + pt[:2500] + "\n\n--- critic ---\n" + cr[:2000]
+
+@tool("PARISHAD (Mixture-of-Agents): mushkil sawaal/design faisla kai desh ke AI models se do parat mein: pehle sab alag jawab, phir har model doosron ke "
+      "jawab dekh kar sudhaare, aakhir mein ek nyaayadhish internet saboot ke saath milaakar sabse sahi jawab de. Gehre design/research faislon ke liye.",
+      {"question": S("sawaal"), "web": {"type": "boolean", "description": "internet saboot (default haan)", "optional": True}})
+def council(question, web=True):
+    provs = route("reason", k=6)
+    if not provs: return "koi AI key nahi"
+    jobs = [lambda p=p: (p, *llm_one(p, question, timeout=90, purpose="reason")) for p in provs]
+    if web is not False: jobs.append(lambda: ("WEB", deep_research(question), ""))
+    res = [r for r in _parallel(jobs, timeout=120) if r]
+    evidence = next((a for p, a, e in res if p == "WEB"), "")
+    if "http" not in (evidence or ""): evidence = ""
+    l1 = [(p, a) for p, a, e in res if p != "WEB" and a]
+    if not l1: return "Kisi model se jawab nahi mila: " + "; ".join(f"{p}: {e}" for p, a, e in res if p != "WEB")
+    if len(l1) >= 2:                                  # parat 2: har model doosron ko dekh kar sudhaare
+        others = lambda me: "\n\n".join(f"[Model {i+1}]\n{a[:2500]}" for i, (p, a) in enumerate(l1) if p != me)
+        ref = "Doosre models ke jawab (galat bhi ho sakte):\n{o}\n\nSAWAAL: {q}\nInki galtiyan pakdo, sahi baatein lo, apna behtar jawab do."
+        l2 = _parallel([lambda p=p: (p, *llm_one(p, ref.format(o=others(p), q=question), timeout=120, purpose="reason")) for p, _ in l1[:4]], timeout=150)
+        l2 = [(p, a) for r in l2 if r for p, a, e in [r] if a] or l1
+    else:
+        l2 = l1
+    blocks = "\n\n".join(f"### Model {i+1} ({p})\n{a[:3000]}" for i, (p, a) in enumerate(l2))
+    judge = (f"SAWAAL: {question}\n\nModels ke sudhre hue jawab:\n{blocks}\n\nINTERNET SABOOT:\n{evidence[:7000] or '(nahi)'}\n\n"
+             "Sab milaakar ek sabse sahi, poora jawab do. Jo baat saboot ya zyada-tar models se mel na khaaye use pakka mat bolo. Format:\n"
+             "JAWAB: ...\nBHAROSA: <ucch|madhyam|kam> (kyun)\nMATBHED/SHAK: ...\nSOURCES: ...")
+    agg = route("reason", explore=False)[0]
+    v, err = llm_one(agg, judge, system="Tum nishpaksh nyaayadhish ho. Sirf saboot par.", timeout=150, purpose="reason")
+    bad = _judge_feedback(v, [p for p, _ in l2], "reason")
+    return (v or "nyaayadhish fail: " + err + "\n" + blocks[:3000]) + f"\n\n(parishad: {', '.join(p for p, _ in l1)}; parat 2: {len(l2)}; nyaayadhish: {agg}; galat pakde: {', '.join(bad) or 'koi nahi'}; web: {'haan' if evidence else 'nahi'})"
+
+@tool("Duniya ki KOI BHI naya AI API (OpenAI-jaisa /chat/completions) VISUAL mein jodo: naam, base URL, model, desh. Key chat mein KABHI nahi: "
+      "owner Termux mein 'visual keys' se daale (ya save_secret NAAM_API_KEY). Jodne se pehle check_url se link jaancho.",
+      {"name": S("chhota naam, jaise krutrim"), "base_url": S("jaise https://api.example.com/v1"), "model": S("model id"),
+       "country": S("IN/CN/US/EU/KR/JP...", optional=True), "tools": {"type": "boolean", "description": "tool-calling chalta hai? (default haan)", "optional": True},
+       "good_at": S("kis kaam mein khaas achha: code, hindi, fact, reason, fast, chat (comma se)", optional=True)})
+def add_brain(name, base_url, model, country="?", tools=True, good_at=""):
+    nm = re.sub(r"[^a-z0-9_]", "", str(name).lower())
+    base = str(base_url).strip().rstrip("/")
+    if base.endswith("/chat/completions"): base = base[: -len("/chat/completions")]
+    if not nm or not base.startswith("https://") or not model: return "naam, https base URL aur model chahiye"
+    if nm in PROVIDERS and not PROVIDERS[nm].get("custom"): return f"'{nm}' pehle se bana hua hai; sirf key daalo: visual keys"
+    CFG.setdefault("custom_providers", {})[nm] = {"base": base, "model": model, "country": str(country).upper(), "tools": tools is not False,
+                                                  "good_at": [c for c in re.split(r"[\s,]+", str(good_at).lower()) if c in CATS]}
+    PROVIDERS[nm] = {"base": base, "model": model, "vision": False, "tools": tools is not False, "country": str(country).upper(),
+                     "signup": "(aapki jodi hui)", "custom": True}
+    CFG["keys"].setdefault(nm, "")
+    if nm not in CFG["provider_order"]: CFG["provider_order"].append(nm)
+    save_json(CONF, CFG)
+    if not pkey(nm): return f"✅ '{nm}' jod diya ({base}, {model}). Ab key daalo: Termux mein 'visual keys' (ya save_secret {nm.upper()}_API_KEY). Key chat mein mat bolna."
+    txt, err = llm_one(nm, "Sirf 'ok' likho.", timeout=40)
+    return f"✅ '{nm}' jod diya aur chal gaya." if txt else f"⚠ '{nm}' jod diya par jaanch fail: {err[:150]}"
+
+@tool("Kaun-kaun se free AI dimaag (India/China/America/Europe) jude hain, kaun chal raha hai, kaun sa model chuna, aur kis ki key baaki hai (sign-up link).")
+def brains():
+    rows = []; avail = providers_available()
+    res = dict((r[0], r[1:]) for r in _parallel([lambda p=p: (p, *llm_one(p, "Sirf 'ok' likho.", timeout=30)) for p in avail], timeout=45) if r)
+    for p, info in PROVIDERS.items():
+        if p in avail:
+            txt, err = res.get(p, ("", "timeout"))
+            rows.append(f"{'✅' if txt else '❌'} {p} [{info['country']}] {len(_keylist(p))} key, model: {provider_model(p) if p != 'gemini' else (CFG.get('models',{}).get('gemini') or info['model'])} {('' if txt else err[:70])}")
+        else:
+            rows.append(f"➕ {p} [{info['country']}] key nahi: {info['signup']}")
+    board = []
+    names = {"chat": "baat", "hindi": "Hindi", "code": "code", "reason": "soch/plan", "fact": "tathya", "vision": "tasveer", "tools": "phone-kaam", "fast": "tez"}
+    for c in CATS:
+        line = route(c, explore=False)[:3]
+        if line: board.append(f"  {names[c]}: " + " > ".join(f"{p}({router_score(p, c):.2f}, {(STATS.get(p, {}).get(c) or {}).get('n', 0)} baar)" for p in line))
+    return ("\n".join(rows) + f"\n\nChalu dimaag: {sum(1 for r in rows if r.startswith('✅'))}/{len(PROVIDERS)}. Key jodne ke liye Termux mein: visual keys"
+            + ("\n\nKis kaam mein kaun aage (asli nateejon se seekhta hai; bracket = number, kitni baar aazmaaya):\n" + "\n".join(board) if board else ""))
+
 # ---------------------------------------------------------------- ENGINEER AGENT (gehra kaam, peeche chalta hai)
 TASKS = {}
+TASKS_FILE = os.path.join(HOME, "tasks.json")
+_TASK_KEYS = ("id", "goal", "kind", "status", "steps", "report", "started", "announced", "resumes", "spec", "tests_ok", "critic",
+              "critic_rounds", "done_at", "is_upgrade")
+
+def _save_tasks():
+    """Engineer ke kaam disk par: restart/crash/phone band hone par bhi kaam gum na ho."""
+    try:
+        keep = sorted(TASKS.values(), key=lambda x: x.get("started", 0))[-30:]
+        save_json(TASKS_FILE, [{k: t.get(k) for k in _TASK_KEYS if k in t} for t in keep])
+    except Exception as e:
+        log_error("tasks-save", e)
+
+def resume_tasks():
+    """Beech mein ruke kaam wapas chalu (har kaam max 2 baar), baaki purani report dikhane ke liye load."""
+    for d in load_json(TASKS_FILE, []):
+        if not isinstance(d, dict) or not d.get("id"): continue
+        t = dict(d); t.setdefault("steps", []); t.setdefault("report", "")
+        if t.get("status") in ("chal raha", "atka hua"):
+            if t.get("resumes", 0) >= 2:
+                t.update(status="fail", report="❌ Ye kaam 3 baar beech mein ruk gaya (restart/crash). Wajah dekhne ke liye: self_errors. Dobara chhota karke do.")
+            else:
+                t["resumes"] = t.get("resumes", 0) + 1; t["status"] = "chal raha"; t["started_again"] = time.time()
+                t["goal"] = t["goal"].split("\n[PEHLE BEECH MEIN RUKA")[0] + (
+                    "\n[PEHLE BEECH MEIN RUKA THA (restart/crash). Pichhle kadam: " + ", ".join(t["steps"][-12:]) +
+                    ". Jo files/plugin/project ban chuke hain unhe padh kar (self_read/project_files) WAHIN SE aage badho, shuru se mat karo.]")
+                TASKS[t["id"]] = t
+                threading.Thread(target=_engineer, args=(t["id"],), daemon=True).start(); continue
+        TASKS[t["id"]] = t
+    _save_tasks()
+
 ENGINEER_RULES = """
 TUM AB "ENGINEER" HO: VISUAL ka gehra kaam karne wala dimaag. Owner tumse seedhe baat nahi kar raha; kaam pura karke report do.
 Tareeka (har baar):
@@ -1033,8 +1530,10 @@ YE "UPGRADE/BADA SYSTEM" KAAM HAI. MINIMUM WALA KAAM BILKUL NAHI. Socho: is chee
 Zaroori kadam (code inhe jaanchta hai; chhodoge to kaam khatam nahi maana jayega):
 1. RESEARCH: deep_research / web_search se best tareeke, asli libraries/APIs (check_packages, check_url se pakka).
 2. SPEC: upgrade_spec mein poora design: features (advanced wale bhi), architecture (kai files), galti sambhalna, retries/cache, config, keys, test.
-3. BUILD: plugin_file se kai files (plugin.py entry + modules + test_*.py asli test). Ek file mein sab thoos mat do.
-4. TEST: plugin_test. FAIL ho to trace padh kar asli wajah theek karo.
+3. BUILD: ensemble_code(name) chalao (SANGAM: kai desh ke AI se kai namoone + alag test + asli chala kar sabse achha + sudhaar + milaan + install).
+   Ye fail ho ya chhota sudhaar chahiye tab plugin_file se files theek karo. Ek file mein sab thoos mat do.
+   Mushkil design faisla ho to council (kai models ki parishad) se poochho.
+4. TEST: plugin_test (ensemble_code khud bhi chalata hai). FAIL ho to trace padh kar asli wajah theek karo.
 5. CRITIC: critic_review. SCORE 8 se kam ho to uski har kami theek karo, phir dobara plugin_test + critic_review.
 6. Jab tests pass + SCORE >= 8 tab self_restart, phir report (kya naya, kaise use kare, score, kya baaki).
 """
@@ -1049,8 +1548,17 @@ def _engineer(tid):
     restart_after = False; report = ""
     try:
         budget = int(CFG.get("engineer_steps", 60)) * (2 if is_up else 1)
+        brain_fail = 0
         for step in range(budget):
-            msg = llm(work, smart=True, tool_names=names)
+            t["last_step_at"] = time.time()
+            if step % 3 == 0: _save_tasks()
+            msg = llm(work, smart=True, tool_names=names, cat="reason" if t["kind"] == "research" else "code")
+            c0 = (msg.get("content") or "")
+            if not msg.get("tool_calls") and (c0.startswith("Dimaag se jud nahi paaya") or c0.startswith("Free AI ki")):
+                brain_fail += 1
+                if brain_fail >= 3:
+                    report = "❌ KAAM NAHI HO PAAYA: AI dimaag baar-baar fail. Wajah: " + c0[:300]; t["status_detail"] = "brain fail"; break
+                time.sleep(20); continue
             calls = msg.get("tool_calls") or []
             if not calls:
                 report = (msg.get("content") or "").strip()
@@ -1088,11 +1596,11 @@ def _engineer(tid):
         else:
             report = f"{budget} kadam ho gaye, kaam adhoora. Jitna hua: " + ", ".join(t["steps"][-10:])
         if is_up: report += f"\n(Critic score: {t.get('critic', '-')}/10, tests: {'pass' if t.get('tests_ok') else 'fail/nahi'})"
-        t.update(status="done", report=report or "(khaali report)")
+        t.update(status="fail" if report.startswith("❌") else "done", report=report or "(khaali report)")
     except Exception as e:
         import traceback; log_error("engineer", e, traceback.format_exc())
         t.update(status="fail", report=f"Engineer ruk gaya: {e}")
-    t["done_at"] = time.time()
+    t["done_at"] = time.time(); _save_tasks()
     with _lock:
         MEMORY.setdefault("tasks", []).append({k: t[k] for k in ("id", "goal", "status", "report")}); MEMORY["tasks"] = MEMORY["tasks"][-20:]
     save_mem()
@@ -1105,6 +1613,7 @@ def _engineer(tid):
 def agent_task(goal, kind="build"):
     tid = "t" + str(int(time.time() * 1000))[-7:]
     TASKS[tid] = {"id": tid, "goal": goal, "kind": kind, "status": "chal raha", "steps": [], "report": "", "started": time.time(), "announced": False}
+    _save_tasks()
     threading.Thread(target=_engineer, args=(tid,), daemon=True).start()
     return f"Engineer ne kaam shuru kiya (id {tid}). Ho jaane par report aayegi."
 
@@ -1113,15 +1622,14 @@ def task_status(id=""):
     if not TASKS: return "abhi koi kaam nahi chal raha"
     t = TASKS.get(id) or max(TASKS.values(), key=lambda x: x["started"])
     mins = int((time.time() - t["started"]) // 60)
+    if t["status"] == "chal raha" and time.time() - t.get("last_step_at", t["started"]) > 300:
+        t["status"] = "atka hua"; t["report"] = "⚠ 5 minute se koi kadam nahi. Haal ki galti: " + self_errors(1)[:300]
     return f"[{t['id']}] {t['status']} ({mins} min) | lakshya: {t['goal'][:120]} | haal ke kadam: {', '.join(t['steps'][-6:])}" + (f"\nREPORT:\n{t['report']}" if t["report"] else "")
 
 @tool("VISUAL khud ki poori jaanch (dimaag/models, internet, phone tools, GitHub, awaaz, plugins, haal ki galtiyan). Kuch kharab lage ya upgrade se pehle.")
 def self_diagnose():
-    rep = []
-    for p in providers_available():
-        t0 = time.time(); txt, err = llm_one(p, "Sirf 'ok' likho.", timeout=30)
-        rep.append(f"{'✅' if txt else '❌'} dimaag {p}: {int((time.time()-t0)*1000)} ms {err[:80]}")
-    if not providers_available(): rep.append("❌ koi AI key nahi (visual setup)")
+    rep = [brains()]
+    if not providers_available(): rep.append("❌ koi AI key nahi (visual keys)")
     sm, fm = best_models(force=True); rep.append(f"ℹ️ sabse taaqatwar model: {sm or '?'} | tez: {fm or '?'}")
     w = web_search("weather"); rep.append(("✅" if w and not w.startswith("search fail") else "❌") + " internet search")
     rep.append(("✅" if has("termux-battery-status") else "⚠️") + " phone tools (termux-api)")
@@ -1145,11 +1653,12 @@ def self_errors(n=8):
         except Exception: pass
     return "\n---\n".join(out)[:8000]
 
-LIVE_CORE = ["get_time", "remember", "forget", "set_reminder", "web_search", "cross_check", "open_url", "play_youtube", "open_maps",
+LIVE_CORE = ["brains", "get_time", "remember", "forget", "set_reminder", "web_search", "cross_check", "open_url", "play_youtube", "open_maps",
              "open_app", "battery", "torch", "set_volume", "brightness", "notify", "read_notifications", "location", "find_contact",
              "read_sms", "send_sms", "call", "whatsapp", "set_alarm", "look_camera", "look_screen", "tap", "swipe", "type_text",
              "press_key", "screen_off", "screen_on", "remember_event", "event_done", "agent_task", "task_status", "self_diagnose",
-             "list_projects", "project_preview", "clipboard_get", "clipboard_set", "recall", "data_sync"]
+             "list_projects", "project_preview", "clipboard_get", "clipboard_set", "recall", "data_sync",
+             "delete_item", "trash", "self_info"]
 
 # ---------------------------------------------------------------- YAAD + JUDNA (memory recall, conversation log, API connector)
 CONVO = os.path.join(HOME, "convo.jsonl")
@@ -1222,7 +1731,7 @@ def call_api(method, url, headers="", body=""):
 # ---------------------------------------------------------------- DATA GITHUB MEIN (private repo visual-data)
 DATA_DIR = os.path.expanduser("~/.visual-data")
 DATA_REPO = CFG.get("data_repo", "visual-data")
-DATA_FILES = ["memory.json", "convo.jsonl", "errors.log"]          # secrets.json / config.json (keys) KABHI nahi
+DATA_FILES = ["memory.json", "convo.jsonl", "errors.log", "tasks.json", "brain_stats.json"]          # secrets.json / config.json (keys) KABHI nahi
 DATA_DIRS = ["creations"]
 _SYNC_LOCK = threading.Lock()
 
@@ -1260,7 +1769,7 @@ def data_sync():
         with open(os.path.join(DATA_DIR, "config.public.json"), "w", encoding="utf-8") as f: json.dump(cfg_pub, f, ensure_ascii=False, indent=1)
         with open(os.path.join(DATA_DIR, ".gitignore"), "w") as f: f.write("secrets*\n*.key\nconfig.json\n.env\n")
         # key ki chori-chhupe entry na ho: har file jaancho
-        pat = re.compile(r"(AIza[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|gsk_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})")
+        pat = KEY_PAT
         sec_vals = [str(x) for x in load_json(SECRETS, {}).values() if len(str(x)) > 6] + [str(x) for x in CFG.get("keys", {}).values() if len(str(x)) > 6]
         for d, ds, fs in os.walk(DATA_DIR):
             ds[:] = [x for x in ds if x != ".git"]
@@ -1304,6 +1813,60 @@ def data_sync_loop():
             try: print("data sync:", data_sync()[:80])
             except Exception as e: log_error("data_sync", e)
         time.sleep(int(CFG.get("data_sync_minutes", 30)) * 60)
+
+# ---------------------------------------------------------------- DELETE (asli mitana, backup ke saath)
+TRASH = os.path.join(HOME, "trash"); os.makedirs(TRASH, exist_ok=True)
+
+def _to_trash(path, label):
+    dst = os.path.join(TRASH, time.strftime("%Y%m%d-%H%M%S-") + label)
+    shutil.move(path, dst); return dst
+
+@tool("Kuch MITAO (delete): project, banayi file (creation), plugin, ya yaad (memory) ki baat. Pehle trash mein jaata hai (7 din wapas la sakte ho). "
+      "what: project | creation | plugin | memory | reminder", {"what": S("kya mitana: project/creation/plugin/memory/reminder"), "name": S("kiska naam / kaunsi baat")},
+      risky=True)
+def delete_item(what, name):
+    w = what.lower().strip()
+    if w.startswith("proj"):
+        p = os.path.join(PROJECTS, _slug(name))
+        if not os.path.isdir(p): return f"project '{name}' nahi mila. Projects: {', '.join(os.listdir(PROJECTS)) or 'koi nahi'}"
+        return f"✅ project '{name}' mita diya (trash: {_to_trash(p, 'project-' + _slug(name))}). GitHub repo alag hai, wo nahi mita."
+    if w.startswith("creat") or w.startswith("file"):
+        p = _safe(name)
+        if not os.path.exists(p): return f"file '{name}' nahi mili. Files: {', '.join(os.listdir(CREATIONS)) or 'koi nahi'}"
+        return f"✅ '{name}' mita di (trash mein)." if _to_trash(p, "file-" + os.path.basename(p)) else "fail"
+    if w.startswith("plug"):
+        cands = [x for x in os.listdir(PLUGINS) if x.lower().startswith(_slug(name).replace("-", "_")) and not x.startswith("_")]
+        if not cands: return f"plugin '{name}' nahi mila. Plugins: {', '.join(x for x in os.listdir(PLUGINS) if not x.startswith('_')) or 'koi nahi'}"
+        for c in cands: _to_trash(os.path.join(PLUGINS, c), "plugin-" + c)
+        return f"✅ plugin {', '.join(cands)} hata diya. Poori tarah band karne ke liye self_restart chalao."
+    if w.startswith("mem") or w.startswith("yaad"):
+        return forget(name)
+    if w.startswith("rem"):
+        with _lock:
+            before = len(MEMORY["reminders"])
+            MEMORY["reminders"] = [r for r in MEMORY["reminders"] if name.lower() not in r["text"].lower()]
+        save_mem(); return f"✅ {before - len(MEMORY['reminders'])} reminder hataye"
+    return "kya mitana hai? project, creation, plugin, memory ya reminder bolo."
+
+@tool("Trash (mitaayi cheezein) ki list, aur kuch wapas lana ho to naam do", {"restore": S("wapas lana ho to trash wala naam", optional=True)})
+def trash(restore=""):
+    items = sorted(os.listdir(TRASH))
+    if not restore: return "\n".join(items[-30:]) or "trash khaali"
+    hit = next((x for x in reversed(items) if restore.lower() in x.lower()), None)
+    if not hit: return "trash mein nahi mila"
+    parts = hit.split("-", 3)                      # 20261125-202630-<kind>-<naam>
+    if len(parts) < 4: return "trash naam samajh nahi aaya: " + hit
+    kind, rest = parts[2], parts[3]
+    if os.path.exists(os.path.join({"project": PROJECTS, "file": CREATIONS, "plugin": PLUGINS}.get(kind, TRASH), rest)):
+        return f"'{rest}' naam ki cheez pehle se hai; pehle use hatao ya naam badlo"
+    dest = {"project": PROJECTS, "file": CREATIONS, "plugin": PLUGINS}.get(kind)
+    if not dest: return "pata nahi kahan wapas rakhun"
+    shutil.move(os.path.join(TRASH, hit), os.path.join(dest, rest)); return f"✅ '{rest}' wapas aa gaya"
+
+def trash_cleanup():
+    for x in os.listdir(TRASH):
+        p = os.path.join(TRASH, x)
+        if time.time() - os.path.getmtime(p) > 7 * 86400: shutil.rmtree(p, ignore_errors=True) if os.path.isdir(p) else os.remove(p)
 
 # ---------------------------------------------------------------- DIL: samajh, ehsaas, apnapan
 # Research ke hisaab se 4 hisse: (1) owner ka mood pehchaanna, (2) VISUAL ki apni pakki personality +
@@ -1444,6 +2007,9 @@ PEHCHAAN: Tumhara naam sirf "{n}" hai. Kabhi kisi aur naam (Gemini, Llama, Nemot
 aur ye kabhi mat kaho ki owner tumhe kisi aur naam se bulata hai. Kaun sa AI model chal raha hai, ye tabhi batao jab owner seedha poochhe.
 
 SACHCHAI (sabse zaroori niyam):
+- KAAM KA DAAVA SIRF TOOL KE BAAD: "kar diya / ho gaya / delete kar diya / upgrade kar raha hoon" tabhi bolo jab tool chala ho aur
+  usne safalta lautai ho. Jo tool tumhare paas nahi, us kaam ke liye saaf kaho "ye main abhi nahi kar sakta" (Engineer se banwa sakte ho).
+  Engineer ko kaam diya ho to "kar diya" nahi, "Engineer ko de diya, report aane par bataunga" kaho.
 - SACH ENGINE: zaroori tathya/number/faisla ho ya kisi model ke jawab par shak ho to cross_check. Code mein koi library daalne se
   pehle check_packages (AI models aksar nakli library ke naam bana dete hain), API URL se pehle check_url, aur kaam pura bolne se
   pehle verify_code. Jawab mein bharosa batao: "pakka (source)", "andaaza", ya "pata nahi".
@@ -1496,9 +2062,177 @@ Owner ke baare mein yaad:
 {facts}
 Abhi ka samay: {get_time()}"""
 
-def providers_available():
+_GH_TOKEN = {"v": None, "t": 0}
+
+KEY_IDX = {}
+
+def _keylist(p):
+    """Ek provider ki kai keys (comma/space se alag): limit bhare to agli key."""
+    raw = CFG["keys"].get(p) or os.environ.get(p.upper() + "_API_KEY", "")
+    if not raw:
+        try: raw = load_json(SECRETS, {}).get(p.upper() + "_API_KEY", "")      # 'save_secret' se jodi key bhi chalegi
+        except Exception: raw = ""
+    return [x for x in re.split(r"[\s,;]+", str(raw)) if x]
+
+def rotate_key(p):
+    ks = _keylist(p)
+    if len(ks) < 2: return False
+    KEY_IDX[p] = (KEY_IDX.get(p, 0) + 1) % len(ks); return True
+
+def pkey(p):
+    ks = _keylist(p)
+    k = ks[KEY_IDX.get(p, 0) % len(ks)] if ks else ""
+    if not k and p == "github" and CFG.get("github_models", True) and has("gh"):
+        if time.time() - _GH_TOKEN["t"] > 3600:
+            try: _GH_TOKEN["v"] = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, timeout=15).stdout.strip() or None
+            except Exception: _GH_TOKEN["v"] = None
+            _GH_TOKEN["t"] = time.time()
+        k = _GH_TOKEN["v"] or ""
+    return k
+
+BAD_PROVIDER = {}       # baar-baar 401/403/404 dene wale provider ko kuch der chhodo
+
+def providers_available(need_tools=False):
     order = CFG.get("provider_order") or list(PROVIDERS)
-    return [p for p in order if p in PROVIDERS and CFG["keys"].get(p)]
+    out = [p for p in order if p in PROVIDERS and pkey(p) and BAD_PROVIDER.get(p, 0) < time.time()]
+    return [p for p in out if PROVIDERS[p].get("tools")] if need_tools else out
+
+
+# ---------------------------------------------------------------- DIMAAG-CHUNAV (smart router): kaun sa AI kis kaam mein behtar
+# Sirf "ek khatam to doosra" nahi: har kaam ki kism (code/Hindi/tathya/soch/tasveer/tools/tez) ke liye har dimaag ka number.
+# Shuruaati number = andaza (public benchmark/jaankari se); ASLI number har jawab ke baad badalta hai:
+# chala ya fail, kitna tez, aur jawab kitna sahi nikla (Sangam test, Parishad/Sach ke faisle). Bhaar bhi baant-ta hai aur naye dimaag aazmata hai.
+CATS = ("chat", "hindi", "code", "reason", "fact", "vision", "tools", "fast")
+STRENGTH = {   # 0-10, sirf shuruaati andaza; 5+ asli nateejon ke baad asli data zyada maayne rakhta hai
+    "gemini":      dict(chat=8, hindi=9, code=8, reason=8, fact=8, vision=9, tools=9, fast=6),
+    "github":      dict(chat=8, hindi=7, code=8, reason=8, fact=7, vision=8, tools=8, fast=6),
+    "groq":        dict(chat=7, hindi=6, code=7, reason=7, fact=6, vision=0, tools=7, fast=10),
+    "openrouter":  dict(chat=7, hindi=6, code=7, reason=7, fact=6, vision=5, tools=6, fast=5),
+    "cerebras":    dict(chat=7, hindi=5, code=7, reason=7, fact=6, vision=0, tools=7, fast=10),
+    "nvidia":      dict(chat=7, hindi=6, code=8, reason=8, fact=6, vision=0, tools=6, fast=5),
+    "mistral":     dict(chat=7, hindi=5, code=7, reason=6, fact=6, vision=0, tools=7, fast=7),
+    "zhipu":       dict(chat=7, hindi=5, code=8, reason=7, fact=6, vision=0, tools=7, fast=6),
+    "siliconflow": dict(chat=6, hindi=5, code=7, reason=7, fact=6, vision=0, tools=6, fast=6),
+    "modelscope":  dict(chat=7, hindi=5, code=8, reason=7, fact=6, vision=0, tools=6, fast=5),
+    "qwen":        dict(chat=8, hindi=6, code=8, reason=8, fact=7, vision=0, tools=7, fast=6),
+    "deepseek":    dict(chat=8, hindi=6, code=9, reason=9, fact=7, vision=0, tools=7, fast=4),
+    "sarvam":      dict(chat=7, hindi=10, code=4, reason=6, fact=6, vision=0, tools=0, fast=6),
+}
+STATS_FILE = os.path.join(HOME, "brain_stats.json")
+STATS = load_json(STATS_FILE, {})
+RECENT = {}                 # provider -> haal ki request ke samay (bhaar baantne ke liye)
+_stats_lock = threading.Lock()
+_stats_dirty = {"t": 0}
+
+def _st(p, cat):
+    return STATS.setdefault(p, {}).setdefault(cat, {"n": 0, "ok": 0, "lat": 0.0, "q": None, "qn": 0})
+
+def router_record(p, cat, ok, latency=None, quality=None):
+    """Har jawab ke baad: chala/fail, samay, aur (pata ho to) kitna sahi tha (0-1)."""
+    if p not in PROVIDERS or cat not in CATS: return
+    with _stats_lock:
+        s = _st(p, cat); s["n"] += 1; s["ok"] += 1 if ok else 0
+        if latency is not None or not ok:                       # galti ka 'daag' samay ke saath mit-ta hai, safalta se jaldi
+            b = _bad_now(s); s["bad"] = b + 1 if not ok else b * 0.6; s["bad_t"] = time.time()
+        if latency is not None and ok: s["lat"] = latency if not s["lat"] else 0.8 * s["lat"] + 0.2 * latency
+        if quality is not None:
+            q = max(0.0, min(1.0, float(quality))); s["q"] = q if s["q"] is None else 0.7 * s["q"] + 0.3 * q; s["qn"] += 1
+        if latency is not None: RECENT.setdefault(p, []).append(time.time())     # sirf asli request gino (feedback nahi)
+    if time.time() - _stats_dirty["t"] > 20:
+        _stats_dirty["t"] = time.time()
+        try: save_json(STATS_FILE, STATS)
+        except Exception: pass
+
+def _bad_now(s):
+    return s.get("bad", 0) * math.exp(-(time.time() - s.get("bad_t", 0)) / 1800)   # ~30 min mein asar 1/3
+
+def router_score(p, cat):
+    if p in STRENGTH: prior = STRENGTH[p].get(cat, 6) / 10
+    else: prior = (8 if cat in CFG.get("custom_providers", {}).get(p, {}).get("good_at", []) else 6) / 10   # jodi hui API: owner ne jo bataya
+    s = STATS.get(p, {}).get(cat) or {}
+    n = s.get("n", 0)
+    rel = 2 / (2 + _bad_now(s))                               # bharosa: haal ki galtiyan ghatati hain (1 fail = 67%), samay/safalta se wapas
+    qn = s.get("qn", 0); q = s.get("q")
+    wq = qn / (qn + 4)                                         # sahi-pan ke jitne asli number, utna unka vazan
+    score = ((1 - wq) * prior + wq * (q if q is not None else prior)) * rel
+    lat = s.get("lat") or 0
+    if lat: score -= min(0.25, lat / 120) * (2.5 if cat in ("fast", "chat", "hindi") else 1)   # dheema = kam (tez kaam mein zyada)
+    now = time.time(); r = [x for x in RECENT.get(p, []) if now - x < 60]; RECENT[p] = r
+    rpm = PROVIDERS[p].get("rpm") or CFG.get("custom_providers", {}).get(p, {}).get("rpm") or 20
+    score -= 0.5 * min(1.2, len(r) / rpm) ** 2                 # free minute-limit ke paas = doosron ko mauka (limit bhare hi nahi)
+    return round(score, 4)
+
+def route(cat="chat", need_tools=False, need_vision=False, k=None, explore=True, exclude=()):
+    """Is kaam ke liye dimaag ki line (sabse achha pehle). Kabhi-kabhi kam aazmaaya dimaag aage (naya seekhne ke liye)."""
+    cat = cat if cat in CATS else "chat"
+    ps = [p for p in providers_available(need_tools=need_tools) if p not in exclude]
+    if need_vision: ps = [p for p in ps if PROVIDERS[p].get("vision")] or ps
+    ps = [p for p in ps if STRENGTH.get(p, {}).get(cat, 6) > 0 or len(ps) == 1]
+    ranked = sorted(ps, key=lambda p: -router_score(p, cat))
+    if explore and len(ranked) > 2 and random.random() < float(CFG.get("explore_rate", 0.12)):
+        fresh = [p for p in ranked[1:] if (STATS.get(p, {}).get(cat) or {}).get("n", 0) < 5]
+        if fresh: c = random.choice(fresh); ranked.remove(c); ranked.insert(1, c)   # pehla wahi, doosre number par naya aazmao
+    return ranked[:k] if k else ranked
+
+def classify(text="", image=False, voice=False, smart=False):
+    """Kaam ki kism pehchano."""
+    t = (text or "").lower()
+    if image: return "vision"
+    if smart or re.search(r"\b(code|coding|bug|error|python|javascript|html|css|app|website|script|function|api|plugin|debug|deploy|github|sql)\b", t):
+        return "code"
+    if re.search(r"\b(kitna|kitne|kab|kaun|price|daam|rate|score|news|khabar|aaj|date|tareekh|population|capital|mausam|weather)\b|\d{3,}"
+                 r"|कितन|कब |कौन|दाम|कीमत|खबर|ख़बर|आज|तारीख|मौसम|राजधानी", t): return "fact"
+    if re.search(r"\b(kaise|kaisa|kaisi) (ho|hai|hain|ho gaye)\b|कैसे हो|कैसा है|कैसी हो", t): return "hindi" if voice or re.search(r"[\u0900-\u097F]", text) else "chat"
+    if re.search(r"\b(kyun|kyon|kaise|samjhao|explain|why|how|compare|tulna|plan|soch|strategy|faisla|analysis)\b|क्यों|कैसे|समझा|तुलना|योजना", t): return "reason"
+    if voice or re.search(r"[ऀ-ॿ]", text or ""): return "hindi"
+    return "chat"
+
+def _cat_of_purpose(purpose):
+    return {"code": "code", "chat": "chat"}.get(purpose, purpose if purpose in CATS else "chat")
+
+_PMODELS = {}
+
+def _model_score(mid, purpose):
+    m = mid.lower(); sc = 0.0
+    if re.search(r"embed|tts|whisper|guard|rerank|moderat|image|vision-only|audio|speech|ocr|transcri|-vl-|/vl", m): return -99
+    if re.search(r"(^|[^0-9])(0\.5b|1b|1\.5b|2b|3b|4b|7b|8b|9b)([^0-9]|$)|mini|nano|tiny|small|lite", m): sc -= 4
+    for pat, w in [(r"deepseek-(v3|v4|r1|chat|reasoner)", 7), (r"qwen3", 6), (r"kimi|k2", 7), (r"glm-?(4\.[5-9]|5)", 5), (r"gpt-oss-120b", 5),
+                   (r"gpt-(4\.1|4o|5)", 5), (r"nemotron.*(ultra|super)", 4), (r"llama-?(4|3\.3|3\.1-405)", 3), (r"mistral-(large|medium)", 4),
+                   (r"(70|72|110|120|235|405|480|550|671)b", 3), (r"sarvam-105b", 4), (r"gemini", 3), (r"command-a", 3)]:
+        if re.search(pat, m): sc += w
+    if purpose == "code" and re.search(r"coder|code|devstral|codestral", m): sc += 4
+    if re.search(r"preview|exp|beta", m): sc -= 0.5
+    return sc
+
+def provider_model(p, purpose="chat"):
+    """Har provider par sabse achha model khud chuno (config mein models.<p> ho to wahi)."""
+    if CFG.get("models", {}).get(p): return CFG["models"][p]
+    key = (p, purpose); c = _PMODELS.get(key)
+    if c and time.time() - c[1] < 86400: return c[0]
+    info = PROVIDERS[p]; choice = info["model"]
+    try:
+        url = info.get("models_url") or info["base"].rstrip("/") + "/models"
+        r = json.loads(http(url, None, {"Authorization": "Bearer " + pkey(p)}, timeout=15))
+        items = r.get("data", r) if isinstance(r, dict) else r
+        ids = []
+        for it in items if isinstance(items, list) else []:
+            mid = it.get("id") if isinstance(it, dict) else str(it)
+            if not mid: continue
+            if p == "openrouter":                                  # sirf free wale
+                pr = (it.get("pricing") or {}) if isinstance(it, dict) else {}
+                if not (mid.endswith(":free") or (str(pr.get("prompt")) in ("0", "0.0") and str(pr.get("completion")) in ("0", "0.0"))): continue
+            ids.append(mid.replace("models/", ""))
+        if ids:
+            # chat: jaana-pehchana tez default (agar abhi bhi maujood); code/smart: sabse taaqatwar
+            if purpose == "chat" and (info["model"] in ids or p == "openrouter" and info["model"] == "openrouter/free"):
+                choice = info["model"]
+            else:
+                best = max(ids, key=lambda m: _model_score(m, purpose))
+                if _model_score(best, purpose) > -50: choice = best
+    except Exception as e:
+        log_error(f"models:{p}", e)
+    _PMODELS[key] = (choice, time.time())
+    return choice
 
 LAST_BRAIN = {"name": "", "errors": []}
 
@@ -1508,7 +2242,7 @@ def best_models(force=False):
     """Gemini key par jo models mil rahe hain unme se sabse taaqatwar (smart) aur tez (fast) khud chuno."""
     if CFG.get("smart_model"): return CFG["smart_model"], CFG.get("fast_model") or PROVIDERS["gemini"]["model"]
     if not force and time.time() - _DISC["t"] < 86400 and _DISC["smart"]: return _DISC["smart"], _DISC["fast"]
-    key = CFG["keys"].get("gemini")
+    key = pkey("gemini")
     if not key: return None, None
     try:
         r = json.loads(http(PROVIDERS["gemini"]["base"].rstrip("/") + "/models", None, {"Authorization": "Bearer " + key}, timeout=20))
@@ -1536,21 +2270,26 @@ def _retry_after(e_body, default=40):
     m = re.search(r'"retryDelay"\s*:\s*"(\d+)', e_body) or re.search(r"retry in (\d+(?:\.\d+)?)s", e_body, re.I)
     return min(120, float(m.group(1)) + 2) if m else default
 
-def llm(messages, use_tools=True, smart=False, tool_names=None):
+def llm(messages, use_tools=True, smart=False, tool_names=None, cat=None):
     """Limit (429) / overload (503) aaye to us model ko kuch der chhod kar baaki try; sab band hon to intezaar karke dobara."""
     for attempt in range(4 if smart else 2):
-        msg, waits = _llm_once(messages, use_tools, smart, tool_names)
+        msg, waits = _llm_once(messages, use_tools, smart, tool_names, cat=cat)
         if msg is not None: return msg
         if not waits: break
         wait = min(waits)
         LAST_BRAIN.update(name=f"limit: {int(wait)}s intezaar")
         time.sleep(min(wait, 75 if smart else 20))
-    return _llm_once(messages, use_tools, smart, tool_names, final=True)[0]
+    return _llm_once(messages, use_tools, smart, tool_names, final=True, cat=cat)[0]
 
-def _llm_once(messages, use_tools, smart, tool_names, final=False):
+def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
     errs = []; waits = []
-    for p in providers_available():
-        info = PROVIDERS[p]; base_model = CFG.get("models", {}).get(p) or info["model"]
+    has_img = any(isinstance(m.get("content"), list) and any(c.get("type") == "image_url" for c in m["content"]) for m in messages)
+    cat = cat or ("vision" if has_img else ("code" if smart else "chat"))
+    line = route(cat, need_tools=use_tools, need_vision=has_img)
+    LAST_BRAIN["route"] = f"{cat}: " + " > ".join(line[:4])
+    for p in line[:int(CFG.get("max_fallback_providers", 4))]:
+        info = PROVIDERS[p]
+        base_model = (CFG.get("models", {}).get(p) or info["model"]) if p == "gemini" else provider_model(p, "code" if smart else "chat")
         cands = [base_model]
         if smart and p == "gemini":
             sm, fm = best_models()
@@ -1560,34 +2299,40 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False):
         if not info["vision"]:   # tasveer na samjhe to text bana do
             msgs = [dict(m, content=" ".join(c.get("text", "[tasveer]") for c in m["content"]))
                     if isinstance(m.get("content"), list) else m for m in messages]
-        for model in cands:
-            cd = COOLDOWN.get((p, model), 0)
-            if cd > time.time(): waits.append(cd - time.time()); continue
+        for model in [m for m in cands for _ in range(max(1, len(_keylist(p))))]:     # har key ek mauka
+            cd = COOLDOWN.get((p, model, pkey(p)[-6:]), 0)
+            if cd > time.time(): waits.append(cd - time.time()); rotate_key(p); continue
             body = {"model": model, "messages": msgs, "temperature": 0.2 if smart else 0.3}
             if use_tools:
                 body["tools"] = [t["schema"] for n, t in TOOLS.items() if tool_names is None or n in tool_names]
+            t0 = time.time()
             try:
                 r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body,
-                                    {"Authorization": "Bearer " + CFG["keys"][p]}, timeout=180 if smart else 90))
+                                    {"Authorization": "Bearer " + pkey(p)}, timeout=180 if smart else 90))
                 LAST_BRAIN.update(name=f"{p}:{r.get('model') or model}", errors=errs[:])
-                return r["choices"][0]["message"], []
+                m_ = r["choices"][0]["message"]
+                router_record(p, cat, True, time.time() - t0, quality=None if (m_.get("content") or m_.get("tool_calls")) else 0.0)
+                return m_, []
             except urllib.error.HTTPError as e:
                 body_txt = e.read().decode(errors="replace")
+                if e.code != 429: router_record(p, cat, False)
+                if e.code in (401, 403) and not rotate_key(p): BAD_PROVIDER[p] = time.time() + 1800
                 if e.code in (429, 503, 500):
                     w = _retry_after(body_txt, 40 if e.code == 429 else 15)
-                    COOLDOWN[(p, model)] = time.time() + w; waits.append(w)
+                    COOLDOWN[(p, model, pkey(p)[-6:])] = time.time() + w; waits.append(w)
+                    if e.code == 429: rotate_key(p)          # isi provider ki doosri key try
                 errs.append(f"{p}/{model}: {e.code} {body_txt[:200]}")
             except Exception as e:
-                errs.append(f"{p}/{model}: {e}")
+                router_record(p, cat, False); errs.append(f"{p}/{model}: {e}")
     if errs: log_error("llm", " | ".join(errs)[:500])
     if not final and waits: return None, waits
     if not errs and not waits:
-        return {"role": "assistant", "content": "Mera dimaag (API key) set nahi hai. Termux mein chalao: python visual.py setup"}, []
+        return {"role": "assistant", "content": "Mera dimaag (API key) set nahi hai. Termux mein chalao: visual keys"}, []
     if not errs:
         return {"role": "assistant", "content": "Free AI ki limit abhi bhari hai, thodi der baad dobara bolo."}, []
     lim = any(" 429 " in x for x in errs)
     return {"role": "assistant", "content": ("Free AI ki minute/din ki limit poori ho gayi. Thodi der baad dobara, ya ek aur free key "
-            "(Groq/OpenRouter) 'visual setup' mein daalo. " if lim else "Dimaag se jud nahi paaya: ") + " | ".join(errs)[:300]}, []
+            "(kisi bhi desh ki) 'visual keys' mein daalo. " if lim else "Dimaag se jud nahi paaya: ") + " | ".join(errs)[:300]}, []
 
 YES = re.compile(r"^\s*(haan|ha|haa|han|yes|y|ok|okay|kar do|karo|theek hai|thik hai|bhej do|chalo|done|hmm+)\b", re.I)
 NO = re.compile(r"^\s*(nahi|nahin|na|no|mat|cancel|ruko|rehne do)\b", re.I)
@@ -1639,11 +2384,41 @@ def run_tool(name, args):
     try:
         res = str(t["fn"](**args))
         return res + (f"\n(note: {note})" if note else "")
+    except UserErr as e:
+        return str(e)
     except TypeError as e:
         log_error(f"tool:{name}", e, traceback.format_exc()); return f"galat input: {e}"
     except Exception as e:
         tb = traceback.format_exc(); log_error(f"tool:{name}", e, tb)
         return f"ERROR: {type(e).__name__}: {e}\n(trace) {tb[-700:]}"
+
+def _second_opinion(question, reply, ev=lambda k, t: None):
+    """Tathya wale jawab ko ek DOOSRI company ka AI jaanche. Shak ho to Sach Engine (kai AI + internet) se sahi karo.
+    Isse router seekhta hai ki kaun sa AI sahi tathya deta hai."""
+    first = (LAST_BRAIN.get("name") or ":").split(":")[0]
+    if not reply or len(reply.strip()) < 2 or reply.startswith(("Free AI", "Dimaag se", "Mera dimaag")): return reply
+    checker = next((p for p in route("fact", explore=False) if p != first), None)
+    if not checker: return reply
+    v, err = llm_one(checker, f"SAWAAL: {question}\nJAWAB: {reply[:2500]}\n\nIs jawab mein koi tathya (number, naam, tareekh, daam, khabar) galat ya purana hai? "
+                     "Pehli line mein sirf 'SAHI' ya 'GALAT' likho, phir ek line mein kyun.", system="Tum sakht tathya-jaanchne wale ho. Pakka na pata ho to SAHI likho.",
+                     timeout=30, purpose="fact")
+    verdict = (v or "").strip().upper()[:12]
+    if not v: return reply                      # jaanchne wala na mila: jawab waisa hi (jhootha 'pakka' nahi bolte)
+    if verdict.startswith("SAHI"):
+        if first in PROVIDERS: router_record(first, "fact", True, None, quality=0.85)
+        return reply
+    ev("tool", "dusre AI ko shak hua: Sach Engine se jaanch")
+    if first in PROVIDERS: router_record(first, "fact", True, None, quality=0.35)
+    cc = cross_check(question)
+    m = re.search(r"SACH:\s*(.+)", cc)
+    if not m: return reply + "\n\n⚠ Doosre AI ko is jawab par shak hai: " + v.splitlines()[-1][:200]
+    web = "web saboot: haan" in cc
+    return m.group(1).strip()[:1500] + f"\n\n(✔ pehla jawab galat nikla; kai AI{' + internet' if web else ''} se jaancha)"
+
+FAKE_CLAIM = re.compile(r"(delete|डिलीट|mita|मिटा|upgrade|अपग्रेड|update|अपडेट|install|इंस्टॉल|bana|बना|bhej|भेज|khol|खोल|call|कॉल|save|सेव|set |सेट|"
+                        r"chalu|चालू|band|बंद|jod|जोड़|fix|ठीक|sudhaar|सुधार|deploy|डिप्लॉय|push|पुश)[^.!?।\n]{0,30}"
+                        r"(kar diya|kar di(?![a-z])|diya|दिया|कर दी|ho gaya|ho gayi|हो गया|हो गई|kar raha|kar rahi|कर रहा|कर रही|karunga|karungi|करूँगा|"
+                        r"करूंगा|कर दूँगा|कर दूंगा|kar dunga|shuru|शुरू)", re.I)
 
 def chat(session, user_text, image_url=None, allow_tools=True, events=None, voice=False):
     """Ek baat ka jawab. events(kind, text) se UI ko live haal milta hai."""
@@ -1684,13 +2459,22 @@ def chat(session, user_text, image_url=None, allow_tools=True, events=None, voic
                   "(app, GitHub, code jaise shabd English mein chalenge). Chhote vaakya, bolne layak; link, code ya lambi list mat bolo, "
                   "zaroorat ho to kaho 'screen par dikha diya'. Shuddh par bol-chaal wali Hindi, galat matra nahi.")
     work = [{"role": "system", "content": system_prompt() + "\n\nABHI KA HAAL:\n" + heart}] + [m for m in hist[-24:] if not isinstance(m.get("content"), list) or m is hist[-1]]
-    reply = ""
+    reply = ""; tools_ran = 0; fixes = 0
+    cat = classify(user_text, image=bool(image_url), voice=voice)
     for _step in range(int(CFG.get("max_steps", 40))):
-        msg = llm(work, use_tools=allow_tools and not crisis)
+        msg = llm(work, use_tools=allow_tools and not crisis, cat=cat)
         calls = msg.get("tool_calls") or []
         if not calls:
             reply = (msg.get("content") or "").strip() or "Hmm, kuch samajh nahi aaya. Dobara bolo?"
+            # SACHCHAI JAANCH: kaam ka daava kiya par ek bhi tool nahi chala = jhooth; ek baar sudharwao
+            if allow_tools and not crisis and tools_ran == 0 and fixes < 1 and FAKE_CLAIM.search(reply):
+                fixes += 1
+                work.append({"role": "assistant", "content": reply})
+                work.append({"role": "user", "content": "[SACHCHAI JAANCH] Tumne kaam hone/karne ka daava kiya par koi tool nahi chala, yani asal mein kuch nahi hua. "
+                             "Abhi sahi tool chalao (bada kaam ho to agent_task). Aisa tool hai hi nahi to saaf bolo 'ye main abhi nahi kar sakta'."})
+                continue
             break
+        tools_ran += len(calls)
         work.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": calls})
         for c in calls:
             name = c["function"]["name"]
@@ -1714,6 +2498,8 @@ def chat(session, user_text, image_url=None, allow_tools=True, events=None, voic
             continue
     else:
         reply = "Bahut saare kadam ho gaye, yahin ruk raha hoon. Aage kya karun?"
+    if cat == "fact" and allow_tools and not crisis and CFG.get("auto_verify", True):
+        reply = _second_opinion(user_text, reply, ev)
     if image_url:   # history mein badi tasveer mat rakho
         hist[-1] = {"role": "user", "content": (user_text or "") + " [tasveer bheji]"}
     hist.append({"role": "assistant", "content": reply})
@@ -1771,7 +2557,7 @@ def live_tools():
     return decls
 
 def live_config():
-    key = CFG["keys"].get("gemini")
+    key = pkey("gemini")
     if not key or CFG.get("live_mode") is False: return {"ok": False}
     heart, _ = heart_context("")
     recent = convo_recent(14)
@@ -1861,7 +2647,7 @@ class Web(BaseHTTPRequestHandler):
             return self._send(200, json.dumps([{k: t[k] for k in ("id", "goal", "status", "report", "announced")} | {"steps": t["steps"][-5:]} for t in items], ensure_ascii=False))
         if path.startswith("/api/tasks/announced/"):
             tid = path.rsplit("/", 1)[-1]
-            if tid in TASKS: TASKS[tid]["announced"] = True
+            if tid in TASKS: TASKS[tid]["announced"] = True; _save_tasks()
             return self._send(200, "{}")
         if path == "/api/live/config":
             return self._send(200, json.dumps(live_config(), ensure_ascii=False))
@@ -2074,16 +2860,52 @@ def run_setup():
     def ask(q, cur): v = input(f"{q} [{cur}]: ").strip(); return v or cur
     CFG["assistant_name"] = ask("Assistant ka naam", CFG["assistant_name"])
     CFG["owner_name"] = ask("Aapka naam", CFG["owner_name"])
-    print("\nFree dimaag (kam se kam ek key; zyada keys = Sach Engine zyada pakka):\n  Gemini: aistudio.google.com/apikey\n  Groq: console.groq.com/keys\n  OpenRouter: openrouter.ai/keys\n  Mistral: console.mistral.ai\n  Cerebras: cloud.cerebras.ai")
-    for p in PROVIDERS:
+    print("\nFree dimaag: kam se kam Gemini key (aistudio.google.com/apikey). Baaki desh (Groq, GitHub, Zhipu, Sarvam...) baad mein: visual keys")
+    for p in ("gemini", "groq", "openrouter"):
         cur = CFG["keys"].get(p, ""); show = (cur[:4] + "...") if cur else ""
-        v = input(f"{p} key [{show}]: ").strip()
+        v = input(f"{p} key [{show}] ({PROVIDERS[p]['signup']}): ").strip()
         if v: CFG["keys"][p] = v
     t = input("\nTelegram bot token (BotFather se, chhodna ho to Enter): ").strip()
     if t: CFG["telegram_token"] = t
     ids = input("Aapka Telegram chat id (bot ko /id bhejo; comma se kai): ").strip()
     if ids: CFG["telegram_owner_ids"] = [i.strip() for i in ids.split(",") if i.strip()]
     save_json(CONF, CFG); os.chmod(CONF, 0o600); print("\nSave ho gaya:", CONF)
+
+def run_keys():
+    print("VISUAL ke free dimaag (jitne zyada, utna pakka Sach/Sangam). Enter = chhodo, '-' = key hatao.\n"
+          "Key kabhi kisi ko mat bhejo; ye sirf is phone ki config mein rehti hai (GitHub par nahi jaati).\n")
+    for p, info in PROVIDERS.items():
+        cur = CFG["keys"].get(p, "")
+        note = " (khaali chhodo: GitHub login se apne aap)" if p == "github" else ""
+        n = len(_keylist(p))
+        print(f"[{info['country']}] {p}: {info['signup']}{note}")
+        v = input(f"  key [{(str(n) + ' key') if n else 'nahi'}] (kai keys comma se; '+key' = pehle wali mein jodo): ").strip()
+        if v.startswith("+") and cur: v = cur + "," + v[1:].strip()
+        if v == "-": CFG["keys"][p] = ""; continue
+        if not v: continue
+        CFG["keys"][p] = v; BAD_PROVIDER.pop(p, None)
+        for i, _k in enumerate(_keylist(p)):
+            KEY_IDX[p] = i; txt, err = llm_one(p, "Sirf 'ok' likho.", timeout=40)
+            print(f"  key {i+1}: " + ("✅ chal gayi" if txt else f"❌ nahi chali: {err[:110]} (galat key ya model band? fir bhi save)"))
+            BAD_PROVIDER.pop(p, None)
+        KEY_IDX[p] = 0
+    print("\nKOI AUR API (kisi bhi desh/company ki, jo OpenAI-jaisi /chat/completions deti ho: jaise Kimi, Baidu, Yi, Together, Fireworks, Krutrim...)")
+    while True:
+        nm = re.sub(r"[^a-z0-9_]", "", input("  naam (Enter = bas): ").strip().lower())
+        if not nm: break
+        base = input("  base URL (jaise https://api.example.com/v1): ").strip().rstrip("/")
+        if base.endswith("/chat/completions"): base = base[: -len("/chat/completions")]
+        model = input("  model naam: ").strip(); key = input("  key: ").strip(); ctry = input("  desh (IN/CN/US/EU...): ").strip().upper() or "?"
+        if not (base.startswith("https://") and model and key): print("  ❌ https base URL, model aur key teeno chahiye"); continue
+        good = [c for c in re.split(r"[\s,]+", input("  ye kis kaam mein khaas achha hai? (code hindi fact reason fast chat; Enter = pata nahi): ").lower()) if c in CATS]
+        CFG.setdefault("custom_providers", {})[nm] = {"base": base, "model": model, "country": ctry, "good_at": good}
+        PROVIDERS[nm] = {"base": base, "model": model, "vision": False, "tools": True, "country": ctry, "signup": "(aapki jodi hui)", "custom": True}
+        CFG["keys"][nm] = key
+        if nm not in CFG["provider_order"]: CFG["provider_order"].append(nm)
+        txt, err = llm_one(nm, "Sirf 'ok' likho.", timeout=40)
+        print("  ✅ jud gayi" if txt else f"  ❌ nahi chali: {err[:120]} (save kar di; 'visual keys' mein theek kar sakte ho)")
+    save_json(CONF, CFG); os.chmod(CONF, 0o600)
+    print("\nSave ho gaya. Chalu dimaag:", ", ".join(providers_available()) or "koi nahi")
 
 def run_adb_setup():
     if not has("adb"): print("Pehle: pkg install android-tools"); return
@@ -2107,9 +2929,12 @@ def main():
     if mode == "app": mode = "web"
     if mode == "setup": return run_setup()
     if mode == "adb": return run_adb_setup()
+    if mode == "keys": return run_keys()
+    if mode == "brains": return print(brains())
     if mode == "restore": return print(data_restore())
     if mode == "sync": return print(data_sync())
-    if not providers_available(): print("Note: koi API key nahi. Pehle chalao: python visual.py setup")
+    if not providers_available(): print("Note: koi API key nahi. Pehle chalao: visual keys")
+    if mode in ("web", "always", "voice", "telegram"): resume_tasks()
     if mode == "always":
         if "--no-open" not in sys.argv: sys.argv.append("--no-open")
         return run_always()

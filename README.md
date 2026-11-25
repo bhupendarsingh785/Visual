@@ -12,6 +12,37 @@ Dekhta hai (camera + phone ki screen), sunta hai, bolta hai, sochta hai, phone c
 - **Kahin se bhi:** Telegram bot se door baithe bhi chalao; dost bhi baat kar sakte hain (unke liye phone control band).
 - **Suraksha:** SMS, call, WhatsApp, code chalana: pehle poochhta hai, aap "haan" bolo tabhi karta hai. Payment ka aakhri "Pay" khud nahi dabata.
 
+## v4.2: Dimaag-chunav (smart router): har kaam ke liye sahi AI
+- Ab "ek khatam to doosra" nahi. Har sawaal ki kism pehchaanta hai: baat, Hindi, code, soch/plan, tathya, tasveer, phone-kaam, tez. Har kism mein har AI ka alag number hai.
+- Shuru mein number andaze se (jaise code mein DeepSeek/Qwen, Hindi mein Sarvam/Gemini, tez mein Groq/Cerebras). Phir **asli nateejon se khud seekhta hai**: chala ya fail, kitna tez, aur jawab kitna sahi nikla (Sangam ke test, Sach Engine/Parishad ke nyaayadhish, doosre AI ki jaanch). Number `~/.visual/brain_stats.json` mein (GitHub data repo mein bhi).
+- **Bhaar baant-ta hai:** har AI ki free minute-limit jaanta hai; ek par zyada bojh ho to limit bharne se pehle doosre ko deta hai.
+- **Naye AI aazmata hai:** ~12% baar doosre number par kam aazmaaya AI lagata hai, taaki pata chale kaun behtar hai.
+- **Galti maaf bhi karta hai:** ek-do baar fail hone wala AI thodi der peeche jaata hai, 30-60 min mein wapas.
+- **Tathya wale jawab ki doosri raay:** kisi doosri company ka AI jawab jaanchta hai; shak ho to Sach Engine (kai AI + internet) se sahi karke deta hai, aur jhootha AI ka number girta hai. Band karna ho: config mein `auto_verify: false`.
+- Har AI mein kai keys (comma se) aur duniya ki koi bhi OpenAI-jaisi API jod sakte ho (`visual keys`, ya bolo "ye API jodo"), saath mein batao wo kis kaam mein achhi hai.
+- `visual brains`: kaun juda hai + har kaam mein kaun aage.
+- Honest note: Live awaaz mode Google Gemini Live par hi chalta hai (doosri company ka Live audio API free mein nahi); par Live se bulaye gaye kaam (Engineer, Sach, Parishad) ye router use karte hain. Sach Engine ab internet khoj fail ho to "internet se jaancha" nahi bolta.
+
+## v4.1: poori jaanch ke baad majbooti
+- **Live lambi baat:** pehle Google ki seema se audio baat ~15 min aur camera ke saath sirf ~2 min mein toot jaati thi, aur har ~10 min connection badalne par pichhli baat bhool jaata tha. Ab context compression + session resumption: baat bina toote aage chalti hai.
+- **Live mein Google khoj** seedhe (model na maane to apne aap uske bina chalta hai).
+- **web_search:** DuckDuckGo fail ho to ab Google khoj (Gemini key se, source links ke saath), phir Wikipedia. Pehle DDG ka page badalne par "kuch nahi mila" bol kar ruk jaata tha.
+- **Engineer ke kaam ab gum nahi hote:** restart/crash/phone band hone par kaam `tasks.json` mein rehta hai aur wapas chalu hone par wahin se aage badhta hai (har kaam max 2 baar; teesri baar saaf ❌). Ye bhi GitHub data repo mein jaata hai.
+- **Screen control khud judta hai:** phone restart ya Wi-Fi badalne par Wireless debugging ka port badalta hai; ab VISUAL mDNS se naya port dhoondh kar khud jud jaata hai (pairing ek hi baar).
+- Volume ka galat input ab crash nahi.
+- Jaanch: 78 tools nakli phone par chalaye (0 crash), Sangam 20/20, purane features 14/14, Live (jhooth-pakad, resume, Google-khoj fallback) browser mein, task-resume 6/6. Sab mock par.
+
+## v4.0 "Sangam": kai desh ke free dimaag ek saath
+- **13 free/sasti AI services:** America (Gemini, GitHub Models, Groq, OpenRouter free, Cerebras, NVIDIA), Europe (Mistral), China (Zhipu GLM, SiliconFlow, ModelScope, Qwen/DashScope, DeepSeek), Bharat (Sarvam). Jitni key, utna pakka. Key jodo: `visual keys` (har key wahi par jaanchi jaati hai). Haal dekho: `visual brains` ya bolo "kaun-kaun se dimaag jude hain".
+- GitHub Models ke liye alag key nahi: phone par `gh auth login` hai to apne aap judta hai.
+- Har service par sabse taaqatwar model khud chunta hai (code ke liye DeepSeek/Qwen3/Kimi/GLM/gpt-oss jaise), chat ke liye tez wala. Galat key wali service 30 min ke liye chhod deta hai.
+- **ensemble_code (SANGAM CODE):** upgrade/naya feature banate waqt: ek model sakht test likhta hai, 4 alag models code likhte hain, har code alag jagah asli chala kar number milte hain, sabse achha chuna jata hai, galti wale ko doosre model se sudhaarwaya jata hai, do achhe milaaye jaate hain (tabhi jab number na gire), phir install + test + doosre model ka critic. Koi bhi code load na ho to install NAHI karta, saaf ❌ batata hai.
+- Galat test pakadna: jo test kisi bhi model se paas na ho (aur galti 'assert' wali ho) use "shayad test galat" likh kar skip karta hai, chhupata nahi. Feature hi gayab ho (ERROR) to wo test kabhi nahi hat-ta.
+- **council (Parishad):** mushkil sawaal par 6 models, doosri parat mein har model doosron ki galti pakad kar sudhaarta hai, phir nyaayadhish internet saboot ke saath jawab deta hai.
+- **Jhootha daava pakadna (text + Live dono):** "delete kar diya / upgrade karunga" jaisa daava kiya par koi tool nahi chala to VISUAL ko turant wapas bhej kar sahi tool chalwaya jata hai.
+- Trash restore ki galti theek (v3.7 mein mitayi cheez wapas nahi aati thi).
+- **Sach:** ye sab nakli (mock) servers par jaancha gaya. Asli Groq/Zhipu/Sarvam waghaira se is computer se judna block tha, isliye asli models par pehli jaanch aapke phone par hogi (`visual brains`). Free models ki apni seema hai: ek din/minute mein kam request, aur chhote models galat code dete hain; isliye Sangam kai models + asli test se chunta hai, par 100% guarantee koi nahi de sakta.
+
 ## v3.6: poori jaanch (audit) ke baad
 - **Har tool asli mein chala kar jaancha** (75 tools, nakli phone par). AI ke galat inputs ab crash nahi karte:
   text→number/haan-na, faltu keys hatana, zaroori input ki kami saaf batana, alag format ke arguments samajhna.
