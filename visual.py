@@ -18,7 +18,7 @@ import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 APP = "VISUAL"
-VERSION = "4.2"
+VERSION = "4.3"
 HOME = os.path.expanduser("~/.visual")
 CONF = os.path.join(HOME, "config.json")
 MEM = os.path.join(HOME, "memory.json")
@@ -26,14 +26,14 @@ CREATIONS = os.path.join(HOME, "creations")
 SHOTS = os.path.join(HOME, "shots")
 HERE = os.path.dirname(os.path.abspath(__file__))
 # sab free providers ki key ki shakal (Google, OpenAI-jaisi sk-, GitHub, Groq, NVIDIA, Cerebras, HuggingFace, OpenRouter)
-KEY_PAT = re.compile(r"(AIza[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|gsk_[A-Za-z0-9]{30,}"
+KEY_PAT = re.compile(r"(AIza[0-9A-Za-z_-]{30,}|AQ\.[0-9A-Za-z_-]{30,}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|gsk_[A-Za-z0-9]{30,}"
                      r"|nvapi-[A-Za-z0-9_-]{30,}|csk-[A-Za-z0-9]{30,}|hf_[A-Za-z0-9]{30,})")
 os.makedirs(CREATIONS, exist_ok=True); os.makedirs(SHOTS, exist_ok=True)
 
 # Free (ya free-tier) dimaag: India, China, America, Europe. Sab OpenAI-compatible. Key ho to apne aap judte hain.
 # Research: awesome-freellm-apis / cheahjs free-llm-api-resources (2026), Sarvam docs, GitHub Models docs.
 PROVIDERS = {
-    "gemini":      {"rpm": 10, "base": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-2.5-flash", "vision": True, "tools": True,
+    "gemini":      {"rpm": 10, "base": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-flash-latest", "vision": True, "tools": True,
                     "country": "US", "signup": "aistudio.google.com/apikey"},
     "groq":        {"rpm": 30, "base": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile", "vision": False, "tools": True,
                     "country": "US", "signup": "console.groq.com/keys"},
@@ -72,7 +72,7 @@ DEFAULT_CONF = {
     "owner_name": "Arjun",
     "language": "hi-IN",
     "keys": {p_: "" for p_ in PROVIDERS},
-    "models": {},                 # jaise {"gemini": "gemini-2.5-flash"} badalna ho to
+    "models": {},                 # khaali = har provider ka model khud chuna jata hai; zabardasti ho to {"gemini": "<naam>"}
     "provider_order": ["gemini", "github", "groq", "openrouter", "cerebras", "nvidia", "mistral", "zhipu", "siliconflow",
                        "modelscope", "qwen", "moonshot", "deepseek", "cohere", "upstage", "sarvam"],
     "web_host": "127.0.0.1", "web_port": 8765, "web_pin": "",
@@ -308,7 +308,7 @@ def _google_grounded(query):
     """Gemini + Google Search (free key ki seema ke andar): taaza jawab + asli source links."""
     key = pkey("gemini")
     if not key: return ""
-    for model in ("gemini-2.5-flash", "gemini-2.5-flash-lite"):
+    for model in list(dict.fromkeys(m for m in (gemini_model("fast"), best_models()[1], "gemini-flash-latest") if m)):
         try:
             r = json.loads(http(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
                                 {"contents": [{"parts": [{"text": "Google par khoj kar chhota, taaza, tathya-sahi jawab do (tareekh/number ke saath): " + query}]}],
@@ -768,7 +768,7 @@ def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho
             purpose="chat", temperature=0.2, max_tokens=None):
     """Ek hi provider se seedha jawab (tools ke bina). (text, error)"""
     info = PROVIDERS[provider]; mp = "code" if purpose in ("code", "reason") else "chat"; cat = _cat_of_purpose(purpose)
-    model = provider_model(provider, mp) if provider != "gemini" or CFG.get("models", {}).get("gemini") else (best_models()[0] if mp == "code" and best_models()[0] else (CFG.get("models", {}).get("gemini") or info["model"]))
+    model = provider_model(provider, mp) if provider != "gemini" else gemini_model("smart" if mp == "code" else "fast")
     body = {"model": model, "temperature": temperature, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}
     if max_tokens: body["max_tokens"] = max_tokens
     last = ""; t0 = time.time()
@@ -790,6 +790,9 @@ def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho
                     fm = best_models()[1] or info["model"]
                     if body["model"] != fm: body["model"] = fm; continue
                 time.sleep(min(_retry_after(eb, 15 * (attempt + 1)), 45)); continue
+            if e.code in (400, 404) and provider == "gemini" and _model_gone(eb) and attempt < 2:
+                best_models(force=True); nm = gemini_model("fast")             # Google ne model band kiya: nayi list se naya
+                if nm != body["model"]: body["model"] = nm; continue
             if e.code == 404 and provider != "gemini" and body["model"] != info["model"]:
                 body["model"] = info["model"]; continue                  # chuna model band ho gaya: default se
             break
@@ -2240,7 +2243,7 @@ _DISC = {"t": 0, "smart": None, "fast": None, "all": []}
 
 def best_models(force=False):
     """Gemini key par jo models mil rahe hain unme se sabse taaqatwar (smart) aur tez (fast) khud chuno."""
-    if CFG.get("smart_model"): return CFG["smart_model"], CFG.get("fast_model") or PROVIDERS["gemini"]["model"]
+    if CFG.get("smart_model"): return CFG["smart_model"], CFG.get("fast_model") or CFG["smart_model"]
     if not force and time.time() - _DISC["t"] < 86400 and _DISC["smart"]: return _DISC["smart"], _DISC["fast"]
     key = pkey("gemini")
     if not key: return None, None
@@ -2263,6 +2266,16 @@ def best_models(force=False):
     if not good: return None, None
     _DISC.update(t=time.time(), all=good, smart=max(good, key=lambda m: score(m, "smart")), fast=max(good, key=lambda m: score(m, "fast")))
     return _DISC["smart"], _DISC["fast"]
+
+def gemini_model(kind="fast"):
+    """Gemini ka chalu model: owner ne config mein diya ho to wo, warna Google ki list se khud chuna (naam pakka likha nahi:
+    Google purane model band karta rehta hai, jaise 2.5-flash Nov 2026 mein band hua)."""
+    if CFG.get("models", {}).get("gemini"): return CFG["models"]["gemini"]
+    sm, fm = best_models()
+    return (sm if kind == "smart" else fm) or fm or sm or PROVIDERS["gemini"]["model"]
+
+def _model_gone(body_txt):
+    return bool(re.search(r"no longer available|not found|is not supported|deprecated|does not exist", body_txt or "", re.I))
 
 COOLDOWN = {}          # (provider, model) -> kab tak na chhuein (limit/overload ke baad)
 
@@ -2289,17 +2302,17 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
     LAST_BRAIN["route"] = f"{cat}: " + " > ".join(line[:4])
     for p in line[:int(CFG.get("max_fallback_providers", 4))]:
         info = PROVIDERS[p]
-        base_model = (CFG.get("models", {}).get(p) or info["model"]) if p == "gemini" else provider_model(p, "code" if smart else "chat")
+        base_model = gemini_model("smart" if smart else "fast") if p == "gemini" else provider_model(p, "code" if smart else "chat")
         cands = [base_model]
-        if smart and p == "gemini":
+        if p == "gemini":                       # ek model band/bhara ho to doosra (smart: bada pehle, baat: tez pehle)
             sm, fm = best_models()
-            cands = [m for m in [sm, fm, base_model] if m]
-            cands = list(dict.fromkeys(cands))
+            cands = list(dict.fromkeys(m for m in ([sm, fm, base_model] if smart else [base_model, fm, sm]) if m))
         msgs = messages
         if not info["vision"]:   # tasveer na samjhe to text bana do
             msgs = [dict(m, content=" ".join(c.get("text", "[tasveer]") for c in m["content"]))
                     if isinstance(m.get("content"), list) else m for m in messages]
         for model in [m for m in cands for _ in range(max(1, len(_keylist(p))))]:     # har key ek mauka
+            if COOLDOWN.get((p, model, "gone"), 0) > time.time(): continue      # band model: chhodo
             cd = COOLDOWN.get((p, model, pkey(p)[-6:]), 0)
             if cd > time.time(): waits.append(cd - time.time()); rotate_key(p); continue
             body = {"model": model, "messages": msgs, "temperature": 0.2 if smart else 0.3}
@@ -2315,6 +2328,12 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
                 return m_, []
             except urllib.error.HTTPError as e:
                 body_txt = e.read().decode(errors="replace")
+                if e.code in (400, 404) and _model_gone(body_txt):              # model band hai, provider theek: model badlo
+                    COOLDOWN[(p, model, "gone")] = time.time() + 86400
+                    if CFG.get("models", {}).get(p) == model: CFG["models"].pop(p, None); save_json(CONF, CFG)
+                    if p == "gemini": best_models(force=True)
+                    else: _PMODELS.pop((p, "chat"), None); _PMODELS.pop((p, "code"), None)
+                    errs.append(f"{p}/{model}: model band, naya chun raha"); continue
                 if e.code != 429: router_record(p, cat, False)
                 if e.code in (401, 403) and not rotate_key(p): BAD_PROVIDER[p] = time.time() + 1800
                 if e.code in (429, 503, 500):
@@ -2534,6 +2553,24 @@ def neural_tts(text, voice=None):
     with open(f, "rb") as fh: return fh.read()
 
 # ---------------------------------------------------------------- VISUAL LIVE (Gemini Live API, real-time awaaz)
+_LIVE = {"t": 0, "m": []}
+
+def live_models():
+    """Google ki list se wahi Live (awaaz) models jo is key par sach mein chalte hain; pehle jaane-pehchaane, phir naye."""
+    if _LIVE["m"] and time.time() - _LIVE["t"] < 86400: return _LIVE["m"]
+    key = pkey("gemini"); found = []
+    try:
+        r = json.loads(http("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=" + urllib.parse.quote(key), timeout=20))
+        found = [m["name"].replace("models/", "") for m in r.get("models", []) if "bidiGenerateContent" in (m.get("supportedGenerationMethods") or [])]
+    except Exception as e:
+        log_error("live_models", e)
+    if not found: return LIVE_MODELS
+    def sc(m):
+        v = re.search(r"(\d+(?:\.\d+)?)", m); v = float(v.group(1)) if v else 0
+        return (m in LIVE_MODELS and -LIVE_MODELS.index(m) + 100 or 0) + v * 2 + (3 if "native-audio" in m or "live" in m else 0) - (5 if "exp" in m else 0)
+    _LIVE.update(t=time.time(), m=sorted(found, key=lambda m: -sc(m))[:4])
+    return _LIVE["m"]
+
 LIVE_MODELS = ["gemini-3.1-flash-live-preview", "gemini-2.5-flash-native-audio-preview-12-2025", "gemini-3.8-live"]
 
 def _gem_schema(sc):
@@ -2572,7 +2609,7 @@ def live_config():
               "Jab '[ENGINEER REPORT]' aaye to owner ko 2-3 vaakya mein bolkar batao.")
     url = CFG.get("live_url") or ("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta."
                                   "GenerativeService.BidiGenerateContent?key=" + key)
-    return {"ok": True, "url": url, "models": CFG.get("live_models") or LIVE_MODELS,
+    return {"ok": True, "url": url, "models": CFG.get("live_models") or live_models(),
             "voice": CFG.get("live_voice", "Charon"), "prompt": prompt, "tools": live_tools(), "risky": sorted(RISKY)}
 
 # ---------------------------------------------------------------- web app

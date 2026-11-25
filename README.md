@@ -12,6 +12,11 @@ Dekhta hai (camera + phone ki screen), sunta hai, bolta hai, sochta hai, phone c
 - **Kahin se bhi:** Telegram bot se door baithe bhi chalao; dost bhi baat kar sakte hain (unke liye phone control band).
 - **Suraksha:** SMS, call, WhatsApp, code chalana: pehle poochhta hai, aap "haan" bolo tabhi karta hai. Payment ka aakhri "Pay" khud nahi dabata.
 
+## v4.3: asli phone ki jaanch se mili galti
+- Google ne `gemini-2.5-flash` band kar diya (404 "no longer available"). Ab Gemini ka model naam pakka likha nahi: har din Google ki list se chalu model khud chunta hai (baat ke liye tez, kaam ke liye bada). Model band mile to 1 din ke liye chhod kar turant doosra; config mein purana naam ho to khud hata deta hai.
+- Live awaaz ke models bhi Google ki list se (jo is key par sach mein chalte hain).
+- Google ki nayi `AQ.` wali keys bhi secret-scanner pakadta hai (GitHub par nahi jaayengi).
+
 ## v4.2: Dimaag-chunav (smart router): har kaam ke liye sahi AI
 - Ab "ek khatam to doosra" nahi. Har sawaal ki kism pehchaanta hai: baat, Hindi, code, soch/plan, tathya, tasveer, phone-kaam, tez. Har kism mein har AI ka alag number hai.
 - Shuru mein number andaze se (jaise code mein DeepSeek/Qwen, Hindi mein Sarvam/Gemini, tez mein Groq/Cerebras). Phir **asli nateejon se khud seekhta hai**: chala ya fail, kitna tez, aur jawab kitna sahi nikla (Sangam ke test, Sach Engine/Parishad ke nyaayadhish, doosre AI ki jaanch). Number `~/.visual/brain_stats.json` mein (GitHub data repo mein bhi).
