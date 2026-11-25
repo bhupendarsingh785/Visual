@@ -12,6 +12,15 @@ Dekhta hai (camera + phone ki screen), sunta hai, bolta hai, sochta hai, phone c
 - **Kahin se bhi:** Telegram bot se door baithe bhi chalao; dost bhi baat kar sakte hain (unke liye phone control band).
 - **Suraksha:** SMS, call, WhatsApp, code chalana: pehle poochhta hai, aap "haan" bolo tabhi karta hai. Payment ka aakhri "Pay" khud nahi dabata.
 
+## v4.5: phone jaisi jaanch (Python 3.14)
+- Saare test phone wale Python 3.14 par bhi chalaye (pehle sirf 3.13 par): sab pass, 79 tools 0 crash.
+- CTRL+C dabane par ab lamba laal error nahi aata, bas "⏹ Band kiya (CTRL+C). Ye galti nahi hai."
+- `visual keys` mein har key turant save hoti hai; beech mein band kiya to bhi daali hui key nahi khoti.
+
+## v4.4: `visual brains` atakta tha
+- Phone par `visual brains` bina kuch dikhaye der tak chalta tha (har AI ki jaanch mein limit par 45 second tak rukna + ek-ek karke intezaar). Ab: turant "⏳ jaanch raha hoon" dikhata hai, sab AI ek saath, kul ~30 second se zyada nahi. Atka hua AI baaki ko nahi rokta.
+- Limit bhari ho to ❌ nahi, ⏳ "key sahi hai, thodi der mein chalega".
+
 ## v4.3: asli phone ki jaanch se mili galti
 - Google ne `gemini-2.5-flash` band kar diya (404 "no longer available"). Ab Gemini ka model naam pakka likha nahi: har din Google ki list se chalu model khud chunta hai (baat ke liye tez, kaam ke liye bada). Model band mile to 1 din ke liye chhod kar turant doosra; config mein purana naam ho to khud hata deta hai.
 - Live awaaz ke models bhi Google ki list se (jo is key par sach mein chalte hain).

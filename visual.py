@@ -18,7 +18,7 @@ import urllib.parse, urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 APP = "VISUAL"
-VERSION = "4.3"
+VERSION = "4.5"
 HOME = os.path.expanduser("~/.visual")
 CONF = os.path.join(HOME, "config.json")
 MEM = os.path.join(HOME, "memory.json")
@@ -765,14 +765,14 @@ def deploy_web(project, confirm_public=False):
 
 # ---------------------------------------------------------------- SACH ENGINE (jhooth pakadna, sach nikaalna)
 def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho to 'PAKKA NAHI' likho. Kuch gadho mat.", timeout=60,
-            purpose="chat", temperature=0.2, max_tokens=None):
+            purpose="chat", temperature=0.2, max_tokens=None, retries=3):
     """Ek hi provider se seedha jawab (tools ke bina). (text, error)"""
     info = PROVIDERS[provider]; mp = "code" if purpose in ("code", "reason") else "chat"; cat = _cat_of_purpose(purpose)
     model = provider_model(provider, mp) if provider != "gemini" else gemini_model("smart" if mp == "code" else "fast")
     body = {"model": model, "temperature": temperature, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}
     if max_tokens: body["max_tokens"] = max_tokens
     last = ""; t0 = time.time()
-    for attempt in range(3):              # free limit (429) / bheed (503) par ruk kar dobara; ye kaam chhodne ki wajah nahi
+    for attempt in range(max(1, retries)):   # free limit (429) / bheed (503) par ruk kar dobara; ye kaam chhodne ki wajah nahi
         try:
             r = json.loads(http(info["base"].rstrip("/") + "/chat/completions", body, {"Authorization": "Bearer " + pkey(provider)}, timeout=timeout))
             txt = (r["choices"][0]["message"].get("content") or "").strip()
@@ -782,15 +782,15 @@ def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho
         except urllib.error.HTTPError as e:
             eb = e.read().decode(errors="replace"); last = f"{e.code} {eb[:150]}"
             if e.code in (401, 403):
-                if attempt < 2 and rotate_key(provider): continue          # ye key kharab: agli key
+                if attempt < retries - 1 and rotate_key(provider): continue          # ye key kharab: agli key
                 BAD_PROVIDER[provider] = time.time() + 1800; break
-            if e.code == 429 and attempt < 2 and rotate_key(provider): continue     # doosri key turant
-            if e.code in (429, 500, 502, 503) and attempt < 2:
+            if e.code == 429 and attempt < retries - 1 and rotate_key(provider): continue     # doosri key turant
+            if e.code in (429, 500, 502, 503) and attempt < retries - 1:
                 if provider == "gemini" and e.code == 429:            # bada model limit par: tez model se
                     fm = best_models()[1] or info["model"]
                     if body["model"] != fm: body["model"] = fm; continue
                 time.sleep(min(_retry_after(eb, 15 * (attempt + 1)), 45)); continue
-            if e.code in (400, 404) and provider == "gemini" and _model_gone(eb) and attempt < 2:
+            if e.code in (400, 404) and provider == "gemini" and _model_gone(eb) and attempt < retries - 1:
                 best_models(force=True); nm = gemini_model("fast")             # Google ne model band kiya: nayi list se naya
                 if nm != body["model"]: body["model"] = nm; continue
             if e.code == 404 and provider != "gemini" and body["model"] != info["model"]:
@@ -798,16 +798,18 @@ def llm_one(provider, prompt, system="Tum ek sachche expert ho. Pakka na pata ho
             break
         except Exception as e:
             last = str(e)[:150]
-            if attempt < 1 and "timed out" not in last: time.sleep(3); continue
+            if attempt < retries - 1 and "timed out" not in last: time.sleep(3); continue
             break
     if not last.startswith("429"): router_record(provider, cat, False)
     return "", last
 
 def _parallel(fns, timeout=90):
+    """Sab ek saath; KUL samay 'timeout' se zyada nahi (atka hua ek, baaki ko na roke)."""
     out = [None] * len(fns); ths = []
     for i, f in enumerate(fns):
         t = threading.Thread(target=lambda i=i, f=f: out.__setitem__(i, f()), daemon=True); t.start(); ths.append(t)
-    for t in ths: t.join(timeout)
+    end = time.time() + timeout
+    for t in ths: t.join(max(0, end - time.time()))
     return out
 
 @tool("SACH ENGINE: ek sawaal ko kai alag AI models se alag-alag poochho + internet ke saboot se milao, jhooth/galti pakdo, aur sabse sachcha jawab bharose ke level ke saath do. "
@@ -1465,11 +1467,14 @@ def add_brain(name, base_url, model, country="?", tools=True, good_at=""):
 @tool("Kaun-kaun se free AI dimaag (India/China/America/Europe) jude hain, kaun chal raha hai, kaun sa model chuna, aur kis ki key baaki hai (sign-up link).")
 def brains():
     rows = []; avail = providers_available()
-    res = dict((r[0], r[1:]) for r in _parallel([lambda p=p: (p, *llm_one(p, "Sirf 'ok' likho.", timeout=30)) for p in avail], timeout=45) if r)
+    if sys.stdout.isatty(): print(f"⏳ {len(avail)} dimaag ek saath jaanch raha hoon (max ~30 second)...", flush=True)
+    res = dict((r[0], r[1:]) for r in _parallel([lambda p=p: (p, *llm_one(p, "Sirf 'ok' likho.", timeout=20, retries=1)) for p in avail], timeout=30) if r)
     for p, info in PROVIDERS.items():
         if p in avail:
             txt, err = res.get(p, ("", "timeout"))
-            rows.append(f"{'✅' if txt else '❌'} {p} [{info['country']}] {len(_keylist(p))} key, model: {provider_model(p) if p != 'gemini' else (CFG.get('models',{}).get('gemini') or info['model'])} {('' if txt else err[:70])}")
+            if not txt and err.startswith("429"): txt_mark, err = "⏳", "abhi limit bhari (key sahi hai, thodi der mein chalega)"
+            else: txt_mark = "✅" if txt else "❌"
+            rows.append(f"{txt_mark} {p} [{info['country']}] {len(_keylist(p))} key, model: {(_PMODELS.get((p, 'chat')) or (info['model'],))[0] if p != 'gemini' else (CFG.get('models', {}).get('gemini') or _DISC.get('fast') or info['model'])} {('' if txt else err[:70])}")
         else:
             rows.append(f"➕ {p} [{info['country']}] key nahi: {info['signup']}")
     board = []
@@ -2922,10 +2927,11 @@ def run_keys():
         if not v: continue
         CFG["keys"][p] = v; BAD_PROVIDER.pop(p, None)
         for i, _k in enumerate(_keylist(p)):
-            KEY_IDX[p] = i; txt, err = llm_one(p, "Sirf 'ok' likho.", timeout=40)
+            KEY_IDX[p] = i; print("  ⏳ jaanch...", flush=True); txt, err = llm_one(p, "Sirf 'ok' likho.", timeout=25, retries=1)
             print(f"  key {i+1}: " + ("✅ chal gayi" if txt else f"❌ nahi chali: {err[:110]} (galat key ya model band? fir bhi save)"))
             BAD_PROVIDER.pop(p, None)
         KEY_IDX[p] = 0
+        save_json(CONF, CFG); os.chmod(CONF, 0o600)      # har key turant save: beech mein CTRL+C ho to bhi na khoye
     print("\nKOI AUR API (kisi bhi desh/company ki, jo OpenAI-jaisi /chat/completions deti ho: jaise Kimi, Baidu, Yi, Together, Fireworks, Krutrim...)")
     while True:
         nm = re.sub(r"[^a-z0-9_]", "", input("  naam (Enter = bas): ").strip().lower())
@@ -2989,4 +2995,8 @@ load_plugins()
 if PLUGIN_ERRORS: print("Plugin galtiyan:", PLUGIN_ERRORS)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:          # CTRL+C: lamba laal error nahi, saaf sandesh
+        print("\n⏹ Band kiya (CTRL+C). Ye galti nahi hai. VISUAL dobara chalane ke liye: visual app")
+        sys.exit(130)
