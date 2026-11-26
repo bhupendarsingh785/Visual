@@ -153,7 +153,8 @@ def ingest_source(source_id, home=None, respect_robots=True):
         src = db.execute("SELECT * FROM sources WHERE id=?", (source_id,)).fetchone()
         if not src: raise KeyError("Unknown source_id")
         url = src["url"]
-    # Explicit allowlisted APIs follow their API terms/rate limits; website-page ingestion still checks robots.txt.\n    if respect_robots and not _robots_allowed(url):
+    # Explicit allowlisted APIs follow their API terms/rate limits; website-page ingestion still checks robots.txt.
+    if respect_robots and not _robots_allowed(url):
         with _connect(home) as db: db.execute("UPDATE sources SET status='blocked',error=? WHERE id=?", ("robots.txt disallows or unavailable", source_id))
         return {"status":"blocked","reason":"robots.txt"}
     req = urllib.request.Request(url, headers={"User-Agent":USER_AGENT, "Accept":"text/html,text/plain,application/json"})
