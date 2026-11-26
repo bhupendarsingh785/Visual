@@ -86,7 +86,7 @@ PROVIDERS = ("openalex", "crossref", "zenodo", "gbif", "nasa_cmr",
 
 def collect_global_research(topics=None, per_request=25, max_requests=300, home=None, offset=None):
     """Rotate through all domain/provider tasks so scheduled runs don't repeat only the first page."""
-    selected = [x.strip().lower() for x in (topics or []) if x.strip()]
+    selected = sorted({x.strip().lower() for x in (topics or []) if x.strip()})
     unknown = sorted(set(selected) - set(DOMAIN_QUERIES))
     if unknown:
         raise ValueError("Unknown topics: " + ", ".join(unknown) + ". Available: " + ", ".join(DOMAIN_QUERIES))
