@@ -4,6 +4,7 @@ This module observes the running installation and records auditable improvement
 proposals. It never edits executable source or grants itself permissions.
 """
 import hashlib
+import contextlib
 import json
 import os
 import re
@@ -22,6 +23,19 @@ def _db_path(home=None):
     root = Path(home or os.environ.get("VISUAL_HOME") or Path.home() / ".visual")
     root.mkdir(parents=True, exist_ok=True)
     return root / "self_intelligence.sqlite3"
+
+
+@contextlib.contextmanager
+def _db(home=None):
+    conn = _connect(home)
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def _connect(home=None):
@@ -150,7 +164,7 @@ def save_snapshot(snapshot, findings, home=None):
     sid = "s" + uuid.uuid4().hex[:12]
     payload = json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-    with _connect(home) as db:
+    with _db(home) as db:
         db.execute("INSERT INTO snapshots(id,created_at,payload,digest) VALUES(?,?,?,?)",
                    (sid, time.time(), payload, digest))
         db.executemany(
