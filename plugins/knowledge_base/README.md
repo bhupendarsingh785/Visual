@@ -79,3 +79,6 @@ Allowed paths are restricted to `~/.visual`, Android shared `Download`, and `Doc
 - OpenAlex public snapshot is free to download anonymously, but the full JSONL snapshot is roughly 745 GB compressed as of the September 2026 release; select entity/date partitions instead of attempting the full snapshot on a phone. See [snapshot format and manifest](https://help.openalex.org/access/snapshot/).
 - NASA's open-data portal is a catalog of thousands of public science datasets; each underlying dataset has its own access and reuse terms. See [NASA Open Data](https://data.nasa.gov/).
 
+## Verified research-source registry
+
+`research_sources_registry.json` lists 15 priority research repositories and official portals for biodiversity, animal sounds, marine ecosystems, neuroscience, medicine, engineering and AI. It records the access method, dataset-level rights caveats, collection status and quality checks. Registry presence is discovery metadata only; it does not mean the source has been harvested, a media file has been downloaded, or a license has been granted. Validate the JSON and ensure every listed domain exists in `global_research.py` before expanding the collector.
