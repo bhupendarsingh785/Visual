@@ -56,6 +56,16 @@ class SelfIntelligenceTests(unittest.TestCase):
         self.assertEqual(report["snapshot"]["id"], saved["snapshot_id"])
         self.assertTrue(report["findings"])
 
+    def test_snapshot_delta_is_reported(self):
+        first = {"file_inventory": {"files": [{"path": "a.py", "size": 1, "mtime": 1}], "truncated": False}}
+        second = {"file_inventory": {"files": [{"path": "a.py", "size": 2, "mtime": 2}, {"path": "b.py", "size": 1, "mtime": 1}], "truncated": False}}
+        save_snapshot(first, [("info", "health", "first", "baseline")], self.home)
+        save_snapshot(second, [("info", "health", "second", "follow-up")], self.home)
+        delta = latest_report(self.home)["change_summary"]
+        self.assertEqual(delta["added"], ["b.py"])
+        self.assertEqual(delta["changed"], ["a.py"])
+        self.assertEqual(delta["removed"], [])
+
     def test_improvement_lifecycle_and_validation(self):
         pid = create_plan("Better agent control", "agent/task state", "tasks lack checkpoints",
                           "no source edits; revert plan", "restart resumes from saved checkpoint", self.home)
@@ -64,6 +74,8 @@ class SelfIntelligenceTests(unittest.TestCase):
         self.assertEqual(plan_history(self.home)[0]["status"], "approved")
         with self.assertRaises(ValueError):
             update_plan(pid, "self_authorized", "", self.home)
+        with self.assertRaises(ValueError):
+            update_plan(pid, "completed", "self-certified", self.home)
         with self.assertRaises(KeyError):
             update_plan("missing", "approved", "", self.home)
 
