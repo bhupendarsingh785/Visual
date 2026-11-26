@@ -31,3 +31,28 @@ Do not merge PR #1 or call this upgrade complete until:
 - live provider results are recorded for each configured key;
 - executable app/browser/API/database/deployment adapters pass against disposable fixtures/staging;
 - full regression, security and rollback checks pass.
+
+
+## Integration repair pass — 2026-11-26
+
+- Plugin loader now removes temporary plugin directories from `sys.path` and evicts newly imported sibling modules from the global `sys.modules` cache after plugin initialization. Registered tool functions retain their module references. This prevents path pollution and common helper-name collisions; it remains same-process execution, not a security boundary.
+- The Docker execution adapter now retains direct references to the development engine functions it needs at runtime, so cleanup of the plugin import path does not break lazy runner operations.
+- Added an end-to-end CI smoke test that imports VISUAL, verifies critical development, orchestration, self-intelligence and memory-repeat tools are actually registered, then exercises the development task/test/status adapter chain.
+- Fixed memory-repeat plugin registration: bare `@tool` decorators did not register tools under the staged plugin decorator. All memory-repeat tools now declare explicit schemas.
+- Removed duplicated MemoryStore implementation from the active plugin adapter; it uses the shared `memory_store.py` implementation. Persistent statement data now lives under `~/.visual/last_statement.json`, not inside the source checkout.
+- Removed the unused duplicate `orchestration_plugin.py`; orchestration adapters remain registered from the active `plugins/autonomous_development/plugin.py`.
+- Installer-generated launcher and Termux:Boot entry now point to the actual directory containing `install.sh`. Updater and supervisor resolve the installation directory relative to their own scripts, with `VISUAL_HOME_DIR` override for the supervisor.
+- Updater now runs the same core import smoke test and regression suites as CI before reporting a successful update.
+- Regression tests caught two real integration mistakes during this pass (helper fixture accidentally discovered as a top-level plugin, and a memory tool registration/test wiring issue); both were corrected before final verification.
+
+## Verification for this pass
+
+- GitHub Actions run for commit `261f9ac0aa2d32276dd4730bf8efe2472799a2c1`: Python 3.11, 3.13 and 3.14 matrix. The import/tool-registration smoke test, shell syntax checks, continuous-listening mocked tests, memory-repeat tests, core plugin integration tests, Self-Intelligence tests and Autonomous Development tests are required.
+- These CI checks are automated hosted-runner evidence only. They do not prove physical Android/Termux behavior, live API provider connectivity, Docker daemon availability on the phone, or app/browser/database/deployment E2E behavior.
+
+## Still not complete / not certified
+
+- Plugin code still executes inside the VISUAL interpreter. A restricted worker process with narrow RPC capabilities is not implemented.
+- Planner/Coder/Tester/Security Reviewer are durable workflow roles, but are not yet four independent LLM agents with separately enforced tool grants. The security checklist is not an independent SAST/DAST scan.
+- Live provider tests, real Docker test execution on the target device, Android permission/audio/Doze/reboot tests, and executable browser/app/API/database/deployment adapters remain unverified or unimplemented.
+- Do not merge the draft PR or describe VISUAL as release-complete until those acceptance gates are independently satisfied.
