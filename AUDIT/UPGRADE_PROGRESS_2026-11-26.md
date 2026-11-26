@@ -68,6 +68,7 @@ This section records the separate main-branch work on the public Knowledge Base 
 - Added provider-specific pacing, Retry-After handling and bounded retries for transient HTTP and network failures. Wikimedia Commons requests identify the project URL in the User-Agent and remain below the published user-agent request rate. Openverse anonymous page-size and pagination limits are respected.
 - Global collection runs are bounded to 300 provider-query tasks and at most 25 requested metadata records per task. Scheduled workflow runs every six hours; manual runs persist a cursor to avoid restarting from the first task batch.
 - JSON API ingestion distinguishes non-empty data, empty search results, malformed JSON and API error payloads. Empty search results are counted separately from actual failures.
+- Collection reports now include per-provider status counts, separate fetched versus newly indexed character totals, per-run database deltas, and a mandatory SQLite integrity_check before artifact upload. Scheduled and filtered manual runs maintain separate persisted cursors.
 - SQLite connections close on context exit; source topics survive in documents and search results; source-status and topic metrics are reported.
 - Public URL ingestion validates HTTPS port 443, revalidates the original target before each request, and validates redirect destinations. Dataset download paths are restricted against traversal; resumed transfers validate Content-Range totals.
 - Local JSONL/JSONL.GZ imports now use one SQLite connection with batched commits and report malformed JSONL lines. Training staging groups by source domain to reduce train/test leakage and writes output files atomically.
@@ -75,7 +76,7 @@ This section records the separate main-branch work on the public Knowledge Base 
 
 ### Verified evidence
 
-- Latest offline CI run for commit 16b40815: Python 3.11, 3.13 and 3.14 all passed, including compileall across the project, VISUAL/plugin import checks, shell syntax checks, and the subsystem test suites.
+- Latest offline CI run for commit 789a599b: Python 3.11, 3.13 and 3.14 all passed, including compileall across the project, VISUAL/plugin import checks, shell syntax checks, and the subsystem test suites.
 - Completed public collection run 45765544918 (earlier 11-provider version): 300 API tasks attempted; 246 indexed/already indexed; 54 errors; 423 documents in the resulting index; 25,282 chunks; 21,660,539 indexed characters; SQLite file 165,298,176 bytes. The downloaded SQLite artifact passed PRAGMA integrity_check with ok. This is a real artifact, not an estimate.
 - The above collection report predates the 15-provider expansion and empty-result classification. Do not present its figures as the outcome of the newer 15-provider run.
 
