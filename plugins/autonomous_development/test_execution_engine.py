@@ -42,6 +42,17 @@ class ExecutionEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             execution_engine.run_profile(self.task["id"], "bash", self.home)
 
+    def test_manifest_rejects_non_string_profile(self):
+        with self.assertRaises(ValueError):
+            execution_engine.run_manifest(self.task["id"], {"profile":["python"],"commands":[["python","-m","unittest"]]}, self.home)
+
+    @patch("execution_engine._docker_available", return_value=("docker", "Docker test"))
+    @patch("execution_engine.subprocess.run", side_effect=TimeoutError("daemon timeout"))
+    def test_image_inspection_error_fails_closed(self, _run, _docker):
+        result = execution_engine.run_manifest(self.task["id"], {"profile":"python","commands":[["python","-m","unittest"]]}, self.home)
+        self.assertEqual(result["status"], "unavailable")
+        self.assertIn("Image check failed", result["limitations"])
+
     def test_manifest_requires_argv_arrays(self):
         with self.assertRaises(ValueError):
             execution_engine.run_manifest(self.task["id"], {"profile":"python","commands":["python -c 'bad'"]}, self.home)
