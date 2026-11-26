@@ -68,3 +68,7 @@ The RTL prototype is an optional future IP block; it must not be advertised as a
 
 ## Verification evidence
 The repository CI runs Python tests and Icarus Verilog smoke simulations. CI passing proves only the tests that ran on the specified simulator and software matrix. It does not prove formal correctness, FPGA timing closure, power, performance, or fabrication readiness. Preserve failed runs as regression cases and fix the RTL or testbench based on root-cause evidence rather than weakening assertions.
+
+
+## Host integration status
+The software compute-fabric planner can discover vendor-provided CPU/GPU/NPU runtimes, but this RTL cluster has no bus, DMA engine, command queue, memory-mapped control registers, interrupt controller, synthesis constraints or host driver yet. The next hardware milestones are a systolic dataflow, SRAM/buffer design, AXI4-Lite control plus AXI4 data path, descriptor validation, timeout/reset handling, then FPGA-board proof. No host runtime may select this RTL until board-level tests and a driver-backed execution provider exist.
