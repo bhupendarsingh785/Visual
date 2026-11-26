@@ -5,8 +5,11 @@ from global_research import DOMAIN_QUERIES, collect_global_research
 
 class GlobalResearchTests(unittest.TestCase):
     def test_catalog_covers_requested_core_domains(self):
-        for key in ("medicine", "history", "education", "coding", "ai", "agents", "tools", "india"):
+        for key in ("medicine", "history", "education", "coding", "ai", "agents", "tools", "india", "deep_learning", "computer_vision", "audio_speech", "semiconductor_research"):
             self.assertIn(key, DOMAIN_QUERIES)
+        from global_research import PROVIDERS
+        self.assertEqual(len(DOMAIN_QUERIES), 70)
+        self.assertEqual(len(PROVIDERS), 15)
 
     @patch("global_research.time.sleep")
     @patch("global_research.harvest_public_metadata")
