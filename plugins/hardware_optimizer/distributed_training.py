@@ -107,9 +107,9 @@ def save_checkpoint(path, *, model, optimizer=None, epoch=0, metadata=None,
     payload = {
         "format_version": 1,
         "model_state": module.state_dict(),
-        "optimizer_state": optimizer.state_dict() if optimizer else None,
-        "scheduler_state": scheduler.state_dict() if scheduler else None,
-        "scaler_state": scaler.state_dict() if scaler else None,
+        "optimizer_state": optimizer.state_dict() if optimizer is not None else None,
+        "scheduler_state": scheduler.state_dict() if scheduler is not None else None,
+        "scaler_state": scaler.state_dict() if scaler is not None else None,
         "epoch": int(epoch), "metadata": metadata or {},
     }
     fd, temp_name = tempfile.mkstemp(prefix=".visual-checkpoint-", suffix=".tmp",
