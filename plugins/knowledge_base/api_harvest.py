@@ -1,7 +1,9 @@
 """Bounded metadata harvesting from allowlisted public research/data APIs.
 
-Search-result metadata only; not full-text harvesting or complete bulk mirrors.
+Only public search metadata is indexed here. Dataset files and full texts require
+separate item-level rights checks and the explicit bulk-download workflow.
 """
+import time
 import urllib.parse
 from knowledge_engine import add_source, ingest_source
 
@@ -38,6 +40,31 @@ PROVIDERS = {
         "topic": "earth-observation-metadata",
         "build": lambda q, n: {"keyword": q, "page_size": n},
     },
+    "huggingface": {
+        "base": "https://huggingface.co/api/datasets",
+        "license": "Dataset metadata public; each dataset card/file has its own license",
+        "topic": "machine-learning-datasets-metadata",
+        "build": lambda q, n: {"search": q, "limit": n},
+    },
+    "pubmed": {
+        "base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+        "license": "PubMed bibliographic metadata; article full-text rights vary",
+        "topic": "biomedical-literature-metadata",
+        "build": lambda q, n: {"db": "pubmed", "term": q, "retmax": n, "retmode": "json"},
+    },
+    "stackoverflow": {
+        "base": "https://api.stackexchange.com/2.3/search/advanced",
+        "license": "Stack Exchange content is CC BY-SA; preserve attribution and applicable version",
+        "topic": "programming-qa-metadata",
+        "build": lambda q, n: {"site": "stackoverflow", "q": q, "pagesize": n,
+            "order": "desc", "sort": "relevance", "filter": "default"},
+    },
+    "arxiv": {
+        "base": "https://export.arxiv.org/api/query",
+        "license": "arXiv metadata CC0; paper files have per-paper licenses",
+        "topic": "scientific-preprint-metadata",
+        "build": lambda q, n: {"search_query": "all:" + q, "start": 0, "max_results": n},
+    },
 }
 
 def harvest_public_metadata(provider, query, limit=10, home=None):
@@ -56,6 +83,9 @@ def harvest_public_metadata(provider, query, limit=10, home=None):
     if queued["status"] == "indexed":
         return {"provider": key, "status": "already_indexed",
                 "source_id": queued["source_id"], "url": url}
+    # arXiv asks bulk clients to keep requests at least three seconds apart.
+    if key == "arxiv":
+        time.sleep(3.0)
     result = ingest_source(queued["source_id"], home)
     return {
         "provider": key, "query": query, "requested_records_max": limit,
