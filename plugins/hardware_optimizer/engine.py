@@ -92,7 +92,8 @@ def hardware_profile():
     tools = {k:v for k,v in tools.items() if v}
     nodes = [p for p in ("/dev/kgsl-3d0","/dev/mali0","/dev/dri/renderD128","/dev/nvidia0","/dev/accel/accel0") if os.path.exists(p)]
     return {"platform":platform.platform(),"machine":platform.machine(),"processor":platform.processor() or "unknown",
-            "logical_cpu_count":os.cpu_count() or 1,"memory":_memory(),"cpu_telemetry":_cpu_telemetry(),\n            "thermal_zones":_thermal_telemetry(),"accelerator_telemetry":_accelerator_telemetry(),"android":_android(),
+            "logical_cpu_count":os.cpu_count() or 1,"memory":_memory(),"cpu_telemetry":_cpu_telemetry(),
+            "thermal_zones":_thermal_telemetry(),"accelerator_telemetry":_accelerator_telemetry(),"android":_android(),
             "onnxruntime_installed":ort is not None,"onnxruntime_version":getattr(ort,"__version__",None),
             "onnx_execution_providers":providers,"gpu_device_nodes":nodes,"local_inference_tools":tools,
             "note":"Device-node presence is not proof that a driver/runtime can execute a model."}
