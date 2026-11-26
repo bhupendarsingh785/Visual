@@ -3102,6 +3102,14 @@ def main():
     if mode == "brains": return print(brains())
     if mode == "restore": return print(data_restore())
     if mode == "sync": return print(data_sync())
+    if mode == "control":
+        # Phone-side allowlisted ChatGPT relay; never exposes a general shell.
+        bridge = os.path.join(HERE, "scripts", "visual-control-bridge.py")
+        if not os.path.isfile(bridge):
+            print("VISUAL control bridge file nahi mila:", bridge); return 1
+        bridge_args = [sys.executable, bridge]
+        if "--check" in sys.argv[2:]: bridge_args.append("--check")
+        return subprocess.call(bridge_args, cwd=HERE)
     if not providers_available(): print("Note: koi API key nahi. Pehle chalao: visual keys")
     if mode in ("web", "always", "voice", "telegram"): resume_tasks()
     if mode == "always":
