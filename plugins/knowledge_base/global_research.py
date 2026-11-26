@@ -1,5 +1,8 @@
 """Rotating, resumable multi-domain public metadata collection for VISUAL."""
+import json
+import os
 import time
+from pathlib import Path
 from api_harvest import harvest_public_metadata
 
 DOMAIN_QUERIES = {
@@ -80,7 +83,7 @@ DOMAIN_QUERIES = {
 PROVIDERS = ("openalex", "crossref", "zenodo", "gbif", "nasa_cmr",
              "huggingface", "pubmed", "stackoverflow", "arxiv", "europe_pmc", "wikidata")
 
-def collect_global_research(topics=None, per_request=25, max_requests=300, home=None, offset=0):
+def collect_global_research(topics=None, per_request=25, max_requests=300, home=None, offset=None):
     """Rotate through all domain/provider tasks so scheduled runs don't repeat only the first page."""
     selected = [x.strip().lower() for x in (topics or []) if x.strip()]
     unknown = sorted(set(selected) - set(DOMAIN_QUERIES))
@@ -91,11 +94,21 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
     max_requests = max(1, min(int(max_requests), 300))
     tasks = [(topic, query, provider) for topic in chosen
              for query in DOMAIN_QUERIES[topic] for provider in PROVIDERS]
-    if tasks:
-        start = int(offset) % len(tasks)
-        tasks = tasks[start:] + tasks[:start]
+    if not tasks:
+        raise ValueError("No provider-query tasks are configured.")
+    state_path = Path(home or Path.home() / ".visual") / "global_research_state.json"
+    saved_offset = 0
+    if offset is None and state_path.is_file():
+        try:
+            saved_offset = int(json.loads(state_path.read_text(encoding="utf-8")).get("next_offset", 0))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            saved_offset = 0
+    start = int(saved_offset if offset is None else offset) % len(tasks)
+    rotated_tasks = tasks[start:] + tasks[:start]
     results, errors = [], []
-    for topic, query, provider in tasks[:max_requests]:
+    attempted = 0
+    for topic, query, provider in rotated_tasks[:max_requests]:
+        attempted += 1
         try:
             item = harvest_public_metadata(provider, query, per_request, home, topic=topic)
             results.append({"topic": topic, **item})
@@ -103,9 +116,21 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
             errors.append({"topic": topic, "provider": provider,
                            "query": query, "error": str(exc)[:240]})
         time.sleep(0.4)
-    summary = _summary(results, errors, min(len(tasks), max_requests), chosen)
-    summary["task_offset"] = int(offset)
+    next_offset = (start + attempted) % len(tasks)
+    state_error = ""
+    try:
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = state_path.with_suffix(".tmp")
+        temp_path.write_text(json.dumps({"next_offset": next_offset, "total_tasks": len(tasks),
+                                         "updated_at": time.time()}, indent=2), encoding="utf-8")
+        os.replace(temp_path, state_path)
+    except OSError as exc:
+        state_error = str(exc)[:240]
+    summary = _summary(results, errors, attempted, chosen)
+    summary["task_offset"] = start
+    summary["next_task_offset"] = next_offset
     summary["total_provider_query_tasks"] = len(tasks)
+    summary["rotation_state_error"] = state_error
     summary["stopped_reason"] = "per-run request cap reached" if len(tasks) > max_requests else "all selected tasks processed"
     return summary
 
