@@ -26,6 +26,61 @@ def _android():
             except (OSError, subprocess.SubprocessError): pass
     return result
 
+def _read_text(path):
+    try:
+        return Path(path).read_text().strip()
+    except OSError:
+        return None
+
+def _cpu_telemetry():
+    cpus = []
+    for base in sorted(Path("/sys/devices/system/cpu").glob("cpu[0-9]*")):
+        if not base.name[3:].isdigit():
+            continue
+        freq = _read_text(base / "cpufreq/scaling_cur_freq")
+        max_freq = _read_text(base / "cpufreq/cpuinfo_max_freq")
+        cpus.append({"cpu": base.name, "current_khz": int(freq) if freq and freq.isdigit() else None,
+                     "max_khz": int(max_freq) if max_freq and max_freq.isdigit() else None})
+    flags = []
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.lower().startswith(("features", "flags")):
+                flags = sorted(set(line.split(":", 1)[1].strip().split()))
+                break
+    except OSError:
+        pass
+    return {"cores": cpus, "instruction_features": flags}
+
+def _thermal_telemetry():
+    zones = []
+    for zone in sorted(Path("/sys/class/thermal").glob("thermal_zone*")):
+        raw = _read_text(zone / "temp")
+        kind = _read_text(zone / "type")
+        try:
+            value = int(raw) if raw is not None else None
+            # Linux thermal sysfs convention is millidegrees Celsius.
+            celsius = value / 1000.0 if value is not None and abs(value) > 1000 else value
+        except ValueError:
+            celsius = None
+        if kind or celsius is not None:
+            zones.append({"zone": zone.name, "type": kind, "temperature_c": celsius})
+    return zones
+
+def _accelerator_telemetry():
+    devices = []
+    for node in sorted(Path("/sys/class/devfreq").glob("*")):
+        name = _read_text(node / "name") or node.name
+        current = _read_text(node / "cur_freq")
+        maximum = _read_text(node / "max_freq")
+        if current or maximum:
+            devices.append({"name": name, "current_hz": int(current) if current and current.isdigit() else None,
+                            "max_hz": int(maximum) if maximum and maximum.isdigit() else None})
+    for path in ("/sys/class/kgsl/kgsl-3d0/gpu_model", "/sys/class/misc/mali0/device/gpuinfo"):
+        value = _read_text(path)
+        if value:
+            devices.append({"name": "gpu_model", "model": value[:160]})
+    return devices
+
 def hardware_profile():
     ort = None; providers = []
     if importlib.util.find_spec("onnxruntime"):
@@ -37,7 +92,7 @@ def hardware_profile():
     tools = {k:v for k,v in tools.items() if v}
     nodes = [p for p in ("/dev/kgsl-3d0","/dev/mali0","/dev/dri/renderD128","/dev/nvidia0","/dev/accel/accel0") if os.path.exists(p)]
     return {"platform":platform.platform(),"machine":platform.machine(),"processor":platform.processor() or "unknown",
-            "logical_cpu_count":os.cpu_count() or 1,"memory":_memory(),"android":_android(),
+            "logical_cpu_count":os.cpu_count() or 1,"memory":_memory(),"cpu_telemetry":_cpu_telemetry(),\n            "thermal_zones":_thermal_telemetry(),"accelerator_telemetry":_accelerator_telemetry(),"android":_android(),
             "onnxruntime_installed":ort is not None,"onnxruntime_version":getattr(ort,"__version__",None),
             "onnx_execution_providers":providers,"gpu_device_nodes":nodes,"local_inference_tools":tools,
             "note":"Device-node presence is not proof that a driver/runtime can execute a model."}
