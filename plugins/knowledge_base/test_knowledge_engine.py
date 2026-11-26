@@ -60,6 +60,22 @@ class KnowledgeBaseTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _open_public(Request("https://127.0.0.1/private"), timeout=1)
 
+    def test_legacy_database_gets_topic_column(self):
+        import sqlite3
+        from knowledge_engine import _db_path, _connect
+        path = _db_path(self.home)
+        legacy = sqlite3.connect(str(path))
+        legacy.execute("""CREATE TABLE sources (
+            id TEXT PRIMARY KEY, url TEXT UNIQUE NOT NULL, domain TEXT NOT NULL,
+            title TEXT NOT NULL DEFAULT '', license TEXT NOT NULL DEFAULT 'unknown',
+            status TEXT NOT NULL, added_at REAL NOT NULL, fetched_at REAL, etag TEXT,
+            last_modified TEXT, content_hash TEXT, error TEXT NOT NULL DEFAULT '')""")
+        legacy.commit()
+        legacy.close()
+        with _connect(self.home) as db:
+            columns = {row[1] for row in db.execute("PRAGMA table_info(sources)")}
+            self.assertIn("topic", columns)
+
     def test_sqlite_connection_closes_after_context(self):
         from knowledge_engine import _connect
         with _connect(self.home) as db:
