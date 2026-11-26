@@ -57,3 +57,7 @@ The `compute_fabric` module inventories PyTorch CUDA/MPS/XPU devices and ONNX Ru
 
 ## Training execution contract
 Training jobs must be explicit and bounded. The reusable training runtime accepts caller-provided model, dataloaders, optimizer and loss function; it enforces epoch/step/time limits, finite-loss checks, validation-based best-checkpoint selection, early stopping and rollback to the best in-memory weights. It does not download datasets, choose licenses, start jobs automatically or promise multi-GPU training. DDP requires a separately validated launcher/backend and is not inferred from the presence of `torchrun` alone.
+
+
+## Dataset provenance and evaluation
+`dataset_manifest.py` inventories local training data without downloading or uploading it. Every file receives a SHA-256 digest and byte count; a declared source and license are mandatory, and unknown licenses or pending/denied consent quarantine the dataset from training eligibility. The manifest records paths and metadata, not dataset contents. `benchmark.py` provides bounded warm-up and synchronized latency measurements with median/p95 and throughput. Results must be collected on the target machine with identical inputs and runtime versions before claiming performance gains.
