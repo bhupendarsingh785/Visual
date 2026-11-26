@@ -31,7 +31,11 @@ def record(task_id, role, outcome, notes="", home=None):
     if not state or state["status"] != "running" or state["role"] != role:
         raise ValueError("role is not the active workflow stage")
     t = get_task(task_id, home)
-    if role == "planner" and outcome == "pass":
+    if role in {"planner", "coder"} and outcome != "pass":
+        state["cycle"] += 1
+        state["role"] = role if state["cycle"] < MAX_CYCLES else "blocked"
+        if state["role"] == "blocked": state["status"] = "blocked"
+    elif role == "planner" and outcome == "pass":
         if t["status"] == "planning":
             transition(task_id, "designing", "planner plan recorded", home=home)
         state["role"] = "coder"
