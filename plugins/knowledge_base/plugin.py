@@ -3,7 +3,8 @@ import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
 from catalog import queue_catalog, collect_catalog
 from local_import import import_local_file
-from bulk_download import download_dataset\nfrom api_harvest import harvest_public_metadata
+from bulk_download import download_dataset
+from api_harvest import harvest_public_metadata
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
