@@ -2,6 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+import subprocess
+from unittest.mock import patch
 from autonomous_development_engine import create_task
 import execution_engine
 
@@ -22,6 +24,19 @@ class ExecutionEngineTests(unittest.TestCase):
         self.assertEqual(result["status"], "unavailable")
         self.assertFalse(result["secrets_forwarded"])
         self.assertEqual(result["network"], "disabled")
+
+    @patch("execution_engine.subprocess.run")
+    def test_runner_uses_readonly_input_and_ephemeral_workspace(self, run):
+        run.return_value = subprocess.CompletedProcess(["docker"], 0, "ok", "")
+        result = execution_engine._run_one("docker", self.workspace, "python:3.12-slim", ["python", "-m", "unittest"], 10)
+        self.assertEqual(result["status"], "passed")
+        cmd = run.call_args.args[0]
+        self.assertIn("--network=none", cmd)
+        self.assertIn("--read-only", cmd)
+        self.assertIn(str(self.workspace) + ":/input:ro", cmd)
+        self.assertIn("/workspace:rw,exec,nosuid,size=256m,uid=65534,gid=65534,mode=0700", cmd)
+        self.assertNotIn("--privileged", cmd)
+        self.assertNotIn("-e", cmd[cmd.index("-v") + 2:])
 
     def test_unknown_profile_rejected(self):
         with self.assertRaises(ValueError):
