@@ -35,7 +35,7 @@ MAX_OUTPUT = 12000
 def _finish(task_id, report, home=None):
     from autonomous_development_engine import record_execution_result
     record_execution_result(task_id, report, home)
-    return _finish(task_id, report, home)
+    return report
 
 
 def _workspace(task_id, home=None):
