@@ -44,6 +44,22 @@ DOMAIN_QUERIES = {
   "electrical_electronics": ["electrical engineering power electronics circuits semiconductor devices dataset", "microelectronics chip fabrication testing reliability open research data"],
   "transport": ["transportation traffic pedestrian mobility public transit open data", "vehicle dynamics autonomous driving road safety dataset"],
   "construction": ["construction engineering building materials structural health monitoring dataset", "architecture infrastructure bridge civil engineering open data"],
+  "geology": ["geology tectonics minerals volcanology geophysics open research", "earth history rocks soil groundwater geoscience datasets"],
+  "paleontology": ["paleontology fossils prehistoric life evolution open research", "dinosaur fossil vertebrate invertebrate paleobiology collections"],
+  "archaeology_technology": ["archaeological technology ancient engineering tools metallurgy", "history of inventions ancient machines materials construction"],
+  "neuroscience": ["neuroscience brain behavior neural systems open datasets", "cognitive neuroscience motor control perception attention"],
+  "psychology": ["psychology emotion behavior personality development open research", "clinical psychology social psychology experimental datasets"],
+  "biomechanics": ["human biomechanics gait posture locomotion motion capture open data", "muscle skeletal movement ergonomics sports biomechanics"],
+  "sign_language": ["sign language gestures handshape facial grammar open corpus", "gesture recognition sign language linguistics datasets"],
+  "performing_arts": ["dance theatre acting facial expression body language movement", "music performance voice prosody rhythm gesture research"],
+  "food_nutrition": ["food science nutrition public health food composition open data", "agri food processing fermentation food safety research"],
+  "water_resources": ["hydrology water quality groundwater river basin open datasets", "water treatment desalination sanitation engineering research"],
+  "quantum_technology": ["quantum computing quantum information devices open research", "quantum sensors materials communication technology"],
+  "patents_inventions": ["patent inventions technology trends public patent metadata", "historical patents engineering inventions innovation research"],
+  "standards": ["engineering technical standards interoperability public standards", "medical safety manufacturing quality measurement standards"],
+  "open_hardware": ["open source hardware electronics robotics designs", "microcontroller embedded systems circuit schematics open projects"],
+  "public_policy": ["public policy governance institutions development open data", "government services public administration regulatory research"],
+  "discovery_frontier": ["recent scientific discoveries emerging technologies research frontiers", "interdisciplinary unexplored research questions open science"],
   "india": ["India public health agriculture census education", "India history languages geography"]
 }
 
