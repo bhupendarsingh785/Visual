@@ -15,10 +15,10 @@ on:
         type: string
         default: ""
       max_requests:
-        description: "API requests for this run (1-300)"
+        description: "API requests for this run (1-300; larger batches take longer)"
         required: false
         type: number
-        default: 100
+        default: 300
   schedule:
     - cron: "17 */6 * * *"
 
@@ -54,7 +54,7 @@ jobs:
         env:
           PYTHONPATH: plugins/knowledge_base
           VISUAL_TOPICS: ${{ inputs.topics || '' }}
-          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '100' }}
+          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '300' }}
           VISUAL_PER_REQUEST: "25"
         run: python scripts/github_collect_public.py
       - name: Stage SQLite knowledge index
