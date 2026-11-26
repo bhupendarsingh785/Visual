@@ -2382,6 +2382,25 @@ def provider_live_check(provider=""):
         "results": reports, "note": "Only configured keys were tested; each successful call may consume provider quota."},
         ensure_ascii=False, indent=2)[:10000]
 
+@tool("Asli Android/Termux runtime diagnostics: Android release/API, CPU, RAM/storage, Python aur Termux:API command availability. Ye permission/audio background test nahi hai.", {})
+def device_runtime_diagnostics():
+    def probe(cmd, timeout=8):
+        try: return sh(cmd, timeout)[:500]
+        except Exception as exc: return "ERROR: " + type(exc).__name__
+    android = probe(["getprop", "ro.build.version.release"]) if has("getprop") else "unavailable"
+    sdk = probe(["getprop", "ro.build.version.sdk"]) if has("getprop") else "unavailable"
+    mem = probe(["sh", "-c", "grep -E 'MemTotal|MemAvailable' /proc/meminfo"]) if has("sh") else "unavailable"
+    storage = probe(["df", "-h", HOME]) if has("df") else "unavailable"
+    commands = ["termux-battery-status", "termux-microphone-record", "termux-speech-to-text",
+                "termux-tts-speak", "termux-camera-info", "termux-notification", "termux-wake-lock", "adb"]
+    return json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "platform": sys.platform, "python": sys.version.split()[0], "architecture": __import__("platform").machine(),
+        "android_release": android, "android_api": sdk, "memory": mem, "storage": storage,
+        "termux_api_commands_present": {name: has(name) for name in commands},
+        "limitations": ["Command presence does not prove Android permission or hardware operation.",
+                        "Screen-off/Doze/reboot and microphone foreground-service behavior need interactive physical-device tests."]},
+        ensure_ascii=False, indent=2)[:7000]
+
 YES = re.compile(r"^\s*(haan|ha|haa|han|yes|y|ok|okay|kar do|karo|theek hai|thik hai|bhej do|chalo|done|hmm+)\b", re.I)
 NO = re.compile(r"^\s*(nahi|nahin|na|no|mat|cancel|ruko|rehne do)\b", re.I)
 
