@@ -171,7 +171,8 @@ def harvest_public_metadata(provider, query, limit=10, home=None, topic=None):
     return {
         "provider": key, "query": query, "requested_records_max": limit,
         "status": result.get("status"), "source_id": queued["source_id"],
-        "indexed_characters": result.get("characters", 0),
+        "indexed_characters": 0 if result.get("duplicate", False) else result.get("characters", 0),
+        "fetched_characters": result.get("characters", 0),
         "duplicate": result.get("duplicate", False), "url": url,
         "scope": "Search-result metadata only; not full-text or complete repository download.",
         "license_note": cfg["license"],
