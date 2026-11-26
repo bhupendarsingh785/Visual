@@ -1080,7 +1080,7 @@ def upgrade_spec(name, spec):
 
 @tool("UPGRADE kadam 3: bade plugin ki koi bhi file likho (plugins/<naam>/<path>). Entry file 'plugin.py' (isme @tool functions), baaki modules alag files mein, "
       "aur 'test_*.py' mein unittest wale asli test. Sirf file likhta hai; jaanch plugin_test se.",
-      {"name": S("plugin naam"), "path": S("jaise plugin.py, engine.py, test_engine.py"), "content": S("poora content")})
+      {"name": S("plugin naam"), "path": S("jaise plugin.py, engine.py, test_engine.py"), "content": S("poora content")}, risky=True)
 def plugin_file(name, path, content):
     d = _pdir(name); f = _inside(d, path)
     os.makedirs(os.path.dirname(f), exist_ok=True)
@@ -1107,7 +1107,7 @@ def plugin_test(name):
             rep.append(f"❌ syntax: {fn}: {type(exc).__name__}: {str(exc)[:250]}")
     rep.append("⚠️ runtime/import tests yahan nahi chalte. Host-process execution band hai; isolated Docker runner se alag dev_task workspace mein test karein.")
     good = not any(x.startswith("❌") for x in rep)
-    t = getattr(_CTX, "_task", None)
+    t = getattr(_CTX, "task", None)
     if t: t["tests_ok"] = False
     return ("STATIC CHECK PASS (runtime unverified)" if good else "STATIC CHECK FAIL") + "\\n" + "\\n".join(rep)[:6000]
 
@@ -1288,7 +1288,7 @@ def _gen_candidate(p, temp, spec, tests, extra=""):
       "asli chala kar jaancho, sabse achha chuno, galti wale ko doosre models se sudhaarwao, sabse achhe do ko milao, phir install + plugin_test + critic. "
       "Bada upgrade/naya feature BANANE ke liye plugin_file se pehle ye use karo. Lamba chalta hai (minute).",
       {"name": S("plugin naam"), "spec": S("poora SPEC (khaali ho to plugins/<naam>/SPEC.md)", optional=True),
-       "k": N("kitne namoone (default 4)", optional=True), "rounds": N("sudhaar chakkar (default 3)", optional=True)})
+       "k": N("kitne namoone (default 4)", optional=True), "rounds": N("sudhaar chakkar (default 3)", optional=True)}, risky=True)
 def ensemble_code(name, spec="", k=4, rounds=3):
     d = _pdir(name)
     if not spec:
