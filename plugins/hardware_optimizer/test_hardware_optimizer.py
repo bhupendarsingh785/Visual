@@ -11,7 +11,7 @@ class HardwareOptimizerTests(unittest.TestCase):
     def test_profile_has_core_fields(self):
         p = ENGINE.hardware_profile()
         for key in ("machine", "logical_cpu_count", "memory", "onnx_execution_providers",
-                    "gpu_device_nodes", "local_inference_tools"):
+                    "gpu_device_nodes", "local_inference_tools", "cpu_telemetry", "thermal_zones", "accelerator_telemetry"):
             self.assertIn(key, p)
         self.assertGreaterEqual(p["logical_cpu_count"], 1)
 
