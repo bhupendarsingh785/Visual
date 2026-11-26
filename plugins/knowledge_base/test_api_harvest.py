@@ -19,6 +19,17 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
     def test_explicit_research_domain_is_stored(self, add, ingest):
         harvest_public_metadata("openalex", "neural networks", 10, "/tmp/visual-test", topic="deep_learning")
         self.assertEqual(add.call_args.args[2], "deep_learning")
+    @patch("api_harvest.time.sleep")
+    @patch("api_harvest.ingest_source")
+    @patch("api_harvest.add_source", return_value={"source_id":"src_retry","status":"queued"})
+    def test_rate_limit_response_is_retried(self, add, ingest, sleep):
+        import urllib.error
+        ingest.side_effect = [urllib.error.HTTPError("https://api.example.org", 429, "Too Many Requests", {}, None),
+                              {"status":"indexed","characters":700,"duplicate":False}]
+        result = harvest_public_metadata("openalex", "neural networks", 10, "/tmp/visual-test")
+        self.assertEqual(result["status"], "indexed")
+        self.assertEqual(ingest.call_count, 2)
+        sleep.assert_called_once()
     def test_unknown_provider_is_rejected(self):
         with self.assertRaises(ValueError):
             harvest_public_metadata("unknown", "test")
