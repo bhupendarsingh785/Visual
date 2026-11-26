@@ -22,6 +22,13 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         from api_harvest import PROVIDERS
         self.assertIn("gbif", PROVIDERS)
         self.assertIn("nasa_cmr", PROVIDERS)
+        for provider in ("huggingface", "pubmed", "stackoverflow", "arxiv"):
+            self.assertIn(provider, PROVIDERS)
+
+    def test_animal_and_veterinary_topics_are_available(self):
+        from global_research import DOMAIN_QUERIES
+        self.assertIn("animals_wildlife", DOMAIN_QUERIES)
+        self.assertIn("veterinary", DOMAIN_QUERIES)
 
     def test_empty_query_is_rejected(self):
         with self.assertRaises(ValueError):
