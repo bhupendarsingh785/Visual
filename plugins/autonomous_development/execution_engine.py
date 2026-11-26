@@ -130,7 +130,7 @@ def run_profile(task_id, profile, home=None, timeout=MAX_SECONDS):
 
 def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
     """Run explicit argv-only test commands inside the same restricted container."""
-    if not isinstance(manifest, dict) or manifest.get("profile") not in PROFILES:
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("profile"), str) or manifest.get("profile") not in PROFILES:
         raise ValueError("manifest profile python ya node hona chahiye")
     commands = manifest.get("commands")
     if not isinstance(commands, list) or not commands or len(commands) > 20:
@@ -155,8 +155,12 @@ def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
         report["limitations"] = "No direct local execution fallback. Configure isolated Docker or managed sandbox."
         return _finish(task_id, report, home)
     image = PROFILES[profile]["image"]
-    check = subprocess.run([docker, "image", "inspect", image], capture_output=True,
-                           text=True, timeout=10, env={"PATH": os.environ.get("PATH", "")})
+    try:
+        check = subprocess.run([docker, "image", "inspect", image], capture_output=True,
+                               text=True, timeout=10, env={"PATH": os.environ.get("PATH", "")})
+    except Exception as exc:
+        report["limitations"] = "Image check failed: " + str(exc)[:200]
+        return _finish(task_id, report, home)
     if check.returncode:
         report["limitations"] = f"Required local image {image} is missing; automatic pull is disabled."
         return _finish(task_id, report, home)
