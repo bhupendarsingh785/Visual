@@ -29,7 +29,8 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         result = harvest_public_metadata("openalex", "neural networks", 10, "/tmp/visual-test")
         self.assertEqual(result["status"], "indexed")
         self.assertEqual(ingest.call_count, 2)
-        sleep.assert_called_once()
+        self.assertGreaterEqual(sleep.call_count, 2)
+        self.assertEqual(sleep.call_args_list[-1].args[0], 2.0)
     def test_unknown_provider_is_rejected(self):
         with self.assertRaises(ValueError):
             harvest_public_metadata("unknown", "test")
