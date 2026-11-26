@@ -48,13 +48,34 @@ header{display:flex;align-items:center;justify-content:space-between}
 video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width:220px;border-radius:12px;border:1px solid var(--c);z-index:5}
 .drawer{font-size:12px;color:var(--m);display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .drawer a{color:var(--c);border:1px solid #16384c;border-radius:12px;padding:3px 9px;white-space:nowrap;text-decoration:none}
+
+/* VISUAL mobile control center */
+.top-actions{display:flex;align-items:center;gap:6px}
+#panelToggle{width:38px;height:34px;border-radius:11px;font-size:15px}
+#sendBtn{width:44px;height:44px;border-radius:15px;font-size:17px}
+.control-panel{position:fixed;inset:0;z-index:20;background:#02070def;display:none;flex-direction:column;padding:calc(16px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));overflow:auto}
+.control-panel.open{display:flex}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.panel-title{font-size:18px;font-weight:800;color:var(--c)}
+.panel-close{width:40px;height:40px;border-radius:12px;border:1px solid #1d4d6e;background:#071c2a;color:var(--c);font-size:20px}
+.panel-section{border:1px solid #17394b;background:linear-gradient(145deg,#071824,#04101a);border-radius:16px;padding:14px;margin-bottom:12px}
+.panel-section h3{font-size:13px;color:var(--c);margin-bottom:10px;letter-spacing:.06em}
+.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.panel-action{min-height:58px;border:1px solid #1b465d;background:#0a2030;color:var(--t);border-radius:12px;padding:10px;text-align:left;font-size:13px}
+.panel-action b{display:block;color:var(--c);font-size:13px;margin-bottom:3px}
+.panel-action:active{background:#10334a}
+.panel-note{font-size:11px;color:var(--m);line-height:1.5}
+.status-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #102c3b;font-size:12px}
+.status-row:last-child{border:0}
+.status-value{color:var(--c);text-align:right;overflow-wrap:anywhere}
+@media(min-width:600px){.control-panel{left:calc(50% - 280px);right:calc(50% - 280px);border-left:1px solid #17394b;border-right:1px solid #17394b}}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <header>
     <div class="brand">{{NAME}} <small id="moodtxt" style="font-size:9px;letter-spacing:.08em;color:var(--c);margin-left:6px"></small> <small id="ver" style="font-size:9px;letter-spacing:.05em;color:#6c8a99"></small></div>
-    <div class="chips"><span class="chip" id="cBrain">dimaag</span><span class="chip" id="cPhone">phone</span><span class="chip" id="cScreen">screen</span></div>
+    <div class="top-actions"><div class="chips"><span class="chip" id="cBrain">dimaag</span><span class="chip" id="cPhone">phone</span><span class="chip" id="cScreen">screen</span></div><button class="btn" id="panelToggle" aria-label="Control center" title="Control Center">☷</button></div>
   </header>
   <nav class="nav"><button id="inboxTab" class="active" type="button">✉ INBOX / MESSAGE</button><button id="voiceTab" type="button">◉ VOICE</button></nav>
   <section class="inbox-head" id="inboxHead"><span>VISUAL INBOX</span><span class="inbox-sub">Sawal poochhein · upgrade kahein · jawab dekhein</span></section>
@@ -69,10 +90,36 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
   <div class="bar">
     <button class="btn" id="cam" title="Camera se dikhao">&#128247;</button>
     <input id="txt" placeholder="{{NAME}} se kuch bhi kaho..." autocomplete="off">
-    <button class="btn mic" id="mic" title="Bolo">&#127908;</button>
+    <button class="btn" id="sendBtn" title="Message bhejo" aria-label="Send">➤</button><button class="btn mic" id="mic" title="Bolo">&#127908;</button>
   </div>
   <input type="file" id="file" accept="image/*" hidden>
 </div>
+<section class="control-panel" id="controlPanel" aria-hidden="true">
+ <div class="panel-head"><div><div class="panel-title">VISUAL CONTROL CENTER</div><div class="panel-note">Aapke phone par chal raha VISUAL — quick controls</div></div><button class="panel-close" id="panelClose" aria-label="Close">×</button></div>
+ <div class="panel-section"><h3>LIVE SYSTEM STATUS</h3>
+  <div class="status-row"><span>AI providers</span><span class="status-value" id="pBrain">Jaanch baaki</span></div>
+  <div class="status-row"><span>Termux phone tools</span><span class="status-value" id="pPhone">Jaanch baaki</span></div>
+  <div class="status-row"><span>Screen control</span><span class="status-value" id="pScreen">Jaanch baaki</span></div>
+  <div class="status-row"><span>Memory facts</span><span class="status-value" id="pFacts">—</span></div>
+  <div class="status-row"><span>VISUAL version</span><span class="status-value" id="pVersion">—</span></div>
+ </div>
+ <div class="panel-section"><h3>KNOWLEDGE & RESEARCH</h3><div class="panel-grid">
+  <button class="panel-action" data-prompt="VISUAL, knowledge_status tool chalao aur local database ke total sources, indexed documents, chunks, errors aur storage ka status batao."><b>Database status</b>Local knowledge check</button>
+  <button class="panel-action" data-prompt="VISUAL, global public research collection shuru karo. knowledge_collect_global_research tool mein topics deep_learning,ai,coding,computer_vision,multimodal_ai,robotics,semiconductor_research,electronics_circuits,materials_science,engineering,android,india,languages,speech_voice; per_request 25; max_requests 300 rakho. Progress aur errors report karo."><b>Start data collection</b>Public research sources</button>
+  <button class="panel-action" data-prompt="VISUAL, Knowledge Base ke curated catalog aur source licenses ka audit karo. Abhi kuch download mat karna; pehle report do."><b>Source audit</b>License & source review</button>
+  <button class="panel-action" data-prompt="VISUAL, local knowledge base mein deep learning aur AI par pehle se indexed data khojo aur sources ke saath summary do."><b>Search knowledge</b>AI / deep learning</button>
+ </div></div>
+ <div class="panel-section"><h3>AGENT & DEVICE</h3><div class="panel-grid">
+  <button class="panel-action" data-prompt="VISUAL, active Engineer tasks ka status, recent results aur failures dikhao."><b>Engineer tasks</b>Progress & reports</button>
+  <button class="panel-action" data-prompt="VISUAL, hardware_status tool chalao. CPU, RAM, Android SoC aur available accelerators ka actual status batao; unsupported hardware assume mat karna."><b>Phone hardware</b>CPU / RAM / accelerator</button>
+  <button class="panel-action" data-prompt="VISUAL, self_intelligence_audit tool chalao aur system ki missing capabilities aur errors ki report do."><b>System audit</b>Tools & runtime</button>
+  <button class="panel-action" data-prompt="VISUAL, available AI providers aur har provider ka connection status batao."><b>AI connections</b>Model providers</button>
+ </div></div>
+ <div class="panel-section"><h3>QUICK HELP</h3><div class="panel-grid">
+  <button class="panel-action" data-prompt="VISUAL, mujhe apne available phone-control tools aur unki permission requirements ki list dikhao."><b>Phone controls</b>Available actions</button>
+  <button class="panel-action" data-prompt="VISUAL, recent creations ki list aur unka preview link dikhao."><b>My creations</b>Files & previews</button>
+ </div><p class="panel-note" style="margin-top:10px">Sensitive actions par VISUAL ka confirmation prompt zaroori rahega. Ye controls aapke existing VISUAL agent ko request bhejte hain; unsupported action ka daava nahi karna chahiye.</p></div>
+</section>
 <video id="vid" autoplay playsinline muted></video>
 <script>
 const $=id=>document.getElementById(id), app=$('app'), log=$('log');
@@ -90,7 +137,12 @@ function step(t){const d=document.createElement('div');d.className='step';d.text
 async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','X-Pin':pin,'X-Visual-Token':VTOKEN},body:body?JSON.stringify(body):undefined});
  if(r.status===401){pin=prompt('PIN daalo')||'';localStorage.setItem('vpin',pin);return api(path,body)} return r.json()}
 async function status(){try{const s=await api('/api/status');$('cBrain').classList.toggle('on',s.brain.length>0);
- $('cPhone').classList.toggle('on',s.termux_api);$('cScreen').classList.toggle('on',s.screen);if(s.mood)setMood(s.mood);if(s.voice)VOICE=s.voice;$('cBrain').title=(s.last_brain&&s.last_brain.name)||'';$('ver').textContent='v'+(s.version||'?')+((s.last_brain&&s.last_brain.name)?' · '+s.last_brain.name.split(':')[0]:'');
+ $('cPhone').classList.toggle('on',s.termux_api);$('cScreen').classList.toggle('on',s.screen);if(s.mood)setMood(s.mood);if(s.voice)VOICE=s.voice;$('cBrain').title=(s.last_brain&&s.last_brain.name)||'';
+ if($('pBrain'))$('pBrain').textContent=s.brain.length?s.brain.join(', '):'Koi provider nahi';
+ if($('pPhone'))$('pPhone').textContent=s.termux_api?'Connected':'Not available';
+ if($('pScreen'))$('pScreen').textContent=s.screen?'Connected':'Not connected';
+ if($('pFacts'))$('pFacts').textContent=String(s.facts??0);
+ if($('pVersion'))$('pVersion').textContent='v'+(s.version||'?');$('ver').textContent='v'+(s.version||'?')+((s.last_brain&&s.last_brain.name)?' · '+s.last_brain.name.split(':')[0]:'');
  $('drawer').innerHTML=s.creations.filter(n=>!n.startsWith('_')).slice(-12).map(n=>`<a href="/creations/${encodeURIComponent(n)}" target="_blank">✦ ${n}</a>`).join('')}catch(e){}}
 let live=false, speaking=false, wakeLock=null;
 const MOODC={'khush':['#7dffb0','#16b86a'],'utsahit':['#ffe27a','#ff9a1a'],'josh mein':['#ffb0f0','#c03bd8'],
@@ -177,6 +229,12 @@ async function toggle(){
  if(window.VLive&&await VLive.available()){$('mic').classList.add('on');if(await VLive.start())return;$('mic').classList.remove('on')}
  if(!SR){add('ai','Is browser mein mic nahi chalta. Chrome use karo.');return}goLive(true)}
 $('mic').onclick=toggle;$('orb').onclick=toggle;
+$('sendBtn').onclick=()=>send($('txt').value.trim(),camStream?grab():null);
+const panel=$('controlPanel');
+$('panelToggle').onclick=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');status()};
+$('panelClose').onclick=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true')};
+panel.addEventListener('click',e=>{const b=e.target.closest('[data-prompt]');if(!b)return;const q=b.getAttribute('data-prompt');panel.classList.remove('open');panel.setAttribute('aria-hidden','true');send(q)});
+
 $('txt').onkeydown=e=>{if(e.key==='Enter')send($('txt').value.trim(),camStream?grab():null)};
 // camera: live dikhao, bolte waqt frame saath jaata hai
 function grab(){const v=$('vid'),c=document.createElement('canvas'),w=640;c.width=w;c.height=Math.round(v.videoHeight*w/(v.videoWidth||1));
