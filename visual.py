@@ -1521,16 +1521,14 @@ Jhooth mat bolo: jo test nahi hua use 'test nahi hua' likho.
 NO_ENGINEER = {"agent_task", "task_status"}
 
 UPGRADE_RULES = """
-YE "UPGRADE/BADA SYSTEM" KAAM HAI. MINIMUM WALA KAAM BILKUL NAHI. Socho: is cheez ka duniya ka sabse achha version kaisa hota hai, wahi banao.
-Zaroori kadam (code inhe jaanchta hai; chhodoge to kaam khatam nahi maana jayega):
-1. RESEARCH: deep_research / web_search se best tareeke, asli libraries/APIs (check_packages, check_url se pakka).
-2. SPEC: upgrade_spec mein poora design: features (advanced wale bhi), architecture (kai files), galti sambhalna, retries/cache, config, keys, test.
-3. BUILD: ensemble_code(name) chalao (SANGAM: kai desh ke AI se kai namoone + alag test + asli chala kar sabse achha + sudhaar + milaan + install).
-   Ye fail ho ya chhota sudhaar chahiye tab plugin_file se files theek karo. Ek file mein sab thoos mat do.
-   Mushkil design faisla ho to council (kai models ki parishad) se poochho.
-4. TEST: plugin_test (ensemble_code khud bhi chalata hai). FAIL ho to trace padh kar asli wajah theek karo.
-5. CRITIC: critic_review. SCORE 8 se kam ho to uski har kami theek karo, phir dobara plugin_test + critic_review.
-6. Jab tests pass + SCORE >= 8 tab self_restart, phir report (kya naya, kaise use kare, score, kya baaki).
+BADA UPGRADE: legacy SANGAM/plugin_test execution path is disabled for safety.
+Use ONLY the durable dev_task_* workflow:
+1. Create a durable task; plan and research; store every source in the research ledger.
+2. Write generated files only into the task workspace.
+3. Run static validation, then isolated Docker Python/Node tests. If Docker is unavailable, mark runtime unavailable; never claim pass.
+4. Inspect failures, patch the workspace, and rerun validation and tests until evidence matches the final workspace hash.
+5. Move to awaiting_approval only with current passing evidence. Never self-approve, install, publish, deploy, or edit live VISUAL code.
+6. Report unsupported test profiles and missing device/service fixtures explicitly.
 """
 
 def _engineer(tid):
