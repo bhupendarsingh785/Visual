@@ -34,7 +34,7 @@ Static inspection of the repository tree, README, main Python entry point, insta
 
 ## Not changed intentionally
 
-- `visual.py`, the active plugins, live voice client, phone-control tools, secrets/data sync, and risky-action confirmation logic were not rewritten.
+- `visual.py`, the live voice client, phone-control tools, secrets/data sync, and risky-action confirmation logic were not rewritten. The active continuous-listening plugin received a focused normalizer recursion fix after CI exposed it.
 - No unknown plugin, user data, API key, memory file, or feature was deleted.
 - No changes were applied to the user's phone or to `main`.
 
