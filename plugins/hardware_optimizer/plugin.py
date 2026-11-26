@@ -3,7 +3,8 @@ import json
 from engine import hardware_profile, optimization_plan, create_onnx_session
 from compute_fabric import compute_fabric_plan
 from dataset_manifest import build_dataset_manifest
-from multi_gpu import multi_gpu_topology, run_multi_gpu_training\nfrom distributed_training import (initialize_process_group, make_distributed_sampler, wrap_ddp, save_checkpoint, load_checkpoint, cleanup_process_group)
+from multi_gpu import multi_gpu_topology, run_multi_gpu_training
+from distributed_training import (initialize_process_group, make_distributed_sampler, wrap_ddp, save_checkpoint, load_checkpoint, cleanup_process_group)
 
 _SESSIONS = {}
 
