@@ -39,5 +39,17 @@ class PayloadTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             bridge.parse_payload(self.envelope("knowledge_status", surprise=True))
 
+
+from unittest.mock import patch
+
+class PollingTests(unittest.TestCase):
+    @patch.object(bridge, "gh", return_value="[]")
+    def test_poll_uses_get_for_issue_listing(self, mocked_gh):
+        bridge.poll_once({"issues": {}})
+        mocked_gh.assert_called_once_with(
+            "api", f"repos/{bridge.REPO}/issues", "-X", "GET",
+            "-f", "state=open", "-f", "per_page=100", "-f", "labels=" + bridge.LABEL
+        )
+
 if __name__ == "__main__":
     unittest.main()
