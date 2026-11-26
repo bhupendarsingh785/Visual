@@ -19,9 +19,11 @@
 
 ## Current implementation boundary
 
-`plugins/knowledge_base/training_prep.py` exports already-indexed knowledge-base documents into JSONL train/validation/test staging files. It defaults to a narrow allowlist of explicit permissive license labels and excludes unknown/restrictive labels. It is a preparation stage only: it does not train weights.
+`plugins/knowledge_base/training_prep.py` exports already-indexed knowledge-base documents into JSONL train/validation/test staging files. It accepts explicit permissive licenses and clearly labeled CC0 metadata sources, excludes unknown/restrictive labels, and keeps all documents from the same source domain in one deterministic split to reduce train/test leakage. Outputs are written atomically. It is a preparation stage only: it does not train weights.
 
-The existing global collector currently gathers bounded API search metadata from OpenAlex, Crossref, Zenodo, GBIF and NASA CMR. It is not yet a full global bulk-data mirror. Each dataset file requires its own rights check, manifest parsing, download/resume, checksum verification and streaming parser. API search metadata must not be mistaken for full records or source documents.
+The existing global collector searches 11 allowlisted APIs: OpenAlex, Crossref, Zenodo, GBIF, NASA CMR, Hugging Face Datasets, PubMed, Stack Exchange, arXiv, Europe PMC and Wikidata. Its research map contains 70 domain keys spanning deep learning, computer vision, multimodal AI, medicine, human behaviour/motion, speech/audio, facial movement, semiconductor research, materials science, robotics, history, education and other fields. Each run is bounded to 300 provider-query tasks and up to 25 metadata records requested per task. Scheduled runs execute every six hours; manual runs persist a cursor so repeated requests continue through the task queue instead of repeating the first batch. Actual records returned, indexed and failed are measured in each workflow report; task count is not record count.
+
+This is still metadata harvesting, not a full global bulk-data mirror. The catalog contains 148 dataset entries, but bulk-download flags remain disabled until each dataset's rights, manifest, size and access method are reviewed. Each dataset file requires its own rights check, manifest parsing, resumable download, checksum verification and streaming parser. API search metadata must not be mistaken for full records, source documents, image/audio/video corpora or model training data.
 
 ## GitHub execution constraints
 
@@ -31,7 +33,8 @@ GitHub Actions is suitable for CI and bounded scheduled jobs, not an unlimited d
 
 - Unit tests for license gating, deterministic splits, deduplication and provenance.
 - Live API smoke tests with request budgets and backoff.
-- Bulk-download tests with resume, checksum, size caps and content-type validation.
+- Bulk-download tests with resume, checksum, size caps, destination traversal protection and HTTPS-only validation.
+- CI matrix for Python 3.11, 3.13 and 3.14; latest commit must be green before release.
 - Corpus quality report and manual sample review before training.
 - Baseline evaluation, training run manifest, checkpoint hash and post-training regression report.
 - No claim of trained model or collected record counts until workflow artifacts and logs prove them.
