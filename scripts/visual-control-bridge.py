@@ -17,7 +17,8 @@ def gh(*args,timeout=25):
 def load_state():
  try:
   d=json.loads(STATE.read_text(encoding="utf-8")); return d if isinstance(d,dict) else {"issues":{}}
- except (OSError,ValueError): return {"issues":{}}
+ except FileNotFoundError: return {"issues":{}}
+ except (OSError,ValueError) as e: raise RuntimeError("Bridge state corrupt; refusing to replay commands: "+str(e))
 def save_state(s):
  HOME.mkdir(parents=True,exist_ok=True); tmp=STATE.with_suffix(".tmp")
  tmp.write_text(json.dumps(s,ensure_ascii=False,indent=2),encoding="utf-8"); os.chmod(tmp,0o600); os.replace(tmp,STATE); os.chmod(STATE,0o600)
