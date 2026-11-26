@@ -84,7 +84,8 @@ class KnowledgeBaseTests(unittest.TestCase):
         with _connect(self.home) as db:
             db.execute("SELECT 1")
         with self.assertRaises(Exception):
-            db.execute("SELECT 1")\n    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
+            db.execute("SELECT 1")
+    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
     def test_add_ingest_search_and_deduplicate(self, _url):
         source = add_source("https://docs.example.org/python", "CC-BY", "python", self.home)
         with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine._open_public", return_value=Response()):
