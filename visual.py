@@ -938,25 +938,57 @@ def _self_path(path):
     return p
 
 def load_plugins():
-    """plugins/*.py ko VISUAL ke andar load karo; har plugin @tool se naye kaam jod sakta hai."""
+    """Load trusted built-in plugins in isolated namespaces and atomically publish their tools.
+
+    Namespace isolation prevents global-name pollution and partial tool registration.
+    It is NOT an OS/process security boundary: plugins still share this interpreter
+    and inherited capabilities. Never load untrusted/generated plugin source here.
+    """
     PLUGIN_ERRORS.clear(); loaded = []
+    core = globals()
     for fn in sorted(os.listdir(PLUGINS)):
         if fn.startswith(("_", ".")): continue
         path = os.path.join(PLUGINS, fn)
-        if os.path.isdir(path):                      # bada plugin: plugins/<naam>/plugin.py + apne modules
+        if os.path.isdir(path):
             entry = os.path.join(path, "plugin.py")
-            if not os.path.exists(entry): continue
-            if path not in sys.path: sys.path.insert(0, path)
-        elif fn.endswith(".py"): entry = path
+            if not os.path.isfile(entry): continue
+            plugin_dir = path
+        elif fn.endswith(".py"):
+            entry = path; plugin_dir = os.path.dirname(entry)
         else: continue
+        staged_tools, staged_risky = {}, set()
+        def staged_tool(desc, params=None, risky=False):
+            def deco(func):
+                name = func.__name__
+                if name in staged_tools:
+                    raise ValueError("duplicate tool name inside plugin: " + name)
+                schema_params = params or {}
+                staged_tools[name] = {"fn": func, "schema": {"type": "function", "function": {
+                    "name": name, "description": desc,
+                    "parameters": {"type": "object", "properties": schema_params,
+                                   "required": [k for k,v in schema_params.items() if not v.get("optional", False)]}}}}
+                if risky: staged_risky.add(name)
+                return func
+            return deco
         try:
-            with open(entry, encoding="utf-8") as f: code = f.read()
-            g = globals(); g["PLUGIN_DIR"] = os.path.dirname(entry)
-            exec(compile(code, entry, "exec"), g)
+            with open(entry, encoding="utf-8") as stream: code = stream.read()
+            namespace = dict(core)
+            namespace.update({"__name__": "visual_plugin_" + re.sub(r"\\W+", "_", fn),
+                              "__file__": entry, "PLUGIN_DIR": plugin_dir,
+                              "TOOLS": staged_tools, "RISKY": staged_risky,
+                              "tool": staged_tool})
+            if plugin_dir not in sys.path: sys.path.insert(0, plugin_dir)
+            exec(compile(code, entry, "exec"), namespace, namespace)
+            collisions = sorted(set(staged_tools).intersection(core["TOOLS"]))
+            if collisions:
+                raise ValueError("tool name collision: " + ", ".join(collisions))
+            # Publish only after the complete plugin imports and executes successfully.
+            core["TOOLS"].update(staged_tools)
+            core["RISKY"].update(staged_risky)
             loaded.append(fn)
-        except Exception as e:
+        except Exception as exc:
             import traceback
-            PLUGIN_ERRORS[fn] = f"{type(e).__name__}: {e} | {traceback.format_exc()[-400:]}"
+            PLUGIN_ERRORS[fn] = f"{type(exc).__name__}: {exc} | {traceback.format_exc()[-700:]}"
     return loaded
 
 def _backup(label):
