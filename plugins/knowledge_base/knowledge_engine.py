@@ -197,3 +197,19 @@ def knowledge_stats(home=None):
           "chunks":db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0],
           "db_bytes":_db_path(home).stat().st_size if _db_path(home).exists() else 0,
           "storage_note":"Local device storage is finite; export/backup or attach larger storage for growth." }
+
+
+def collect_queued(limit=10, home=None):
+    """Fetch a bounded batch of already queued public sources; never crawls links recursively."""
+    limit = max(1, min(int(limit), 30))
+    with _connect(home) as db:
+        rows = db.execute("SELECT id,url FROM sources WHERE status IN ('queued','error') ORDER BY added_at LIMIT ?", (limit,)).fetchall()
+    results = []
+    for row in rows:
+        try:
+            results.append({"source_id": row["id"], "url": row["url"], **ingest_source(row["id"], home)})
+        except Exception as exc:
+            results.append({"source_id": row["id"], "url": row["url"], "status": "error", "error": str(exc)[:240]})
+        time.sleep(1.0)
+    return {"processed": len(results), "results": results, "stats": knowledge_stats(home),
+            "note": "Batch limited to 30 sources; robots.txt, HTTPS, public-IP and 2 MiB/page limits apply."}
