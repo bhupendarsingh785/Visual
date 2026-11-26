@@ -1,7 +1,8 @@
 """Public-source Knowledge Base tools for VISUAL."""
 import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
-from catalog import queue_catalog, collect_catalog\nfrom local_import import import_local_file
+from catalog import queue_catalog, collect_catalog
+from local_import import import_local_file
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
