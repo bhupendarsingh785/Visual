@@ -245,7 +245,7 @@ def tool(desc, params=None, risky=False):
         TOOLS[fn.__name__] = {"fn": fn, "schema": {"type": "function", "function": {
             "name": fn.__name__, "description": desc,
             "parameters": {"type": "object", "properties": params or {},
-                           "required": [k for k, v in (params or {}).items() if not v.pop("optional", False)]}}}}
+                           "required": [k for k, v in (params or {}).items() if not v.get("optional", False)]}}}}
         if risky: RISKY.add(fn.__name__)
         return fn
     return deco
