@@ -3,6 +3,7 @@ import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
 from catalog import queue_catalog, collect_catalog
 from local_import import import_local_file
+from bulk_download import download_dataset
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
@@ -42,3 +43,12 @@ def knowledge_collect_now(limit=10, topics=""):
        "max_records": S("0 = all records; otherwise a bounded number")}, risky=True)
 def knowledge_import_local(path, topic="local-dataset", max_records=0):
     return json.dumps(import_local_file(path, topic, globals().get("HOME"), max_records), ensure_ascii=False)[:12000]
+
+
+@tool("User-selected official public dataset file ko bounded size ke saath download karo. HTTPS only, resume support, SHA-256 verification, private IP/redirect blocking. Download automatic nahi hota; exact URL aur destination user ko dena hoga.",
+      {"url": S("exact official HTTPS file URL"),
+       "destination": S("absolute path inside ~/.visual, Android Download or Documents"),
+       "max_bytes": S("maximum bytes; default 536870912 (512 MiB)"),
+       "expected_sha256": S("optional publisher checksum")}, risky=True)
+def knowledge_download_dataset(url, destination, max_bytes=536870912, expected_sha256=""):
+    return json.dumps(download_dataset(url, destination, max_bytes, expected_sha256, globals().get("HOME")), ensure_ascii=False)[:12000]
