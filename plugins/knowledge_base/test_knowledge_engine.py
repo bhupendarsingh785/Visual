@@ -21,9 +21,37 @@ class KnowledgeBaseTests(unittest.TestCase):
         self.tmp.cleanup()
 
     @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
+    def test_source_topic_is_preserved_in_search_index(self, _url):
+        source = add_source("https://docs.example.org/python", "CC-BY", "deep_learning", self.home)
+        with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine._open_public", return_value=Response()):
+            result = ingest_source(source["source_id"], self.home)
+        self.assertEqual(result["status"], "indexed")
+        found = search_knowledge("Python programming debugging", home=self.home)
+        self.assertTrue(found)
+        self.assertEqual(found[0]["topic"], "deep_learning")
+
+    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
+    def test_short_response_is_marked_error(self, _url):
+        class ShortResponse(Response):
+            def read(self, size=-1): return b"too short"
+        source = add_source("https://docs.example.org/python", "CC-BY", "test", self.home)
+        with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine._open_public", return_value=ShortResponse()):
+            with self.assertRaises(ValueError):
+                ingest_source(source["source_id"], self.home)
+        self.assertEqual(add_source("https://docs.example.org/python", "CC-BY", "test", self.home)["status"], "error")
+
+    def test_redirects_to_non_public_targets_are_rejected(self):
+        from knowledge_engine import _PublicRedirectHandler
+        from urllib.request import Request
+        handler = _PublicRedirectHandler()
+        request = Request("https://docs.example.org/start")
+        with patch("knowledge_engine._public_url", side_effect=ValueError("private target blocked")):
+            with self.assertRaises(ValueError):
+                handler.redirect_request(request, None, 302, "Found", {}, "https://127.0.0.1/admin")
+    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
     def test_add_ingest_search_and_deduplicate(self, _url):
         source = add_source("https://docs.example.org/python", "CC-BY", "python", self.home)
-        with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine.urllib.request.urlopen", return_value=Response()):
+        with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine._open_public", return_value=Response()):
             result = ingest_source(source["source_id"], self.home)
         self.assertEqual(result["status"], "indexed")
         found = search_knowledge("Python programming debugging", home=self.home)
