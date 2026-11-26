@@ -4,10 +4,11 @@ Only public search metadata is indexed here. Dataset files and full texts requir
 separate item-level rights checks and the explicit bulk-download workflow.
 """
 import time
+import urllib.error
 import urllib.parse
 from knowledge_engine import add_source, ingest_source
 
-PROVIDERS = {
+_LAST_REQUEST = {}\n\nPROVIDERS = {
     "openalex": {
         "base": "https://api.openalex.org/works",
         "license": "CC0 metadata; linked full text has separate rights",
