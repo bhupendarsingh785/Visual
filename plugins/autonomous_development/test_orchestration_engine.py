@@ -15,7 +15,7 @@ class OrchestrationTests(unittest.TestCase):
 
     def tearDown(self): self.tmp.cleanup()
 
-    def _reach_security(self, source="print('ok')\\n"):
+    def _reach_security(self, source="print('ok')\n"):
         start(self.tid, self.home)
         record(self.tid, "planner", "pass", home=self.home)
         write_artifact(self.tid, "main.py", source, self.home)
@@ -31,9 +31,9 @@ class OrchestrationTests(unittest.TestCase):
         self.assertEqual(get_task(self.tid, self.home)["status"], "completed")
 
     def test_workspace_change_invalidates_review(self):
-        self._reach_security("print(1)\\n")
+        self._reach_security("print(1)\n")
         record(self.tid, "security_reviewer", "pass", notes=REVIEW, home=self.home)
-        write_artifact(self.tid, "main.py", "print(2)\\n", self.home)
+        write_artifact(self.tid, "main.py", "print(2)\n", self.home)
         with self.assertRaisesRegex(ValueError, "workspace changed"):
             approve(self.tid, "approve", home=self.home)
 
