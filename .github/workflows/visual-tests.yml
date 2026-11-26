@@ -40,6 +40,19 @@ jobs:
       - name: Test Autonomous Development subsystem
         run: PYTHONPATH=plugins/autonomous_development python -m unittest discover -s plugins/autonomous_development -p 'test_*.py' -v
 
+
+  real-training-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU PyTorch for a real optimizer-update test
+        run: python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+      - name: Run real CPU training smoke test
+        run: PYTHONPATH=plugins/hardware_optimizer python -m unittest test_training_runtime.RealTrainingSmokeTests -v
+
   chip-rtl-simulation:
     runs-on: ubuntu-latest
     steps:
