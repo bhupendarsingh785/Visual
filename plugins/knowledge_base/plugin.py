@@ -63,7 +63,7 @@ def knowledge_harvest_public_metadata(provider, query, limit=10):
 
 
 @tool("VISUAL ke liye ek hi run mein deep learning, computer vision, multimodal AI, medical imaging, clinical trials, genomics, human motion, audio/speech, semiconductor research, materials science, robotics agents, medicine, biology, veterinary, wildlife, archaeology, engineering, agriculture, climate, space, law, economy, languages, cybersecurity aur anya domains ke official public APIs se metadata collect aur local index karo. 11 allowlisted APIs; default sabhi domains ka controlled batch; max 300 API requests per run. Retry-after, per-provider pacing aur duplicate checks enabled hain. Yeh metadata harvesting hai, full archive mirror ya model training nahi.", 
-      {"topics": S("optional comma-separated topic keys; blank = all available domains"), "per_request": S("1-25 metadata records per API request; default 5"), "max_requests": S("1-300 API requests per run; default 300")}, risky=True)
-def knowledge_collect_global_research(topics="", per_request=5, max_requests=300):
+      {"topics": S("optional comma-separated topic keys; blank = all available domains"), "per_request": S("1-25 metadata records per API request; default 25"), "max_requests": S("1-300 API requests per run; default 300")}, risky=True)
+def knowledge_collect_global_research(topics="", per_request=25, max_requests=300):
     selected = [x.strip() for x in str(topics).split(",") if x.strip()]
     return json.dumps(collect_global_research(selected, per_request, max_requests, globals().get("HOME")), ensure_ascii=False)[:24000]
