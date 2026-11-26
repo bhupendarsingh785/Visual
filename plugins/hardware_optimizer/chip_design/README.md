@@ -1,37 +1,70 @@
 # VISUAL AI Chip Design Lab
 
-## What is included
+## Scope and honest status
+This directory is a research RTL prototype for a computer/workstation/server accelerator. It is not a fabricated chip and is not yet connected to the host CPU/GPU/DPU runtime. Source code alone cannot install a new compute unit into existing silicon. A real device requires FPGA deployment or a complete ASIC implementation and fabrication.
+
+## Current prototype
 - `rtl/visual_ai_mac_tile.sv`: parameterized signed INT8 multiply-accumulate tile.
-- `rtl/visual_ai_chip_cluster.sv`: four parallel tiles (32 INT8 MAC lanes total by default).
-- A host-facing integration concept for CPU/GPU/DPU systems.
+- `rtl/visual_ai_chip_cluster.sv`: parameterized parallel cluster; default is four tiles × eight lanes = 32 INT8 MAC lanes.
+- `tb/tb_visual_ai_chip_cluster.sv`: self-checking testbench for dot-product result, accumulation, valid signaling and per-tile clear.
+- Existing `plugins/chip_lab`: SIMD, XNOR/popcount and leaky-integrate-and-fire research blocks.
 
-## Important boundary
-These are starter RTL source files describing digital logic. They do not create a physical chip, install silicon into a CPU/GPU, or accelerate the current computer by being present in this repository. To make hardware, synthesize the RTL for a supported FPGA board, validate timing/resource use, then pursue ASIC implementation and fabrication. No FPGA board or fabrication flow is assumed here.
+The cluster is a parallel MAC bank, not yet a complete systolic matrix-multiplication engine or general-purpose processor.
 
-## Intended architecture
-1. Host CPU: operating system, orchestration, control plane and fallback.
-2. Host GPU: graphics and general massively-parallel workloads.
-3. Host DPU/NPU: vendor-supported inference/data-processing path where present.
-4. VISUAL accelerator prototype: deterministic INT8 MAC tile array for matrix/vector kernels.
-5. VISUAL runtime: dispatches only supported kernels to a detected and validated device; all other work remains on existing CPU/GPU/NPU backends.
+## Architecture target
+1. **Host CPU/control complex** — OS, orchestration, command queues, exception handling and software fallback.
+2. **GPU complex** — existing vendor GPU for graphics and parallel kernels, using supported drivers/runtime.
+3. **NPU/AI complex** — vendor-supported inference engine when present.
+4. **DPU/data complex** — networking, storage and data movement where a real DPU exists.
+5. **VISUAL accelerator IP** — dedicated quantized matrix/vector datapath, local SRAM/buffers, DMA, command processor, interrupt/status and host bus interface.
+6. **VISUAL runtime** — capability discovery, workload partitioning, measured scheduling, CPU reference path and rollback.
 
-## Current RTL capability
-The tile computes a sum of pairwise signed 8-bit products over LANES inputs and accumulates the result in a 32-bit register. The cluster instantiates TILES independent tiles. It is a minimal compute datapath, not a complete neural-network processor: it has no DMA, external memory controller, cache, instruction decoder, compiler, PCIe/USB host interface, security subsystem, power management, or verified clock-domain crossing.
+The RTL prototype is an optional future IP block; it must not be advertised as an accelerator available on the current PC until synthesized, deployed and benchmarked on an actual FPGA/ASIC board.
 
-## Build and validation
-With Icarus Verilog installed:
-```sh
-iverilog -g2012 -s visual_ai_chip_cluster -o /tmp/visual_ai_chip.vvp \
-  plugins/hardware_optimizer/chip_design/rtl/visual_ai_mac_tile.sv \
-  plugins/hardware_optimizer/chip_design/rtl/visual_ai_chip_cluster.sv
-vvp /tmp/visual_ai_chip.vvp
-```
-The command above checks elaboration only; a dedicated testbench and FPGA board validation are still required before hardware claims.
+## Research-backed design rules
+- Use a documented, portable instruction/data model. RISC-V Vector (V) defines vector registers, element widths and portable vector operations; do not invent incompatible host CPU opcodes for a first accelerator prototype.
+- Start with a standard host interface (AXI4/AXI4-Lite for FPGA/SoC integration) and separate control/status from high-bandwidth data movement.
+- Build a bit-exact software golden model before optimizing RTL. Test signed extrema (-128, 127), negative products, overflow, reset, stalls, backpressure, clear, repeated commands and malformed transactions.
+- Simulation is necessary but not sufficient. Add randomized cocotb tests, assertions, formal checks with SymbiYosys/Yosys-SMTBMC, lint with Verilator, synthesis statistics with Yosys, and timing/physical implementation with a suitable FPGA or ASIC flow.
+- Keep CPU reference outputs as the correctness oracle. An accelerator result must match the declared quantization/rounding/saturation specification before it can be selected.
+- Profile the whole workload, including DMA and CPU↔accelerator transfers. A faster MAC datapath can still make the application slower if memory movement dominates.
+- Do not overclock, undervolt, write privileged hardware registers or bypass vendor drivers.
 
-## Roadmap to a real accelerator
-- Add a verified testbench and bit-exact software reference.
-- Add command registers, DMA, memory protection and host interface.
-- Add tiled systolic matrix multiplication and activation/quantization blocks.
-- Add clock/reset, interrupt, ECC/parity and fault reporting.
-- Synthesize for a named FPGA target and measure LUT/DSP/BRAM use, Fmax, power and thermal behavior.
-- Only then evaluate an ASIC flow and foundry process. Never claim production silicon without fabrication and board-level tests.
+## Required implementation stages (not marked complete until evidence exists)
+### Stage A — RTL correctness
+- Signed INT8 multiply, accumulation width and overflow behavior formally specified.
+- Saturation/rounding and optional INT4 mode with explicit scale/zero-point contract.
+- Valid/ready protocol with reset and clear semantics.
+- Independent Python reference model and randomized tests.
+- Formal properties for no state change without handshake, reset behavior, no invalid output, and bounded completion.
+
+### Stage B — compute architecture
+- Systolic PE grid with documented dataflow (output-stationary or weight-stationary).
+- Local operand/accumulator buffers and explicit bank-conflict behavior.
+- Command decoder, descriptor validation, bounds checking and error status.
+- DMA and host bus integration with address protection and timeout recovery.
+- Interrupt/status registers and reset/abort recovery.
+
+### Stage C — FPGA proof
+- Named FPGA board and toolchain; clock/reset and pin constraints.
+- Synthesis resource report (LUT/FF/DSP/BRAM), timing closure, Fmax, power estimate.
+- Board-level tests with host driver and real inference workload.
+- CPU/GPU baseline on identical input/model and measured end-to-end latency, throughput, power and thermal results.
+
+### Stage D — ASIC feasibility
+- Select a PDK and compatible standard-cell libraries.
+- Floorplan, placement, clock-tree synthesis, routing, extraction and static timing analysis.
+- DRC/LVS and power-integrity checks; review area, power, IR drop and electromigration.
+- Only after signoff and foundry fabrication may the design be called physical silicon.
+
+## Open toolchain research
+- Icarus Verilog: quick RTL simulation.
+- Verilator: lint and fast compiled simulation.
+- cocotb: Python-driven randomized tests and scoreboards.
+- Yosys: synthesis and logic statistics; not a complete place-and-route tool.
+- SymbiYosys/Yosys-SMTBMC: formal property checking.
+- OpenROAD/OpenLane or LibreLane: ASIC physical-design flow, subject to supported PDK and reproducible configuration.
+- FPGA vendor tools / nextpnr: board-specific mapping and implementation.
+
+## Verification evidence
+The repository CI runs Python tests and Icarus Verilog smoke simulations. CI passing proves only the tests that ran on the specified simulator and software matrix. It does not prove formal correctness, FPGA timing closure, power, performance, or fabrication readiness. Preserve failed runs as regression cases and fix the RTL or testbench based on root-cause evidence rather than weakening assertions.
