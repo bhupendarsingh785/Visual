@@ -56,3 +56,11 @@ jobs:
             plugins/chip_lab/tb/tb_visual_ai_compute_tile.sv
       - name: Run RTL smoke tests
         run: vvp /tmp/visual-chip.vvp
+      - name: Compile multi-tile MAC cluster
+        run: |
+          iverilog -g2012 -s tb_visual_ai_chip_cluster -o /tmp/visual-ai-cluster.vvp \
+            plugins/hardware_optimizer/chip_design/rtl/visual_ai_mac_tile.sv \
+            plugins/hardware_optimizer/chip_design/rtl/visual_ai_chip_cluster.sv \
+            plugins/hardware_optimizer/chip_design/tb/tb_visual_ai_chip_cluster.sv
+      - name: Run multi-tile MAC cluster tests
+        run: vvp /tmp/visual-ai-cluster.vvp
