@@ -81,7 +81,7 @@ class KnowledgeBaseTests(unittest.TestCase):
             source = add_source("https://api.example.org/search", "CC0", "test", self.home)
             with self.assertRaises(ValueError):
                 ingest_source(source["source_id"], self.home, respect_robots=False)
-        self.assertEqual(add_source("https://api.example.org/search", "CC0", "test", self.home)["status"], "error")
+        self.assertEqual(knowledge_stats(self.home)["source_status_counts"]["error"], 1)
 
     def test_redirects_to_non_public_targets_are_rejected(self):
         from knowledge_engine import _PublicRedirectHandler
