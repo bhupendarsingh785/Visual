@@ -88,7 +88,7 @@ PROVIDERS = {
     },
 }
 
-def harvest_public_metadata(provider, query, limit=10, home=None):
+def harvest_public_metadata(provider, query, limit=10, home=None, topic=None):
     """Search one allowlisted API and index a bounded response in the local KB."""
     key = str(provider).strip().lower()
     if key not in PROVIDERS:
@@ -100,7 +100,7 @@ def harvest_public_metadata(provider, query, limit=10, home=None):
     cfg = PROVIDERS[key]
     params = urllib.parse.urlencode(cfg["build"](query, limit), doseq=True)
     url = cfg["base"] + "?" + params
-    queued = add_source(url, cfg["license"], cfg["topic"], home)
+    queued = add_source(url, cfg["license"], str(topic or cfg["topic"]), home)
     if queued["status"] == "indexed":
         return {"provider": key, "status": "already_indexed",
                 "source_id": queued["source_id"], "url": url}
