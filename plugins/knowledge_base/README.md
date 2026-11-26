@@ -30,7 +30,7 @@ Do not ingest personal data, leaked secrets, private repos, paywalled content, o
 robots-disallowed pages.
 
 ## Continuous operation (next integration stage)
-A GitHub Actions metadata collector now runs every six hours. This is cloud-side API metadata collection, not a 24/7 Android worker. A separate on-device worker remains a future integration and should run only while VISUAL is active / Android allows it:
+A GitHub Actions metadata collector now runs every three hours. This is cloud-side API metadata collection, not a 24/7 Android worker. A separate on-device worker remains a future integration and should run only while VISUAL is active / Android allows it:
 - refresh due sources with conditional HTTP requests;
 - discover new sources from curated catalogs, not arbitrary recursive crawling;
 - retry transient errors with exponential backoff and per-domain rate limits;
@@ -81,4 +81,4 @@ Allowed paths are restricted to `~/.visual`, Android shared `Download`, and `Doc
 
 ## Verified research-source registry
 
-`research_sources_registry.json` lists 19 priority research repositories and official portals for biodiversity, animal sounds, marine ecosystems, neuroscience, medicine, engineering and AI. It records the access method, dataset-level rights caveats, collection status and quality checks. Registry presence is discovery metadata only; it does not mean the source has been harvested, a media file has been downloaded, or a license has been granted. Validate the JSON and ensure every listed domain exists in `global_research.py` before expanding the collector.
+`research_sources_registry.json` lists 32 priority research repositories and official portals for biodiversity, animal sounds, marine ecosystems, neuroscience, medicine, engineering and AI. It records the access method, dataset-level rights caveats, collection status and quality checks. Registry presence is discovery metadata only; it does not mean the source has been harvested, a media file has been downloaded, or a license has been granted. Validate the JSON and ensure every listed domain exists in `global_research.py` before expanding the collector.
