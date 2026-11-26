@@ -20,6 +20,17 @@ class GlobalResearchTests(unittest.TestCase):
         self.assertEqual(result["successful_requests"], 3)
         self.assertEqual(harvest.call_count, 3)
 
+    def test_empty_search_results_are_not_counted_as_failures(self):
+        with tempfile.TemporaryDirectory() as home:
+            with patch("global_research.harvest_public_metadata", side_effect=[
+                {"status": "empty", "indexed_characters": 0},
+                {"status": "indexed", "indexed_characters": 100},
+            ]), patch("global_research.time.sleep"):
+                result = collect_global_research(["medicine"], 25, 2, home)
+            self.assertEqual(result["successful_requests"], 1)
+            self.assertEqual(result["empty_results"], 1)
+            self.assertEqual(result["failed_requests"], 0)
+
     def test_manual_runs_persist_and_rotate_task_cursor(self):
         with tempfile.TemporaryDirectory() as home:
             providers = []
