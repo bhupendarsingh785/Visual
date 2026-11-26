@@ -24,7 +24,7 @@ PROVIDERS = {
         "license": "CC0 bibliographic metadata; abstracts/full text may have separate rights",
         "topic": "research-metadata",
         "build": lambda q, n: {"query.bibliographic": q, "rows": n,
-            "select": "DOI,title,author,published,type,URL,license,abstract"},
+            "select": "DOI,title,author,published,type,URL,license"},
     },
     "zenodo": {
         "base": "https://zenodo.org/api/records/",
@@ -122,10 +122,16 @@ def harvest_public_metadata(provider, query, limit=10, home=None, topic=None):
                 raise
             retry_after = exc.headers.get("Retry-After") if exc.headers else None
             try:
-                wait = min(30.0, max(1.0, float(retry_after)))
+                wait = max(delay, float(retry_after))
             except (TypeError, ValueError):
-                wait = 2.0 ** (attempt + 1)
-            time.sleep(wait)
+                wait = max(delay, 2.0 ** (attempt + 1))
+            time.sleep(min(60.0, wait))
+            _LAST_REQUEST[key] = time.monotonic()
+        except (urllib.error.URLError, TimeoutError, OSError):
+            if attempt == 2:
+                raise
+            time.sleep(min(60.0, max(delay, 2.0 ** (attempt + 1))))
+            _LAST_REQUEST[key] = time.monotonic()
     return {
         "provider": key, "query": query, "requested_records_max": limit,
         "status": result.get("status"), "source_id": queued["source_id"],
