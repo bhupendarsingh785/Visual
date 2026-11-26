@@ -3,7 +3,7 @@ import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
 from catalog import queue_catalog, collect_catalog
 from local_import import import_local_file
-from bulk_download import download_dataset
+from bulk_download import download_dataset\nfrom api_harvest import harvest_public_metadata
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
@@ -52,3 +52,9 @@ def knowledge_import_local(path, topic="local-dataset", max_records=0):
        "expected_sha256": S("optional publisher checksum")}, risky=True)
 def knowledge_download_dataset(url, destination, max_bytes=536870912, expected_sha256=""):
     return json.dumps(download_dataset(url, destination, max_bytes, expected_sha256, globals().get("HOME")), ensure_ascii=False)[:12000]
+
+
+@tool("OpenAlex, Crossref ya Zenodo ke official public API se bounded research/dataset metadata khojo aur VISUAL local Knowledge Base mein index karo. Har run mein adhiktam 25 metadata records; yeh full-text ya poora repository download nahi karta.", 
+      {"provider": S("openalex, crossref, or zenodo"), "query": S("topic, title, author, DOI, or dataset keywords"), "limit": S("1-25 records; default 10")}, risky=True)
+def knowledge_harvest_public_metadata(provider, query, limit=10):
+    return json.dumps(harvest_public_metadata(provider, query, limit, globals().get("HOME")), ensure_ascii=False)[:12000]
