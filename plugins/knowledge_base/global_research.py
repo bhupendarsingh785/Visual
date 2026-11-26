@@ -153,6 +153,7 @@ def _summary(results, errors, attempted, topics):
         "empty_results": sum(1 for x in results if x.get("status") == "empty"),
         "failed_requests": len(errors) + sum(1 for x in results if x.get("status") not in ("indexed", "already_indexed", "empty")),
         "indexed_characters": sum(int(x.get("indexed_characters", 0)) for x in results),
+        "fetched_characters": sum(int(x.get("fetched_characters", x.get("indexed_characters", 0))) for x in results),
         "provider_status_counts": provider_status_counts,
         "results": results,
         "errors": errors,
