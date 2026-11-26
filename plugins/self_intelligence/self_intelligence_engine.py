@@ -162,17 +162,29 @@ def save_snapshot(snapshot, findings, home=None):
 
 def latest_report(home=None):
     with _connect(home) as db:
-        row = db.execute("SELECT * FROM snapshots ORDER BY created_at DESC LIMIT 1").fetchone()
-        if not row:
-            return {"snapshot": None, "findings": [], "plans": []}
+        rows = db.execute("SELECT * FROM snapshots ORDER BY created_at DESC LIMIT 2").fetchall()
+        if not rows:
+            return {"snapshot": None, "findings": [], "plans": [], "change_summary": None}
+        row = rows[0]
         snapshot = json.loads(row["payload"])
+        previous = json.loads(rows[1]["payload"]) if len(rows) > 1 else None
+        change_summary = None
+        if previous is not None:
+            old = {x["path"]: (x.get("size"), x.get("mtime")) for x in previous.get("file_inventory", {}).get("files", [])}
+            new = {x["path"]: (x.get("size"), x.get("mtime")) for x in snapshot.get("file_inventory", {}).get("files", [])}
+            change_summary = {
+                "added": sorted(set(new) - set(old))[:500],
+                "removed": sorted(set(old) - set(new))[:500],
+                "changed": sorted(k for k in set(old) & set(new) if old[k] != new[k])[:500],
+                "truncated": bool(previous.get("file_inventory", {}).get("truncated") or snapshot.get("file_inventory", {}).get("truncated")),
+            }
         findings = [dict(x) for x in db.execute(
             "SELECT severity,area,title,detail FROM findings WHERE snapshot_id=? ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END",
             (row["id"],))]
         plans = [dict(x) for x in db.execute(
             "SELECT id,status,title,scope,rationale,risk,acceptance,updated_at FROM improvement_plans ORDER BY updated_at DESC LIMIT 20")]
         return {"snapshot": {"id": row["id"], "created_at": row["created_at"], "digest": row["digest"], "data": snapshot},
-                "findings": findings, "plans": plans}
+                "findings": findings, "plans": plans, "change_summary": change_summary}
 
 
 def create_plan(title, scope, rationale, risk, acceptance, home=None):
@@ -190,7 +202,9 @@ def create_plan(title, scope, rationale, risk, acceptance, home=None):
 
 
 def update_plan(plan_id, status, notes="", home=None):
-    allowed = {"proposed", "approved", "in_progress", "needs_review", "rejected", "completed"}
+    allowed = {"proposed", "approved", "in_progress", "needs_review", "rejected"}
+    if status == "completed":
+        raise ValueError("completion is reserved for an independent verifier; a planning tool cannot self-certify")
     if status not in allowed:
         raise ValueError("status must be one of: " + ", ".join(sorted(allowed)))
     with _connect(home) as db:
