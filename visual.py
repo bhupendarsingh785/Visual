@@ -1525,8 +1525,10 @@ Tareeka (har baar):
 3. Research mein deep_research/web_search use karo. Har source URL, title, summary aur evidence dev_task_add_research se ledger mein record karo; source aur inference ko alag rakho.
 4. Bahar ki jaankari ya library/API par shak ho: check_packages / check_url / cross_check. Nakli library kabhi mat daalo.
 5. Generated source files dev_task_write_file se alag workspace mein banao; dev_task_files aur dev_task_status se artifacts/history verify karo. Live VISUAL source ko seedha overwrite mat karo.
-6. dev_task_validate se Python syntax/JSON/secret-pattern static checks chalao. Ye generated code execute nahi karta; isse unit/integration tests pass hone ka daawa mat karo.
-7. Real execution, package installation, publishing, deployment ya live-core change se pehle owner approval aur isolated test environment zaroori hai. Existing project_* tools sirf owner-approved project scope mein use karo; untrusted code ko Termux user ke unrestricted environment mein mat chalao.
+6. dev_task_validate se Python syntax/JSON/secret-pattern static checks chalao. Phir dev_task_run_tests (Python/Node) ya dev_task_run_manifest se isolated runtime tests chalao. Har test result ledger mein save hota hai; build/upgrade/debug/tool task ko awaiting_approval tak le jaane se pehle isolated runtime tests pass hona anivarya hai.
+7. Docker/approved sandbox unavailable ho to fail-closed report do. Generated code ko Termux/VISUAL process mein seedha execute karke sandbox hone ka daawa kabhi mat karo. Missing test infrastructure ko 'unavailable' likho, 'passed' nahi.
+8. UI/E2E/API/database/load/security/device tests ke liye project ke hisab se test manifest aur matching emulator/service/remote runner chahiye. Sirf Python/Node base profile se sab app types pass hone ka daawa mat karo.
+9. Real package install, publishing, deployment ya live-core change se pehle owner approval aur isolated test environment zaroori hai. Existing project_* tools sirf owner-approved project scope mein use karo; untrusted code ko Termux user ke unrestricted environment mein mat chalao.
 8. Validation evidence ke baad dev_task_transition(..., "awaiting_approval"). Sirf owner dev_task_approve se complete kar sakta hai; agent apne task ko khud complete nahi karega.
 5. Galti mile to trace dhyan se padho, asli wajah dhoondho (andaaze se patch nahi), theek karo, dobara jaancho. Jab tak pass na ho, rukna nahi.
 6. Khud ki galti dhoondhni ho to self_diagnose aur self_errors se shuru karo, phir self_read se code padho.
