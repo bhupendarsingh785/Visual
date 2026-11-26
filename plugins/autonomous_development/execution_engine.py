@@ -74,7 +74,7 @@ def _run_one(docker, workspace, image, argv, timeout):
         "-e", "PYTHONDONTWRITEBYTECODE=1",
         "-e", "PYTEST_ADDOPTS=-p no:cacheprovider",
         "-v", str(workspace) + ":/input:ro",
-        image, "sh", "-c", "cp -a /input/. /workspace/ && cd /workspace && exec \"$@\"", "visual-runner", *argv,
+        image, "sh", "-c", "cp -R /input/. /workspace/ && cd /workspace && exec \"$@\"", "visual-runner", *argv,
     ]
     env = {"PATH": os.environ.get("PATH", ""), "LANG": "C.UTF-8"}
     try:
