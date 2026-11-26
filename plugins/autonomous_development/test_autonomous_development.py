@@ -25,6 +25,17 @@ class DevelopmentEngineTests(unittest.TestCase):
         self.assertEqual(get_task(self.tid, self.home)["status"], "planning")
         self.assertEqual(list_tasks_for_test(self.home)[0]["id"], self.tid)
 
+    def test_only_owner_can_complete_after_successful_validation(self):
+        transition(self.tid, "planning", home=self.home)
+        transition(self.tid, "implementing", home=self.home)
+        transition(self.tid, "validating", home=self.home)
+        write_artifact(self.tid, "main.py", "print('ok')\\n", self.home)
+        validate_artifacts(self.tid, self.home)
+        transition(self.tid, "awaiting_approval", "static checks passed", home=self.home)
+        with self.assertRaises(PermissionError):
+            transition(self.tid, "completed", "agent tries self-approval", actor="agent", home=self.home)
+        self.assertEqual(transition(self.tid, "completed", "owner approved", actor="owner", home=self.home), "completed")
+
     def test_research_requires_https_and_is_persisted(self):
         with self.assertRaises(ValueError):
             add_research(self.tid, "http://example.com", "bad", "summary", home=self.home)
