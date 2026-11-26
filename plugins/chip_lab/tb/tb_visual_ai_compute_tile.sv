@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 module tb_visual_ai_compute_tile;
-    logic clk=0, rst_n=0;
+    logic clk=0, rst_n=1;
     logic [1:0] simd_op;
     logic [63:0] simd_a, simd_b, simd_y;
     logic [31:0] bnn_activation, bnn_weight;
@@ -23,12 +23,28 @@ module tb_visual_ai_compute_tile;
         simd_op=0; simd_a={16'd4,16'd3,16'd2,16'd1}; simd_b={16'd40,16'd30,16'd20,16'd10};
         bnn_activation=32'hffff_0000; bnn_weight=32'hffff_00ff;
         neuron_en=0; neuron_current=0;
-        #2; rst_n=1;
+
+        // Generate a real asynchronous reset edge (1 -> 0), then release it
+        // away from the active clock edge to avoid simulator scheduling races.
+        #1 rst_n=0;
+        repeat (2) @(posedge clk);
+        @(negedge clk); rst_n=1;
         #1;
-        if (simd_y !== {16'd44,16'd33,16'd22,16'd11}) $fatal(1,"SIMD add failed");
+        if (neuron_membrane !== 16'd0 || neuron_spike !== 1'b0)
+            $fatal(1,"neuron reset state failed");
+
+        if (simd_y !== {16'd4,16'd3,16'd2,16'd1}) begin
+            // SIMD op 0 is pass-through on this block.
+            $fatal(1,"SIMD pass-through failed");
+        end
         if (bnn_matches !== 6'd24) $fatal(1,"XNOR/popcount failed: %0d", bnn_matches);
+        simd_op=2'b00; #1;
+        if (simd_y !== {16'd4,16'd3,16'd2,16'd1}) $fatal(1,"SIMD pass-through failed");
+        simd_op=2'b01; #1;
+        if (simd_y !== {16'd44,16'd33,16'd22,16'd11}) $fatal(1,"SIMD add failed");
         simd_op=2'b10; #1;
         if (simd_y !== {16'd160,16'd90,16'd40,16'd10}) $fatal(1,"SIMD multiply failed");
+
         @(negedge clk); neuron_en=1; neuron_current=16'd60;
         @(posedge clk); #1;
         if (neuron_spike !== 1'b0 || neuron_membrane !== 16'd59)
