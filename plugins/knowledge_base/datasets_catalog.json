@@ -1,5 +1,5 @@
 {
-  "catalog_version": 5,
+  "catalog_version": 6,
   "purpose": "Discovery registry for large public datasets. Registry entries are leads, not blanket permission to download or reuse.",
   "download_policy": {
     "require_license_review": true,
@@ -1785,6 +1785,54 @@
       "enabled": false,
       "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
       "metadata_enabled": false
+    },
+    {
+      "name": "Openverse Images",
+      "topic": "open-media-images",
+      "url": "https://api.openverse.org/v1/images/",
+      "access": "Public API; page-limited anonymous search",
+      "license": "Per-item license; preserve creator, source and attribution",
+      "size_class": "large",
+      "coverage": "global",
+      "enabled": false,
+      "metadata_enabled": true,
+      "notes": "Bounded open-media metadata connector enabled; anonymous search pagination is limited. Download only after per-item license and attribution review."
+    },
+    {
+      "name": "Openverse Audio",
+      "topic": "open-media-audio",
+      "url": "https://api.openverse.org/v1/audio/",
+      "access": "Public API; page-limited anonymous search",
+      "license": "Per-item license; preserve creator, source and attribution",
+      "size_class": "large",
+      "coverage": "global",
+      "enabled": false,
+      "metadata_enabled": true,
+      "notes": "Bounded open-audio metadata connector enabled; anonymous search pagination is limited. Download only after per-item license and attribution review."
+    },
+    {
+      "name": "Wikimedia Commons Media",
+      "topic": "wikimedia-commons-media",
+      "url": "https://commons.wikimedia.org/w/api.php",
+      "access": "MediaWiki Action API; image metadata and extmetadata",
+      "license": "Per-file license, author and attribution; verify each item",
+      "size_class": "huge",
+      "coverage": "global",
+      "enabled": false,
+      "metadata_enabled": true,
+      "notes": "Bounded Commons search metadata connector enabled with a descriptive User-Agent and conservative pacing; media files remain disabled until per-file rights review."
+    },
+    {
+      "name": "Internet Archive Advanced Search",
+      "topic": "internet-archive-metadata",
+      "url": "https://archive.org/advancedsearch.php",
+      "access": "Public advanced-search API; metadata records",
+      "license": "Per-item rights; metadata and media reuse terms vary",
+      "size_class": "huge",
+      "coverage": "global",
+      "enabled": false,
+      "metadata_enabled": true,
+      "notes": "Bounded archive metadata connector enabled; no bulk download. Verify item-level rights and file formats before reuse."
     }
   ],
   "expansion_note": "Expanded cross-domain public dataset discovery registry. Disabled by default; no dataset is claimed downloaded. See GLOBAL_DATASET_EXPANSION.md for safe acquisition pipeline.",
