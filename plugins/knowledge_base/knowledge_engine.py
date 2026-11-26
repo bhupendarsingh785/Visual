@@ -22,7 +22,7 @@ from pathlib import Path
 MAX_BYTES = 2 * 1024 * 1024
 CHUNK_CHARS = 1800
 CHUNK_OVERLAP = 180
-USER_AGENT = "VISUAL-KnowledgeBot/1.0 (+user-initiated public-source indexing)"
+USER_AGENT = "VISUAL-KnowledgeBot/1.1 (+https://github.com/bhupendarsingh785/Visual; public metadata indexing)"
 SKIP_TAGS = {"script", "style", "noscript", "svg", "nav", "footer", "header"}
 SECRET_RE = re.compile(r"(?i)(api[_-]?key|password|secret|access[_-]?token)\s*[:=]\s*[^\s<]{8,}")
 
