@@ -31,7 +31,7 @@ class TrainingPrepTests(unittest.TestCase):
             records=[]
             for split in ("train","validation","test"):
                 records += [json.loads(line) for line in (out/(split+".jsonl")).read_text().splitlines()]
-            self.assertEqual(len(records),2)
+            self.assertEqual(len(records),3)
             self.assertTrue(all(x["source_url"].startswith("https://") for x in records))
             self.assertTrue((out/"dataset_manifest.json").exists())
             split_counts = [sum(1 for line in (out/(split+".jsonl")).read_text().splitlines()) for split in ("train","validation","test")]
