@@ -683,6 +683,177 @@
         "Retain provider, spatial resolution, projection and version",
         "Respect restricted national workspaces and sensitive species locations"
       ]
+    },
+    {
+      "id": "who_gho",
+      "name": "World Health Organization Global Health Observatory",
+      "domains": [
+        "medicine_public_health",
+        "medicine_clinical",
+        "disasters"
+      ],
+      "data_types": [
+        "global health indicators",
+        "mortality",
+        "disease burden",
+        "health systems",
+        "risk factors"
+      ],
+      "entry_url": "https://www.who.int/data/gho",
+      "api_docs": "https://www.who.int/data/gho/info/gho-odata-api",
+      "access_mode": "WHO GHO OData API and downloadable indicator datasets",
+      "license_policy": "WHO data terms and third-party source conditions apply; inspect indicator-level attribution and reuse notices; no personal health records.",
+      "collection_status": "discovery_only",
+      "download_policy": "metadata and aggregate indicators first; download only with explicit terms and source attribution",
+      "quality_notes": [
+        "Record indicator definition, unit, population, geography, time coverage and revision date",
+        "Do not compare indicators without checking methodology and age standardization"
+      ]
+    },
+    {
+      "id": "world_bank_data",
+      "name": "World Bank Open Data",
+      "domains": [
+        "economics",
+        "economics_work",
+        "agriculture",
+        "climate",
+        "energy",
+        "education",
+        "public_policy"
+      ],
+      "data_types": [
+        "development indicators",
+        "country statistics",
+        "economy",
+        "population",
+        "education",
+        "energy",
+        "agriculture"
+      ],
+      "entry_url": "https://data.worldbank.org/",
+      "api_docs": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation",
+      "access_mode": "Indicators API, DataBank and bulk downloads",
+      "license_policy": "Many World Bank datasets use CC BY 4.0, but exceptions and third-party data exist; check each dataset's license and attribution.",
+      "collection_status": "discovery_only",
+      "download_policy": "query metadata and indicator subsets first; retain source and indicator metadata",
+      "quality_notes": [
+        "Preserve indicator codes, units, country codes, time series and source notes",
+        "Missing values are not zero; record imputation only as derived data"
+      ]
+    },
+    {
+      "id": "faostat",
+      "name": "FAOSTAT",
+      "domains": [
+        "agriculture",
+        "agriculture_animal_husbandry",
+        "food_nutrition",
+        "plants_traits_ecology",
+        "economics"
+      ],
+      "data_types": [
+        "agriculture production",
+        "food balance",
+        "land use",
+        "forestry",
+        "fisheries",
+        "livestock"
+      ],
+      "entry_url": "https://www.fao.org/faostat/",
+      "api_docs": "https://fenixservices.fao.org/faostat/api/v1/en/",
+      "access_mode": "FAOSTAT API and downloadable data domains",
+      "license_policy": "FAO statistical data reuse and attribution terms apply; verify current FAO open-data license and third-party restrictions for each dataset.",
+      "collection_status": "discovery_only",
+      "download_policy": "use API domain/area/item subsets; preserve FAO metadata and attribution",
+      "quality_notes": [
+        "Keep element, item, area, year, unit and flags",
+        "Check revisions, estimates and country reporting gaps"
+      ]
+    },
+    {
+      "id": "unesco_uis",
+      "name": "UNESCO Institute for Statistics",
+      "domains": [
+        "education",
+        "languages",
+        "culture",
+        "public_policy",
+        "economics"
+      ],
+      "data_types": [
+        "education indicators",
+        "literacy",
+        "science and technology",
+        "culture",
+        "language and heritage statistics"
+      ],
+      "entry_url": "https://uis.unesco.org/",
+      "api_docs": "https://apiportal.uis.unesco.org/",
+      "access_mode": "UIS API and downloadable statistical datasets",
+      "license_policy": "Check UIS data terms and metadata for attribution and third-party source restrictions before redistribution or training.",
+      "collection_status": "discovery_only",
+      "download_policy": "metadata and indicator subsets first; preserve definitions and provenance",
+      "quality_notes": [
+        "Check indicator methodology and national reporting differences",
+        "Do not infer missing country-year values"
+      ]
+    },
+    {
+      "id": "wipo_patents",
+      "name": "WIPO PATENTSCOPE and IP statistics",
+      "domains": [
+        "patents_inventions",
+        "engineering_methods",
+        "semiconductor_research",
+        "materials_science",
+        "technology"
+      ],
+      "data_types": [
+        "patent bibliographic metadata",
+        "patent families",
+        "technology classifications",
+        "IP statistics"
+      ],
+      "entry_url": "https://patentscope.wipo.int/",
+      "api_docs": "https://www.wipo.int/patentscope/en/",
+      "access_mode": "PATENTSCOPE search and WIPO statistical data services",
+      "license_policy": "Patent documents are public records but database access, bulk extraction, images and third-party content have separate terms; do not scrape or redistribute outside permitted channels.",
+      "collection_status": "discovery_only",
+      "download_policy": "use permitted search/export facilities; metadata only unless bulk access is explicitly authorized",
+      "quality_notes": [
+        "Preserve publication number, family, priority date, IPC/CPC codes and jurisdiction",
+        "Patent claims are legal documents, not proof of technical validity"
+      ]
+    },
+    {
+      "id": "ilostat",
+      "name": "International Labour Organization ILOSTAT",
+      "domains": [
+        "economics_work",
+        "economics",
+        "human_behavior",
+        "public_policy",
+        "education"
+      ],
+      "data_types": [
+        "employment",
+        "occupation",
+        "wages",
+        "working time",
+        "skills",
+        "labour market indicators"
+      ],
+      "entry_url": "https://ilostat.ilo.org/",
+      "api_docs": "https://ilostat.ilo.org/data/bulk/",
+      "access_mode": "ILOSTAT API and bulk statistical files",
+      "license_policy": "Check ILOSTAT reuse, citation and third-party source notices for each dataset; preserve source and metadata.",
+      "collection_status": "discovery_only",
+      "download_policy": "use documented bulk/API access with indicator subsets; retain metadata and methodology",
+      "quality_notes": [
+        "Keep ISCO/industry classifications, units, population and survey method",
+        "Separate modelled estimates from national observed statistics"
+      ]
     }
   ],
   "quality_gates": [
