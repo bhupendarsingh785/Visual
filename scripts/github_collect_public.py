@@ -12,7 +12,7 @@ topics = [x.strip() for x in os.environ.get("VISUAL_TOPICS", "").split(",") if x
 result = collect_global_research(
     topics=topics or None,
     per_request=int(os.environ.get("VISUAL_PER_REQUEST", "25")),
-    max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "100")),
+    max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "300")),
     home=home,
     offset=int(os.environ.get("VISUAL_TASK_OFFSET", str((datetime.now(timezone.utc).timetuple().tm_yday * 400) + ((datetime.now(timezone.utc).hour // 6) * 100)))),
 )
