@@ -58,3 +58,19 @@ or terms review before ingestion. This is a curated seed list, not a complete wo
 Once material is indexed, local full-text search works without internet. Live web access is
 an optional way to discover/update information, not a runtime requirement for searching
 already stored knowledge. The system must clearly label stale or unverified knowledge.
+
+
+## Offline local dataset ingestion
+`knowledge_import_local` imports user-owned or reuse-permitted local files directly into the same SQLite/FTS index; it does not need internet. It supports TXT, Markdown, RST, HTML, CSV, JSON, JSONL/NDJSON, XML and gzip-compressed variants. JSONL.GZ is the recommended format for very large datasets because records are read one at a time. Re-running an import deduplicates records by file hash + record number + content hash.
+
+Allowed paths are restricted to `~/.visual`, Android shared `Download`, and `Documents` folders. Example tool call from VISUAL:
+```json
+{"name":"knowledge_import_local","args":{"path":"/storage/emulated/0/Download/my_dataset.jsonl.gz","topic":"science","max_records":0}}
+```
+`max_records: 0` means process until EOF. Large imports should be run while the phone is charging and with sufficient free storage. The importer stores an index/copy of extracted text in SQLite; it does not delete the original dataset. It is not yet a Parquet importer or a vector/embedding index.
+
+## Large public data sources (download selectively)
+- Wikidata structured entity data is CC0; other namespaces and media may carry different terms. Prefer the JSON entity dumps or incremental dumps and process line-by-line; the full dump is not phone-sized. See [official download and license notes](https://www.wikidata.org/wiki/Wikidata:Database_download).
+- OpenAlex public snapshot is free to download anonymously, but the full JSONL snapshot is roughly 745 GB compressed as of the September 2026 release; select entity/date partitions instead of attempting the full snapshot on a phone. See [snapshot format and manifest](https://help.openalex.org/access/snapshot/).
+- NASA's open-data portal is a catalog of thousands of public science datasets; each underlying dataset has its own access and reuse terms. See [NASA Open Data](https://data.nasa.gov/).
+
