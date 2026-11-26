@@ -34,6 +34,8 @@ class TrainingPrepTests(unittest.TestCase):
             self.assertEqual(len(records),3)
             self.assertTrue(all(x["source_url"].startswith("https://") for x in records))
             self.assertTrue((out/"dataset_manifest.json").exists())
+            manifest = json.loads((out/"dataset_manifest.json").read_text())
+            self.assertIn("cc0metadata", manifest["metadata_cc0_prefixes"])
             split_counts = [sum(1 for line in (out/(split+".jsonl")).read_text().splitlines()) for split in ("train","validation","test")]
             self.assertEqual(sum(1 for count in split_counts if count), 1, "same source domain must not leak across splits")
 
