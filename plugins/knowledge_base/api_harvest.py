@@ -90,6 +90,38 @@ PROVIDERS = {
         "delay": 1.0,
         "build": lambda q, n: {"action": "wbsearchentities", "search": q, "language": "en", "format": "json", "limit": n},
     },
+
+    "openverse_images": {
+        "base": "https://api.openverse.org/v1/images/",
+        "delay": 1.0,
+        "license": "Openly-licensed image metadata; each image license and attribution must be preserved",
+        "topic": "open-media-images",
+        "build": lambda q, n: {"q": q, "page_size": min(n, 20)},
+    },
+    "openverse_audio": {
+        "base": "https://api.openverse.org/v1/audio/",
+        "delay": 1.0,
+        "license": "Openly-licensed audio metadata; each recording license and attribution must be preserved",
+        "topic": "open-media-audio",
+        "build": lambda q, n: {"q": q, "page_size": min(n, 20)},
+    },
+    "wikimedia_commons": {
+        "base": "https://commons.wikimedia.org/w/api.php",
+        "delay": 0.5,
+        "license": "Commons media metadata; verify each file's license, author and attribution",
+        "topic": "wikimedia-commons-media",
+        "build": lambda q, n: {"action": "query", "generator": "search", "gsrsearch": q,
+            "gsrnamespace": 6, "gsrlimit": n, "prop": "imageinfo",
+            "iiprop": "url|extmetadata", "format": "json", "formatversion": 2},
+    },
+    "internet_archive": {
+        "base": "https://archive.org/advancedsearch.php",
+        "delay": 1.0,
+        "license": "Archive item metadata; individual item/media reuse terms vary",
+        "topic": "internet-archive-metadata",
+        "build": lambda q, n: {"q": q, "fl[]": ["identifier", "title", "description", "mediatype", "year", "licenseurl"],
+            "rows": n, "page": 1, "output": "json"},
+    },
 }
 
 def harvest_public_metadata(provider, query, limit=10, home=None, topic=None):
