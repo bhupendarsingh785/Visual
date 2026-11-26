@@ -3,6 +3,7 @@ import json
 from engine import hardware_profile, optimization_plan, create_onnx_session
 from compute_fabric import compute_fabric_plan
 from dataset_manifest import build_dataset_manifest
+from multi_gpu import multi_gpu_topology, run_multi_gpu_training
 
 _SESSIONS = {}
 
@@ -42,3 +43,8 @@ def hardware_dataset_manifest(dataset_dir,source,license_name,consent_status="no
     report=build_dataset_manifest(dataset_dir,source=source,license_name=license_name,
                                    consent_status=consent_status)
     return json.dumps(report,ensure_ascii=False,indent=2)[:18000]
+
+
+@tool("Inventory real CUDA GPUs and show the CPU coordinator plus per-GPU model replica workers. Does not create virtual hardware or start training.")
+def hardware_multi_gpu_topology():
+    return json.dumps(multi_gpu_topology(),ensure_ascii=False,indent=2)[:14000]
