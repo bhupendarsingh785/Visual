@@ -43,6 +43,46 @@ class KnowledgeBaseTests(unittest.TestCase):
                 ingest_source(source["source_id"], self.home)
         self.assertEqual(add_source("https://docs.example.org/python", "CC-BY", "test", self.home)["status"], "error")
 
+    def test_empty_json_api_response_is_not_a_fetch_error(self):
+        import json
+        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
+        class JSONResponse(Response):
+            headers = {"Content-Type": "application/json"}
+            def read(self, size=-1):
+                return json.dumps({"items": [], "has_more": False, "quota_remaining": 299}).encode()
+        with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
+             patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            result = ingest_source(source["source_id"], self.home, respect_robots=False)
+        self.assertEqual(result["status"], "empty")
+        self.assertEqual(knowledge_stats(self.home)["documents"], 0)
+        self.assertEqual(knowledge_stats(self.home)["source_status_counts"]["empty"], 1)
+
+    def test_short_nonempty_json_api_result_is_indexed(self):
+        import json
+        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
+        class JSONResponse(Response):
+            headers = {"Content-Type": "application/json"}
+            def read(self, size=-1):
+                return json.dumps({"items": [{"id": "record-1"}]}).encode()
+        with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
+             patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            result = ingest_source(source["source_id"], self.home, respect_robots=False)
+        self.assertEqual(result["status"], "indexed")
+        self.assertEqual(knowledge_stats(self.home)["documents"], 1)
+
+    def test_json_api_error_payload_is_recorded_as_error(self):
+        import json
+        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
+        class JSONResponse(Response):
+            headers = {"Content-Type": "application/json"}
+            def read(self, size=-1):
+                return json.dumps({"error_id": 401, "error_message": "Invalid API key"}).encode()
+        with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
+             patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            with self.assertRaises(ValueError):
+                ingest_source(source["source_id"], self.home, respect_robots=False)
+        self.assertEqual(add_source("https://api.example.org/search", "CC0", "test", self.home)["status"], "error")
+
     def test_redirects_to_non_public_targets_are_rejected(self):
         from knowledge_engine import _PublicRedirectHandler
         from urllib.request import Request
