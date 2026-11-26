@@ -1,6 +1,10 @@
 name: VISUAL public knowledge collection
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-public-collection.yml
   workflow_dispatch:
     inputs:
       topics:
