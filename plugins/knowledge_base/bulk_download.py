@@ -23,6 +23,12 @@ def _validate_url(url):
     p = urllib.parse.urlsplit(str(url).strip())
     if p.scheme != "https" or not p.hostname or p.username or p.password:
         raise ValueError("Only credential-free HTTPS dataset URLs are allowed.")
+    try:
+        port = p.port
+    except ValueError as exc:
+        raise ValueError("Invalid HTTPS port.") from exc
+    if port not in (None, 443):
+        raise ValueError("Only standard HTTPS port 443 is allowed.")
     host = p.hostname.encode("idna").decode("ascii")
     try:
         addresses = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
@@ -40,12 +46,18 @@ def _destination(path, home=None):
     if not p.is_absolute():
         raise ValueError("Destination must be an absolute path.")
     parent = p.parent.resolve()
-    roots = [Path(home or Path.home() / ".visual").expanduser().resolve(),
-             Path("/storage/emulated/0/Download"), Path("/storage/emulated/0/Documents")]
+    home_root = Path(home or Path.home() / ".visual").expanduser().resolve()
+    home_root.mkdir(parents=True, exist_ok=True)
+    roots = [home_root, Path("/storage/emulated/0/Download"), Path("/storage/emulated/0/Documents")]
+    if p.name in ("", ".", ".."):
+        raise ValueError("Destination must include a normal file name.")
     if not any(parent == r or r in parent.parents for r in roots if r.exists()):
         raise ValueError("Destination allowed only inside VISUAL home, Android Download or Documents.")
     parent.mkdir(parents=True, exist_ok=True)
-    return parent / p.name
+    dest = parent / p.name
+    if dest.parent.resolve() != parent:
+        raise ValueError("Destination escapes its allowed folder.")
+    return dest
 
 def download_dataset(url, destination, max_bytes=DEFAULT_CAP, expected_sha256="", home=None):
     """Download one explicitly selected file; .part is retained on interruption for resume."""
@@ -79,12 +91,17 @@ def download_dataset(url, destination, max_bytes=DEFAULT_CAP, expected_sha256=""
             raise ValueError("Server did not honor Range resume; partial file retained. Use a new destination for a fresh download.")
         if not offset and status != 200:
             raise ValueError(f"Unexpected HTTP status: {status}")
+        range_total = None
         if offset:
             content_range = response.headers.get("Content-Range", "")
             if not content_range.startswith(f"bytes {offset}-"):
                 raise ValueError("Content-Range mismatch; partial file retained.")
+            try:
+                range_total = int(content_range.rsplit("/", 1)[1])
+            except (IndexError, ValueError):
+                raise ValueError("Missing or invalid total size in Content-Range; partial file retained.")
         length = response.headers.get("Content-Length")
-        expected_total = offset + int(length) if length and length.isdigit() else None
+        expected_total = range_total if range_total is not None else (offset + int(length) if length and length.isdigit() else None)
         if expected_total is not None and expected_total > cap:
             raise ValueError(f"Remote file size {expected_total} exceeds configured cap {cap}.")
         mode = "ab" if offset else "wb"
