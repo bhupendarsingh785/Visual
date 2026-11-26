@@ -35,18 +35,21 @@ PROVIDERS = {
     },
     "gbif": {
         "base": "https://api.gbif.org/v1/occurrence/search",
+        "delay": 0.5,
         "license": "Occurrence rights vary by record: CC0, CC BY or CC BY-NC",
         "topic": "biodiversity-occurrence-metadata",
         "build": lambda q, n: {"q": q, "limit": n},
     },
     "nasa_cmr": {
         "base": "https://cmr.earthdata.nasa.gov/search/collections.json",
+        "delay": 0.5,
         "license": "Collection metadata public; each data product has its own terms",
         "topic": "earth-observation-metadata",
         "build": lambda q, n: {"keyword": q, "page_size": n},
     },
     "huggingface": {
         "base": "https://huggingface.co/api/datasets",
+        "delay": 1.0,
         "license": "Dataset metadata public; each dataset card/file has its own license",
         "topic": "machine-learning-datasets-metadata",
         "build": lambda q, n: {"search": q, "limit": n},
@@ -60,6 +63,7 @@ PROVIDERS = {
     },
     "stackoverflow": {
         "base": "https://api.stackexchange.com/2.3/search/advanced",
+        "delay": 1.0,
         "license": "Stack Exchange content is CC BY-SA; preserve attribution and applicable version",
         "topic": "programming-qa-metadata",
         "build": lambda q, n: {"site": "stackoverflow", "q": q, "pagesize": n,
