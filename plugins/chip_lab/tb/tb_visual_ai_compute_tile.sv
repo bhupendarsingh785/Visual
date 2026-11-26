@@ -33,15 +33,10 @@ module tb_visual_ai_compute_tile;
         if (neuron_membrane !== 16'd0 || neuron_spike !== 1'b0)
             $fatal(1,"neuron reset state failed");
 
-        if (simd_y !== {16'd4,16'd3,16'd2,16'd1}) begin
-            // SIMD op 0 is pass-through on this block.
-            $fatal(1,"SIMD pass-through failed");
-        end
-        if (bnn_matches !== 6'd24) $fatal(1,"XNOR/popcount failed: %0d", bnn_matches);
-        simd_op=2'b00; #1;
-        if (simd_y !== {16'd4,16'd3,16'd2,16'd1}) $fatal(1,"SIMD pass-through failed");
-        simd_op=2'b01; #1;
         if (simd_y !== {16'd44,16'd33,16'd22,16'd11}) $fatal(1,"SIMD add failed");
+        if (bnn_matches !== 6'd24) $fatal(1,"XNOR/popcount failed: %0d", bnn_matches);
+        simd_op=2'b01; #1;
+        if (simd_y !== {16'hffdc,16'hffe3,16'hfff0,16'hfff7}) $fatal(1,"SIMD subtract failed");
         simd_op=2'b10; #1;
         if (simd_y !== {16'd160,16'd90,16'd40,16'd10}) $fatal(1,"SIMD multiply failed");
 
