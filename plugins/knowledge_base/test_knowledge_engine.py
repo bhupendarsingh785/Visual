@@ -59,20 +59,19 @@ class KnowledgeBaseTests(unittest.TestCase):
 
     def test_short_nonempty_json_api_result_is_indexed(self):
         import json
-        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
         class JSONResponse(Response):
             headers = {"Content-Type": "application/json"}
             def read(self, size=-1):
                 return json.dumps({"items": [{"id": "record-1"}]}).encode()
         with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
              patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            source = add_source("https://api.example.org/search", "CC0", "test", self.home)
             result = ingest_source(source["source_id"], self.home, respect_robots=False)
         self.assertEqual(result["status"], "indexed")
         self.assertEqual(knowledge_stats(self.home)["documents"], 1)
 
     def test_json_api_error_payload_is_recorded_as_error(self):
         import json
-        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
         class JSONResponse(Response):
             headers = {"Content-Type": "application/json"}
             def read(self, size=-1):
