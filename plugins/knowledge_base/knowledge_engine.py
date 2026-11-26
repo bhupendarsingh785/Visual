@@ -26,6 +26,14 @@ USER_AGENT = "VISUAL-KnowledgeBot/1.0 (+user-initiated public-source indexing)"
 SKIP_TAGS = {"script", "style", "noscript", "svg", "nav", "footer", "header"}
 SECRET_RE = re.compile(r"(?i)(api[_-]?key|password|secret|access[_-]?token)\s*[:=]\s*[^\s<]{8,}")
 
+class _ClosingConnection(sqlite3.Connection):
+    """Commit/rollback and always close SQLite handles when used with 'with'."""
+    def __exit__(self, exc_type, exc, tb):
+        try:
+            return super().__exit__(exc_type, exc, tb)
+        finally:
+            self.close()
+
 class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
     """Allow redirects only when the destination remains public HTTPS."""
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -33,6 +41,9 @@ class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, clean)
 
 def _open_public(req, timeout):
+    # Re-resolve and validate immediately before every outbound request, not only
+    # when a source is first queued. Redirect destinations are checked separately.
+    _public_url(req.full_url)
     opener = urllib.request.build_opener(_PublicRedirectHandler())
     return opener.open(req, timeout=timeout)
 
@@ -55,7 +66,7 @@ def _db_path(home=None):
     return root / "knowledge.sqlite3"
 
 def _connect(home=None):
-    db = sqlite3.connect(str(_db_path(home)), timeout=20)
+    db = sqlite3.connect(str(_db_path(home)), timeout=20, factory=_ClosingConnection)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA journal_mode=WAL")
     db.execute("PRAGMA foreign_keys=ON")
@@ -90,6 +101,12 @@ def _public_url(url):
     p = urllib.parse.urlsplit(str(url).strip())
     if p.scheme != "https" or not p.hostname or p.username or p.password:
         raise ValueError("Sirf credential-free HTTPS public URLs allowed hain.")
+    try:
+        port = p.port
+    except ValueError as exc:
+        raise ValueError("Invalid HTTPS port.") from exc
+    if port not in (None, 443):
+        raise ValueError("Only standard HTTPS port 443 is allowed.")
     host = p.hostname.encode("idna").decode("ascii")
     try:
         addresses = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
