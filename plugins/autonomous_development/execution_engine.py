@@ -136,11 +136,14 @@ def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
     if not isinstance(commands, list) or not commands or len(commands) > 20:
         raise ValueError("manifest mein 1 se 20 commands ki list honi chahiye")
     clean = []
+    allowed = {"python": {"python", "python3"}, "node": {"node"}}
     for argv in commands:
         if not isinstance(argv, list) or not argv or len(argv) > 32:
             raise ValueError("har command argv list honi chahiye")
         if any(not isinstance(x, str) or not x or len(x) > 300 or "\x00" in x for x in argv):
             raise ValueError("invalid command argument")
+        if argv[0] not in allowed[manifest["profile"]]:
+            raise ValueError("command executable profile allowlist ke bahar hai")
         clean.append(argv)
     profile = manifest["profile"]
     ws = _workspace(task_id, home)
