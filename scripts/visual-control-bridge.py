@@ -16,7 +16,9 @@ def gh(*args,timeout=25):
  return p.stdout.strip()
 def load_state():
  try:
-  d=json.loads(STATE.read_text(encoding="utf-8")); return d if isinstance(d,dict) else {"issues":{}}
+  d=json.loads(STATE.read_text(encoding="utf-8"))
+  if not isinstance(d,dict) or not isinstance(d.get("issues"),dict): raise RuntimeError("Bridge state schema invalid; refusing to replay commands.")
+  return d
  except FileNotFoundError: return {"issues":{}}
  except (OSError,ValueError) as e: raise RuntimeError("Bridge state corrupt; refusing to replay commands: "+str(e))
 def save_state(s):
