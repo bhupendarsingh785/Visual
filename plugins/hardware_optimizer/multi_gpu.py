@@ -20,6 +20,7 @@ def multi_gpu_topology(torch_module=None):
                 "reason": "PyTorch is not installed; no CUDA device can be verified."
             }
     devices = []
+    inventory_errors = []
     try:
         if torch_module.cuda.is_available():
             for index in range(torch_module.cuda.device_count()):
@@ -31,8 +32,7 @@ def multi_gpu_topology(torch_module=None):
                         "memory_bytes": getattr(props, "total_memory", None),
                     })
                 except Exception as exc:
-                    devices.append({"index": index, "name": f"CUDA device {index}",
-                                    "inventory_error": str(exc)[:160]})
+                    inventory_errors.append({"index": index, "error": str(exc)[:160]})
     except Exception as exc:
         return {"mode": "cpu_only", "physical_cuda_gpus": [],
                 "logical_workers": [{"id": "cpu-control", "role": "orchestration-data-validation"}],
@@ -60,6 +60,7 @@ def multi_gpu_topology(torch_module=None):
         "multi_gpu_training_ready": len(devices) > 1,
         "replica_count": len(devices),
         "reason": reason,
+        "inventory_errors": inventory_errors,
         "limitations": [
             "This implementation uses single-process PyTorch DataParallel for CUDA GPUs only.",
             "MPS/XPU and multi-node DDP are inventoried elsewhere but are not silently treated as CUDA replicas.",
@@ -94,6 +95,8 @@ def run_multi_gpu_training(model, train_loader, validation_loader, optimizer, lo
     result = run_training(wrapped, train_loader, validation_loader, optimizer, loss_fn,
                           device=target_device, **kwargs)
     result["multi_gpu_topology"] = topology
-    result["distributed_training"] = bool(topology["multi_gpu_training_ready"])
+    # DataParallel is single-process data parallelism, not torch.distributed/DDP.
+    result["distributed_training"] = False
+    result["multi_gpu_enabled"] = bool(topology["multi_gpu_training_ready"])
     result["parallel_strategy"] = "torch.nn.DataParallel" if topology["multi_gpu_training_ready"] else "single_device_fallback"
     return result
