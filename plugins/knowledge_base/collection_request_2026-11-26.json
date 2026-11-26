@@ -1,0 +1,19 @@
+{
+  "request_id": "visual-global-research-2026-11-26",
+  "requested_at_utc_date": "2026-11-26",
+  "purpose": "Start the existing VISUAL public research metadata collection workflow across all configured domains; preserve the existing index and avoid duplicate records.",
+  "mode": "incremental_metadata_first",
+  "topics": [],
+  "max_requests": 300,
+  "per_request": 25,
+  "required_checks": [
+    "resume_existing_index",
+    "deduplicate_by_existing_keys",
+    "record_source_url_and_access_time",
+    "record_license_and_provenance_when_available",
+    "sqlite_integrity_check",
+    "report_actual_collection_delta"
+  ],
+  "storage_note": "This request does not authorize bulk dataset downloads, paid storage, or external storage migration. Do not claim a 2 TB corpus unless actual payload bytes are downloaded, checksum-verified, and durably stored.",
+  "note": "This file records an execution request. The workflow's push trigger is expected to start the existing collection workflow; verify the Actions run before claiming execution."
+}
