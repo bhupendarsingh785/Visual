@@ -1,6 +1,7 @@
 """GitHub Actions entry point for VISUAL's resumable metadata collection."""
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from global_research import collect_global_research
 from knowledge_engine import knowledge_stats
@@ -11,8 +12,9 @@ topics = [x.strip() for x in os.environ.get("VISUAL_TOPICS", "").split(",") if x
 result = collect_global_research(
     topics=topics or None,
     per_request=int(os.environ.get("VISUAL_PER_REQUEST", "25")),
-    max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "30")),
+    max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "100")),
     home=home,
+    offset=int(os.environ.get("VISUAL_TASK_OFFSET", str(datetime.now(timezone.utc).timetuple().tm_yday * 100))),
 )
 result["local_index_stats"] = knowledge_stats(home)
 out = Path(os.environ.get("GITHUB_WORKSPACE", ".")) / "visual-collection-report.json"
