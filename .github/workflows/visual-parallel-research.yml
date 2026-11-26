@@ -1,0 +1,77 @@
+name: VISUAL parallel multi-domain research
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-parallel-research.yml
+  workflow_dispatch:
+  schedule:
+    - cron: "43 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    name: Research lane ${{ matrix.lane }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - lane: life-sciences
+            topics: "animal_taxonomy,animal_morphology,animal_behavior,animal_communication,animal_bioacoustics,animal_vision_color,animal_life_history,plants_traits_ecology,ecosystems_foodwebs,agriculture_animal_husbandry,veterinary,biology,genomics_proteomics"
+          - lane: brain-health
+            topics: "neuroscience,neuroscience_cognition,brain_imaging,memory_cognition,learning_intelligence,psychometrics_behavior,psychology,medicine_clinical,medicine_public_health,medical_methods,medical_imaging,clinical_trials"
+          - lane: engineering-computing
+            topics: "deep_learning,computer_vision,multimodal_ai,computer_science_methods,engineering,engineering_methods,semiconductor_research,electronics_circuits,robotics_agents,robotics_perception_control,materials_science,materials_properties,manufacturing_processes,open_hardware"
+          - lane: earth-society
+            topics: "earth_observation,climate,space,oceans,water_resources,energy_systems,food_nutrition,economics_work,education,history_knowledge,philosophy_ethics,language_culture,public_policy,india"
+    env:
+      VISUAL_HOME: ${{ github.workspace }}/.visual
+      PYTHONPATH: plugins/knowledge_base
+      VISUAL_TOPICS: ${{ matrix.topics }}
+      VISUAL_MAX_REQUESTS: "300"
+      VISUAL_PER_REQUEST: "25"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore lane-specific research index
+        uses: actions/cache@v4
+        with:
+          path: .visual
+          key: visual-parallel-${{ matrix.lane }}-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            visual-parallel-${{ matrix.lane }}-${{ runner.os }}-
+      - name: Collect this research lane
+        run: python scripts/github_collect_public.py
+      - name: Verify SQLite integrity and stage index
+        run: |
+          python - <<'PY'
+          import os, sqlite3
+          db = os.path.join(os.environ["VISUAL_HOME"], "knowledge.sqlite3")
+          assert os.path.isfile(db) and os.path.getsize(db) > 0, "missing knowledge database"
+          con = sqlite3.connect(db)
+          try:
+              result = con.execute("PRAGMA integrity_check").fetchone()[0]
+              assert result == "ok", result
+          finally:
+              con.close()
+          PY
+          cp "$VISUAL_HOME/knowledge.sqlite3" "knowledge-${{ matrix.lane }}.sqlite3"
+      - name: Upload lane report and index
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-research-${{ matrix.lane }}-${{ github.run_id }}
+          path: |
+            visual-collection-report.json
+            knowledge-${{ matrix.lane }}.sqlite3
+          if-no-files-found: error
+          retention-days: 30
