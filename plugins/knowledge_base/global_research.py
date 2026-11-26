@@ -98,12 +98,17 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
     if not tasks:
         raise ValueError("No provider-query tasks are configured.")
     state_path = Path(home or Path.home() / ".visual") / "global_research_state.json"
+    state_key = "all" if not selected else ",".join(sorted(set(selected)))
     saved_offset = 0
+    saved_state = {}
     if offset is None and state_path.is_file():
         try:
-            saved_offset = int(json.loads(state_path.read_text(encoding="utf-8")).get("next_offset", 0))
-        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            saved_state = json.loads(state_path.read_text(encoding="utf-8"))
+            saved_offset = int(saved_state.get("next_offsets", {}).get(
+                state_key, saved_state.get("next_offset", 0) if state_key == "all" else 0))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError, AttributeError):
             saved_offset = 0
+            saved_state = {}
     start = int(saved_offset if offset is None else offset) % len(tasks)
     rotated_tasks = tasks[start:] + tasks[:start]
     results, errors = [], []
@@ -122,8 +127,14 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
     try:
         state_path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = state_path.with_suffix(".tmp")
-        temp_path.write_text(json.dumps({"next_offset": next_offset, "total_tasks": len(tasks),
-                                         "updated_at": time.time()}, indent=2), encoding="utf-8")
+        offsets = saved_state.get("next_offsets", {}) if isinstance(saved_state, dict) else {}
+        if not isinstance(offsets, dict):
+            offsets = {}
+        offsets[state_key] = next_offset
+        new_state = {"next_offsets": offsets, "last_task_key": state_key,
+                     "next_offset": offsets.get("all", 0), "total_tasks": len(tasks),
+                     "updated_at": time.time()}
+        temp_path.write_text(json.dumps(new_state, indent=2), encoding="utf-8")
         os.replace(temp_path, state_path)
     except OSError as exc:
         state_error = str(exc)[:240]
