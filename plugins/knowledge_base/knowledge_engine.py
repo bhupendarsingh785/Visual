@@ -155,6 +155,65 @@ def _extract(raw, content_type):
     decoded = SECRET_RE.sub("[REDACTED_SECRET]", decoded)
     return re.sub(r"\n{3,}", "\n\n", decoded).strip()
 
+def _json_result_state(raw, content_type):
+    """Classify JSON API payloads as data, empty, error or invalid without indexing noise."""
+    if "json" not in str(content_type or "").lower():
+        return None
+    try:
+        payload = json.loads(raw.decode("utf-8", errors="replace"))
+    except (ValueError, UnicodeDecodeError):
+        return "invalid"
+    if payload is None or payload == []:
+        return "empty"
+    if isinstance(payload, dict):
+        if any(payload.get(key) not in (None, "", 0, False)
+               for key in ("error", "error_id", "error_description", "error_message")):
+            return "error"
+
+    result_keys = {"results", "items", "entries", "search", "records", "works",
+                   "hits", "result", "idlist", "granules", "collections",
+                   "docs", "datasets", "pages"}
+    nested_keys = {"message", "feed", "resultList", "esearchresult",
+                   "response", "query", "data", "hits", "collection"}
+
+    def inspect(node, depth=0):
+        if depth > 6:
+            return None
+        if isinstance(node, list):
+            return "data" if node else "empty"
+        if not isinstance(node, dict):
+            return None
+        saw_empty = False
+        for key in result_keys:
+            if key not in node:
+                continue
+            value = node[key]
+            if isinstance(value, list):
+                if value:
+                    return "data"
+                saw_empty = True
+            elif isinstance(value, dict):
+                state = inspect(value, depth + 1)
+                if state == "data":
+                    return "data"
+                if state == "error":
+                    return "error"
+                if state == "empty":
+                    saw_empty = True
+        for key in nested_keys:
+            value = node.get(key)
+            if isinstance(value, dict):
+                state = inspect(value, depth + 1)
+                if state == "data":
+                    return "data"
+                if state == "error":
+                    return "error"
+                if state == "empty":
+                    saw_empty = True
+        return "empty" if saw_empty else None
+
+    return inspect(payload)
+
 def _chunks(text):
     text = re.sub(r"[ \t]+", " ", text)
     out, pos = [], 0
@@ -199,12 +258,24 @@ def ingest_source(source_id, home=None, respect_robots=True):
             raw = response.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES: raise ValueError("Page exceeds 2 MiB safety limit")
             title = response.headers.get("X-Page-Title") or urllib.parse.urlsplit(url).path.rsplit("/",1)[-1] or src["domain"]
-            text = _extract(raw, ctype)
+            json_state = _json_result_state(raw, ctype)
+            if json_state == "invalid":
+                raise ValueError("API returned malformed JSON.")
+            if json_state == "error":
+                raise ValueError("API returned an error JSON payload.")
             etag, modified = response.headers.get("ETag"), response.headers.get("Last-Modified")
     except Exception as exc:
         with _connect(home) as db: db.execute("UPDATE sources SET status='error',error=? WHERE id=?", (str(exc)[:500], source_id))
         raise
-    if len(text) < 80:
+    if json_state == "empty":
+        digest = hashlib.sha256(raw).hexdigest()
+        with _connect(home) as db:
+            db.execute("UPDATE sources SET status='empty',fetched_at=?,etag=?,last_modified=?,content_hash=?,error='' WHERE id=?",
+                       (time.time(), etag, modified, digest, source_id))
+        return {"status": "empty", "characters": 0, "duplicate": False,
+                "reason": "Valid API response contained no matching records.", "sha256": digest}
+    text = _extract(raw, ctype)
+    if len(text) < 80 and json_state != "data":
         with _connect(home) as db:
             db.execute("UPDATE sources SET status='error',error=? WHERE id=?",
                        ("Readable content bahut kam mila; page ko index nahi kiya.", source_id))
