@@ -43,3 +43,5 @@ The knowledge base is retrieval-augmented context, not model-weight training. It
 This is an initial acquisition path for searchable scholarly and dataset metadata, not a full repository mirror. It does not download article full text, Zenodo file payloads, OpenAlex snapshots, or every paginated result. Those require separate license-aware manifest discovery, cursor/resumption, storage preflight, and bulk-transfer stages. Each provider's license and access policy remains authoritative.
 
 A CI unit test checks provider allowlisting, query validation, and the 25-record ceiling. The workflow also verifies that the new tool is registered.
+
+The metadata harvester allowlist additionally includes GBIF occurrence search and NASA CMR collection search. These endpoints discover bounded record/collection metadata only. GBIF bulk occurrence downloads require the provider's authenticated download workflow; NASA granule data require product-specific access and terms. Neither connector silently mirrors the complete archive.
