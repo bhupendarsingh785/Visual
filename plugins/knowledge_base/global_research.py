@@ -136,6 +136,16 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
     return summary
 
 def _summary(results, errors, attempted, topics):
+    provider_status_counts = {}
+    for item in results:
+        provider = item.get("provider", "unknown")
+        status = item.get("status", "unknown")
+        counts = provider_status_counts.setdefault(provider, {})
+        counts[status] = counts.get(status, 0) + 1
+    for item in errors:
+        provider = item.get("provider", "unknown")
+        counts = provider_status_counts.setdefault(provider, {})
+        counts["error"] = counts.get("error", 0) + 1
     return {
         "topics": topics,
         "requests_attempted": attempted,
@@ -143,6 +153,7 @@ def _summary(results, errors, attempted, topics):
         "empty_results": sum(1 for x in results if x.get("status") == "empty"),
         "failed_requests": len(errors) + sum(1 for x in results if x.get("status") not in ("indexed", "already_indexed", "empty")),
         "indexed_characters": sum(int(x.get("indexed_characters", 0)) for x in results),
+        "provider_status_counts": provider_status_counts,
         "results": results,
         "errors": errors,
         "scope": "Public API search metadata only; full-text and bulk dataset files require separate item-level rights and download workflows.",
