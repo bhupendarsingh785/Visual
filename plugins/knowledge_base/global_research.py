@@ -97,7 +97,7 @@ def collect_global_research(topics=None, per_request=25, max_requests=300, home=
     results, errors = [], []
     for topic, query, provider in tasks[:max_requests]:
         try:
-            item = harvest_public_metadata(provider, query, per_request, home)
+            item = harvest_public_metadata(provider, query, per_request, home, topic=topic)
             results.append({"topic": topic, **item})
         except Exception as exc:
             errors.append({"topic": topic, "provider": provider,
