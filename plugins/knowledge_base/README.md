@@ -15,6 +15,7 @@ debugging, testing, and researching. It is separate from private user memory and
   2 MiB per-response cap; text/HTML/JSON/XML only; obvious secret-like strings redacted.
 - No recursive crawling, no private repositories, no credential-bearing URLs.
 - Global research collector: 15 allowlisted APIs across 70 subject areas; up to 300 provider-query tasks per run and 25 metadata records requested per task.
+- Dataset registry: 152 curated entries, 15 metadata connectors enabled, and 0 automatic bulk-download entries enabled; every file still needs item-level rights and storage review.
 - GitHub Actions collection schedule: every six hours; collection report and SQLite index are retained as a 30-day artifact. A task count is not a record count; inspect the report for actual successes and failures.
 - Provider-specific pacing for Crossref, Zenodo, PubMed, arXiv, Europe PMC, Wikidata, Hugging Face, Stack Exchange, GBIF and NASA; transient 429/5xx and network failures use bounded retries.
 - Global research cursor persists across manual runs and rotates across the full provider-query queue; scheduled runs also advance the batch offset.
