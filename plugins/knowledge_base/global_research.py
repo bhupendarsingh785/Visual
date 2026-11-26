@@ -80,7 +80,7 @@ DOMAIN_QUERIES = {
 PROVIDERS = ("openalex", "crossref", "zenodo", "gbif", "nasa_cmr",
              "huggingface", "pubmed", "stackoverflow", "arxiv")
 
-def collect_global_research(topics=None, per_request=25, max_requests=100, home=None, offset=0):
+def collect_global_research(topics=None, per_request=25, max_requests=300, home=None, offset=0):
     """Rotate through all domain/provider tasks so scheduled runs don't repeat only the first page."""
     selected = [x.strip().lower() for x in (topics or []) if x.strip()]
     unknown = sorted(set(selected) - set(DOMAIN_QUERIES))
