@@ -1,0 +1,107 @@
+{
+  "plan_version": 1,
+  "name": "VISUAL 150 GB staged public-data acquisition plan",
+  "status": "planning_only_no_bulk_downloads_enabled",
+  "target_bytes": 150000000000,
+  "target_gib": 139.70,
+  "policy": {
+    "never_download_without_verified_item_license": true,
+    "never_treat_public_access_as_reuse_permission": true,
+    "require_official_manifest_or_api_metadata": true,
+    "require_sha256_or_publisher_checksum": true,
+    "require_storage_preflight_and_resume": true,
+    "require_deduplication_and_provenance": true,
+    "require_privacy_and_sensitive_data_screening": true,
+    "require_train_validation_test_split_by_source": true,
+    "no_model_training_until_quality_gate_passes": true,
+    "no_credentials_or_dataset_blobs_in_git": true,
+    "bulk_downloads_enabled_by_default": false
+  },
+  "storage": {
+    "minimum_free_bytes_before_start": 165000000000,
+    "reserve_fraction": 0.10,
+    "recommended_location": "user-controlled persistent disk or object storage",
+    "github_actions_artifacts_are_not_a_150gb_data_lake": true
+  },
+  "allocation": [
+    {
+      "domain": "text_and_knowledge",
+      "target_bytes": 35000000000,
+      "candidate_sources": [
+        {"name": "Wikimedia dumps", "url": "https://dumps.wikimedia.org/", "rights": "CC BY-SA/GFDL; attribution and share-alike obligations; verify dump and component terms"},
+        {"name": "Wikidata dumps", "url": "https://www.wikidata.org/wiki/Wikidata:Database_download", "rights": "structured data CC0; media and linked resources have separate rights"},
+        {"name": "Project Gutenberg", "url": "https://www.gutenberg.org/", "rights": "item-level public-domain status varies by jurisdiction; verify each title"},
+        {"name": "OpenAlex snapshot", "url": "https://help.openalex.org/access/snapshot/", "rights": "metadata CC0; linked full text has separate rights"}
+      ],
+      "selection_rule": "Prefer incremental or topic/language partitions; do not mirror whole snapshots by default."
+    },
+    {
+      "domain": "speech_and_audio",
+      "target_bytes": 25000000000,
+      "candidate_sources": [
+        {"name": "Mozilla Common Voice", "url": "https://commonvoice.mozilla.org/en/datasets", "rights": "verify current release license, language package and speaker-data terms before use"},
+        {"name": "LibriSpeech", "url": "https://www.openslr.org/12/", "rights": "verify current corpus license and source audiobook terms"}
+      ],
+      "selection_rule": "Prioritize Hindi and multilingual speech; preserve speaker metadata only as permitted; remove personal/sensitive material."
+    },
+    {
+      "domain": "images_and_video",
+      "target_bytes": 35000000000,
+      "candidate_sources": [
+        {"name": "COCO", "url": "https://cocodataset.org/", "rights": "image rights and annotation license differ; verify image-level terms"},
+        {"name": "Open Images", "url": "https://storage.googleapis.com/openimages/web/index.html", "rights": "verify image-level license and attribution metadata"},
+        {"name": "Openverse", "url": "https://api.openverse.org/v1/", "rights": "per-item license and attribution required"}
+      ],
+      "selection_rule": "Download only items with explicit compatible licenses; keep attribution and source identifiers."
+    },
+    {
+      "domain": "science_and_earth_observation",
+      "target_bytes": 30000000000,
+      "candidate_sources": [
+        {"name": "NASA Earthdata", "url": "https://www.earthdata.nasa.gov/", "rights": "mission/product-specific terms and third-party exceptions"},
+        {"name": "NOAA NCEI", "url": "https://www.ncei.noaa.gov/", "rights": "verify product-level terms and third-party content"},
+        {"name": "GBIF", "url": "https://www.gbif.org/developer/occurrence", "rights": "record-level CC0/CC BY/CC BY-NC; exclude incompatible records"}
+      ],
+      "selection_rule": "Prefer well-documented scientific products with stable identifiers, checksums and clear reuse terms."
+    },
+    {
+      "domain": "code_and_technical_knowledge",
+      "target_bytes": 15000000000,
+      "candidate_sources": [
+        {"name": "GitHub public repositories", "url": "https://github.com/", "rights": "repository license must explicitly permit intended use; no-license repositories excluded"},
+        {"name": "Stack Exchange data", "url": "https://archive.org/details/stackexchange", "rights": "CC BY-SA; attribution and share-alike obligations"}
+      ],
+      "selection_rule": "Use only licensed source code and technical Q&A; scan for secrets, personal data, malware and generated/vendor files."
+    },
+    {
+      "domain": "structured_public_statistics",
+      "target_bytes": 10000000000,
+      "candidate_sources": [
+        {"name": "World Bank indicators", "url": "https://api.worldbank.org/v2/", "rights": "many datasets CC BY 4.0; verify individual dataset"},
+        {"name": "FAOSTAT", "url": "https://www.fao.org/faostat/", "rights": "dataset terms and attribution; verify"},
+        {"name": "UNData", "url": "https://data.un.org/", "rights": "dataset-specific terms"}
+      ],
+      "selection_rule": "Prefer machine-readable CSV/JSON/SDMX and retain units, definitions, geography and time coverage."
+    }
+  ],
+  "quality_gates": [
+    "Record publisher, canonical URL, retrieval timestamp, license URL/text, version and checksum.",
+    "Reject unknown, conflicting, non-commercial or share-alike terms unless the downstream use is compatible.",
+    "Verify archive structure and expected file count before extraction; block path traversal and archive bombs.",
+    "Deduplicate exact hashes and near-duplicates; retain lineage rather than deleting provenance.",
+    "Validate schema, encoding, missingness, corruption, language, OCR quality and label consistency.",
+    "Separate source-level train/validation/test splits to reduce leakage.",
+    "Generate a dataset card and sample-review report for every imported dataset.",
+    "Report bytes downloaded, bytes accepted, bytes rejected, records indexed and errors separately."
+  ],
+  "execution": {
+    "phase_0": "Measure persistent free storage and network budget; no download if storage gate fails.",
+    "phase_1": "Resolve official manifests and item-level licenses; produce a reviewed acquisition manifest.",
+    "phase_2": "Download one bounded shard at a time with resume, checksum and per-host rate limits.",
+    "phase_3": "Stream-parse archives; do not load large corpora fully into RAM.",
+    "phase_4": "Deduplicate, screen privacy/sensitive data, validate labels and build provenance.",
+    "phase_5": "Build RAG index and separate training-ready JSONL/Parquet shards.",
+    "phase_6": "Run held-out evaluation before any fine-tuning; version data and model artifacts."
+  },
+  "important_limit": "150 GB is a target budget, not data already collected. This manifest does not authorize or start bulk downloads. Dataset sizes, access URLs and licenses must be re-verified against the publisher before each shard is enabled."
+}
