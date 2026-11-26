@@ -3,7 +3,7 @@ import json
 from engine import hardware_profile, optimization_plan, create_onnx_session
 from compute_fabric import compute_fabric_plan
 from dataset_manifest import build_dataset_manifest
-from multi_gpu import multi_gpu_topology, run_multi_gpu_training\nfrom distributed_training import (initialize_process_group, make_distributed_sampler, wrap_ddp, save_checkpoint, load_checkpoint, cleanup_process_group)\nfrom profiler import profile_callable
+from multi_gpu import multi_gpu_topology, run_multi_gpu_training\nfrom distributed_training import (initialize_process_group, make_distributed_sampler, wrap_ddp, save_checkpoint, load_checkpoint, cleanup_process_group)
 
 _SESSIONS = {}
 
@@ -54,7 +54,3 @@ def hardware_ddp_initialize():
     import json
     torch, device, info = initialize_process_group()
     return json.dumps({"device":str(device),**info},ensure_ascii=False,indent=2)
-
-@tool("Profile a caller-provided training step with torch.profiler and export Chrome traces. Profiling adds overhead; this tool does not start training.")
-def hardware_profile_training():
-    raise RuntimeError("Call profile_callable(run_steps, trace_dir=...) from the training integration with an explicit step callback.")
