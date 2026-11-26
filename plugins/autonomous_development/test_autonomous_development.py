@@ -75,7 +75,7 @@ class DevelopmentEngineTests(unittest.TestCase):
         exec(compile(source,"plugin.py","exec"),ns)
         expected = {"dev_task_create","dev_task_status","dev_task_list","dev_task_transition",
                     "dev_task_add_research","dev_task_write_file","dev_task_files","dev_task_validate",
-                    "dev_task_approve"}
+                    "dev_task_approve","dev_task_run_tests","dev_task_run_manifest"}
         self.assertTrue(expected.issubset(registered))
         self.assertTrue(registered["dev_task_approve"]["risky"])
 
