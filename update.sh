@@ -44,8 +44,13 @@ trap rollback EXIT
 git fetch origin
 git pull --ff-only origin "$BRANCH"
 
-python -m compileall -q .
-python -m unittest discover -s plugins -p 'test_*.py' -v
+python -m compileall -q visual.py plugins
+VISUAL_SELFTEST=1 python -c "import sys; sys.argv=['visual.py']; import visual; required={'dev_task_create','dev_orchestration_start','self_intelligence_audit','store_last','recall_last','handle_dohrao'}; missing=required-set(visual.TOOLS); assert not visual.PLUGIN_ERRORS, visual.PLUGIN_ERRORS; assert not missing, 'missing plugin tools: '+str(sorted(missing))"
+python -m unittest discover -s plugins/continuous_listening -p 'test_*.py' -v
+python -m unittest discover -s plugins/memory_repeat -p 'test_*.py' -v
+python -m unittest discover -s tests -p 'test_*.py' -v
+PYTHONPATH=plugins/self_intelligence python -m unittest discover -s plugins/self_intelligence -p 'test_*.py' -v
+PYTHONPATH=plugins/autonomous_development python -m unittest discover -s plugins/autonomous_development -p 'test_*.py' -v
 
 # Launcher ko tabhi refresh karo jab source checks pass ho chuke hon.
 cat > "$PREFIX/bin/visual" <<'EOW'
