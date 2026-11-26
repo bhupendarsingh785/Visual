@@ -29,7 +29,11 @@ def _torch_inventory():
         xpu = getattr(torch, "xpu", None)
         if xpu is not None and getattr(xpu, "is_available", lambda: False)():
             for index in range(xpu.device_count()):
-                devices.append({"kind": "xpu", "index": index, "name": xpu.get_device_name(index)})
+                try:
+                    name = xpu.get_device_name(index)
+                except Exception:
+                    name = f"Intel XPU {index}"
+                devices.append({"kind": "xpu", "index": index, "name": name})
         return {"installed": True, "version": torch.__version__, "available": bool(devices),
                 "devices": devices, "cpu_threads": os.cpu_count() or 1}
     except Exception as exc:
@@ -70,10 +74,10 @@ def compute_fabric_plan(workload="inference", training=False, memory_budget_gb=0
     ort = profile["onnxruntime"]["providers"]
     devices = torch_info.get("devices", [])
     gpu_devices = [d for d in devices if d.get("kind") in ("cuda", "mps", "xpu")]
-    if "CUDAExecutionProvider" in ort:
-        ort_gpu = "CUDAExecutionProvider"
-    elif "TensorrtExecutionProvider" in ort:
+    if "TensorrtExecutionProvider" in ort:
         ort_gpu = "TensorrtExecutionProvider"
+    elif "CUDAExecutionProvider" in ort:
+        ort_gpu = "CUDAExecutionProvider"
     elif "DmlExecutionProvider" in ort:
         ort_gpu = "DmlExecutionProvider"
     elif "CoreMLExecutionProvider" in ort:
@@ -124,5 +128,6 @@ def compute_fabric_plan(workload="inference", training=False, memory_budget_gb=0
     return {"workload": mode, "selected_primary": primary, "selection_reason": selection_reason,
             "cpu_role": "control, data pipeline, preprocessing, fallback",
             "accelerator_role": "parallel tensor compute when runtime and operator support are confirmed",
+            "dpu_role": "network/storage offload only when a vendor DPU runtime and device are explicitly detected",
             "memory_budget_gb": budget, "profile": profile, "plan": steps, "limitations": limitations,
             "training_started": False, "custom_rtl_used": False}
