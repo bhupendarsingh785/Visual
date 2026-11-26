@@ -135,6 +135,14 @@ def transition(task_id, status, notes="", actor="agent", home=None):
         raise ValueError("unknown status")
     with _db(home) as db:
         t = _task(db,task_id)
+        if status == "completed" and actor != "owner":
+            raise PermissionError("sirf owner approval completed status de sakta hai")
+        if status == "awaiting_approval":
+            last = db.execute("SELECT detail FROM events WHERE task_id=? AND event='static_validation' ORDER BY id DESC LIMIT 1",(task_id,)).fetchone()
+            if not last or not json.loads(last["detail"]).get("ok"):
+                raise ValueError("approval se pehle successful static validation zaroori hai")
+        if status == "completed" and t["status"] != "awaiting_approval":
+            raise ValueError("owner approval se pehle task awaiting_approval hona chahiye")
         if status not in _TRANSITIONS[t["status"]]:
             raise ValueError(f"invalid transition: {t['status']} -> {status}")
         db.execute("UPDATE tasks SET status=?,updated_at=?,notes=? WHERE id=?",
