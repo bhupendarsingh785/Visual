@@ -18,7 +18,7 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             harvest_public_metadata("unknown", "test")
 
-    def test_empty_query_is_rejected(self):
+    def test_gbif_and_nasa_providers_are_allowlisted(self):\n        from api_harvest import PROVIDERS\n        self.assertIn("gbif", PROVIDERS)\n        self.assertIn("nasa_cmr", PROVIDERS)\n\n    def test_empty_query_is_rejected(self):
         with self.assertRaises(ValueError):
             harvest_public_metadata("zenodo", " ")
 
