@@ -141,6 +141,10 @@ def transition(task_id, status, notes="", actor="agent", home=None):
             last = db.execute("SELECT detail FROM events WHERE task_id=? AND event='static_validation' ORDER BY id DESC LIMIT 1",(task_id,)).fetchone()
             if not last or not json.loads(last["detail"]).get("ok"):
                 raise ValueError("approval se pehle successful static validation zaroori hai")
+            if t["kind"] in {"build", "upgrade", "debug", "tool"}:
+                run = db.execute("SELECT detail FROM events WHERE task_id=? AND event='test_execution' ORDER BY id DESC LIMIT 1",(task_id,)).fetchone()
+                if not run or json.loads(run["detail"]).get("status") != "passed":
+                    raise ValueError("approval se pehle isolated runtime tests pass hone chahiye; runner unavailable ho to ise complete mat mark karo")
         if status == "completed" and t["status"] != "awaiting_approval":
             raise ValueError("owner approval se pehle task awaiting_approval hona chahiye")
         if status not in _TRANSITIONS[t["status"]]:
