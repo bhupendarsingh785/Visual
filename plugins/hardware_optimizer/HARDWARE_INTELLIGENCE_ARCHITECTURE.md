@@ -50,3 +50,10 @@ D. Sustained 10-30 minute thermal and memory stress tests.
 E. Real workload benchmark and quality checks.
 F. Canary rollout, fallback and rollback.
 No feature is marked production-ready until all relevant gates pass.
+
+
+## Compute-fabric integration
+The `compute_fabric` module inventories PyTorch CUDA/MPS/XPU devices and ONNX Runtime providers at runtime. The scheduler treats CPU as the control/data-loading and correctness-fallback domain; it only selects accelerators reported by installed runtimes. TensorRT is preferred over CUDA when both ONNX providers are exposed, while actual graph partitioning and numerical correctness must still be checked per model. A DPU is not assumed: networking/storage offload is enabled only when a concrete vendor runtime and device are detected. `hardware_compute_fabric_plan` is a preflight planner, not a training executor.
+
+## Training execution contract
+Training jobs must be explicit and bounded. The reusable training runtime accepts caller-provided model, dataloaders, optimizer and loss function; it enforces epoch/step/time limits, finite-loss checks, validation-based best-checkpoint selection, early stopping and rollback to the best in-memory weights. It does not download datasets, choose licenses, start jobs automatically or promise multi-GPU training. DDP requires a separately validated launcher/backend and is not inferred from the presence of `torchrun` alone.
