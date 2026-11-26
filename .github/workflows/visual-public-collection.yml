@@ -9,10 +9,10 @@ on:
         type: string
         default: ""
       max_requests:
-        description: "API requests for this run (1-30)"
+        description: "API requests for this run (1-300)"
         required: false
         type: number
-        default: 30
+        default: 100
   schedule:
     - cron: "17 2 * * *"
 
@@ -26,7 +26,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,7 +46,7 @@ jobs:
           PYTHONPATH: plugins/knowledge_base
           VISUAL_HOME: ~/.visual
           VISUAL_TOPICS: ${{ inputs.topics || '' }}
-          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '30' }}
+          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '100' }}
           VISUAL_PER_REQUEST: "25"
         run: python scripts/github_collect_public.py
       - name: Upload collection report and SQLite index
