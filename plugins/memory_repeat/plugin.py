@@ -1,4 +1,3 @@
-"""Memory Repeat Plugin - handles storing last statement and repeating on 'dohrao' command."""
 """VISUAL memory-repeat tools backed by the shared persistent MemoryStore."""
 from memory_store import store
 
