@@ -3102,6 +3102,13 @@ def main():
     if mode == "brains": return print(brains())
     if mode == "restore": return print(data_restore())
     if mode == "sync": return print(data_sync())
+    if mode == "control":
+        if "--check" in sys.argv:
+            return print(run_tool("chatgpt_bridge_status", {}))
+        print(run_tool("chatgpt_bridge_start", {}), flush=True)
+        print("Bridge polling active. Band karne ke liye CTRL+C dabayein.", flush=True)
+        while True:
+            time.sleep(1)
     if not providers_available(): print("Note: koi API key nahi. Pehle chalao: visual keys")
     if mode in ("web", "always", "voice", "telegram"): resume_tasks()
     if mode == "always":
