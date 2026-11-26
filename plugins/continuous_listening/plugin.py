@@ -20,9 +20,14 @@ def _stop_file():
     return _g("STOP_FILE", os.path.join(os.path.expanduser("~/.visual"), "STOP"))
 
 
+# Capture the core helper before this plugin is exec-loaded into visual.py globals.
+# Looking up "_norm" dynamically here would resolve to this wrapper itself and recurse forever.
+_CORE_NORM = globals().get("_norm")
+
+
 def _norm(s):
-    fn = _g("_norm")
-    if fn:
+    fn = _CORE_NORM or getattr(builtins, "_norm", None)
+    if fn is not None and fn is not _norm:
         return fn(s)
     return re.sub(r"[^\w\s]", " ", s.lower())
 
