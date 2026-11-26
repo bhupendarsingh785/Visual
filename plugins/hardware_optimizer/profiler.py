@@ -37,7 +37,7 @@ def profile_callable(run_steps, *, trace_dir, wait=1, warmup=1, active=3,
     with torch.profiler.profile(
         activities=activities, schedule=schedule, on_trace_ready=handler,
         record_shapes=bool(record_shapes), profile_memory=bool(profile_memory),
-        with_stack=bool(with_stack), profile_memory_format=True
+        with_stack=bool(with_stack)
     ) as prof:
         for _ in range(int(wait + warmup + active) * int(repeat)):
             run_steps()
