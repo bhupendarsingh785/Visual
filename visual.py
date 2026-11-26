@@ -1555,16 +1555,30 @@ def _engineer(tid):
             calls = msg.get("tool_calls") or []
             if not calls:
                 report = (msg.get("content") or "").strip()
-                if is_up and step < budget - 3:            # QUALITY GATE: bina pipeline pure kiye khatam nahi
+                if is_up and step < budget - 3:            # durable workflow evidence gate
                     missing = []
-                    if not t.get("spec"): missing.append("upgrade_spec (research ke baad poora SPEC)")
-                    if not t.get("tests_ok"): missing.append("plugin_test PASS (asli test ke saath)")
-                    if t.get("critic", 0) < 8 and t.get("critic_rounds", 0) < 4: missing.append(f"critic_review SCORE>=8 (abhi {t.get('critic', 'nahi chala')})")
+                    dev_id = t.get("development_task_id")
+                    if not dev_id:
+                        missing.append("dev_task_create aur dev_orchestration_start: durable task/workflow abhi link nahi hua")
+                    else:
+                        try:
+                            state = json.loads(TOOLS["dev_orchestration_status"]["fn"](dev_id))
+                            stage = state.get("status")
+                            if stage == "awaiting_owner_approval":
+                                t["awaiting_owner_approval"] = True
+                            elif stage == "completed":
+                                t["durable_workflow_completed"] = True
+                            else:
+                                missing.append("durable workflow abhi " + str(state.get("role", "unknown")) + " stage par hai")
+                        except Exception as gate_error:
+                            missing.append("durable workflow status verify nahi hua: " + type(gate_error).__name__)
                     if missing:
                         work.append({"role": "assistant", "content": report or "(khaali)"})
-                        work.append({"role": "user", "content": "QUALITY GATE: kaam abhi pura nahi maana gaya. Baaki: " + "; ".join(missing)
-                                     + ". Minimum par mat ruko; isse advanced banao aur ye kadam pure karo."})
+                        work.append({"role": "user", "content": "QUALITY GATE: kaam abhi pura nahi maana gaya. " + "; ".join(missing)
+                                     + ". Durable Planner-Coder-Tester-Security Reviewer workflow ko evidence ke saath aage badhao; owner approval kabhi khud mat do."})
                         t["steps"].append("quality-gate"); continue
+                    if t.get("awaiting_owner_approval") or t.get("durable_workflow_completed"):
+                        break
                 break
             work.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": calls})
             for c in calls:
@@ -1579,6 +1593,14 @@ def _engineer(tid):
                     res = "Ye kaam (SMS/call/shell) peeche se owner ki haan ke bina nahi hota. Report mein likho ki owner khud bole."
                 else:
                     res = run_tool(name, args)
+                    if name == "dev_task_create":
+                        try:
+                            created = json.loads(res)
+                            if created.get("id"):
+                                t["development_task_id"] = created["id"]
+                                _save_tasks()
+                        except Exception:
+                            pass
                 work.append({"role": "tool", "tool_call_id": c.get("id", name), "content": res[:7000]})
             if PENDING_IMAGES:
                 imgs = PENDING_IMAGES[:]; PENDING_IMAGES.clear()
@@ -1589,7 +1611,12 @@ def _engineer(tid):
         else:
             report = f"{budget} kadam ho gaye, kaam adhoora. Jitna hua: " + ", ".join(t["steps"][-10:])
         if is_up: report += f"\n(Critic score: {t.get('critic', '-')}/10, tests: {'pass' if t.get('tests_ok') else 'fail/nahi'})"
-        t.update(status="fail" if report.startswith("❌") else "done", report=report or "(khaali report)")
+        if t.get("awaiting_owner_approval"):
+            t.update(status="owner approval pending", report=(report or "Development workflow owner approval ka intezar kar raha hai.") + "\\nDurable task: " + str(t.get("development_task_id")))
+        elif t.get("durable_workflow_completed"):
+            t.update(status="done", report=report or "Durable workflow completed with verified evidence.")
+        else:
+            t.update(status="fail" if report.startswith("❌") else "incomplete", report=report or "(khaali report)")
     except Exception as e:
         import traceback; log_error("engineer", e, traceback.format_exc())
         t.update(status="fail", report=f"Engineer ruk gaya: {e}")
