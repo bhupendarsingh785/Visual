@@ -58,7 +58,8 @@ jobs:
           VISUAL_PER_REQUEST: "25"
         run: python scripts/github_collect_public.py
       - name: Stage SQLite knowledge index
-        run: test -s "$VISUAL_HOME/knowledge.sqlite3"
+        run: |
+          test -s "$VISUAL_HOME/knowledge.sqlite3"
           cp "$VISUAL_HOME/knowledge.sqlite3" ./knowledge.sqlite3
       - name: Upload collection report and SQLite index
         uses: actions/upload-artifact@v4
