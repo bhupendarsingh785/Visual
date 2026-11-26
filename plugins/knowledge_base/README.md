@@ -44,3 +44,17 @@ the corpus as context; model fine-tuning is a separate, costly, reviewed process
 No free unlimited storage exists. Device storage, bandwidth, source terms, and rate limits
 are real limits. Use configurable retention, backups, optional user-owned storage, and
 incremental indexing. The index is not yet a verified autonomous crawler or a 24/7 worker.
+
+
+## Curated global starting catalog
+`sources_catalog.json` currently lists official documentation and open-knowledge starting
+points across programming languages, web standards, Android/Termux, databases, AI/ML,
+security, scientific research, education, archives, and space/climate science.
+`knowledge_queue_catalog` adds these URLs to the local queue; it does not mass-download
+them. Each source must still pass robots.txt, technical safety checks, and its own license
+or terms review before ingestion. This is a curated seed list, not a complete world corpus.
+
+## Offline independence
+Once material is indexed, local full-text search works without internet. Live web access is
+an optional way to discover/update information, not a runtime requirement for searching
+already stored knowledge. The system must clearly label stale or unverified knowledge.
