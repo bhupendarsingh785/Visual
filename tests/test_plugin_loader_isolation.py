@@ -17,10 +17,11 @@ class PluginLoaderIsolationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             plugin_dir = Path(tmp) / "plugins"
             plugin_dir.mkdir()
+            (plugin_dir / "helper_module.py").write_text("VALUE = 42\n", encoding="utf-8")
             (plugin_dir / "a_good.py").write_text(
-                "PLUGIN_PRIVATE_VALUE = 42\n"
+                "import helper_module\n"
                 "@tool('good tool', {})\n"
-                "def good_tool(): return PLUGIN_PRIVATE_VALUE\n",
+                "def good_tool(): return helper_module.VALUE\n",
                 encoding="utf-8",
             )
             (plugin_dir / "b_bad.py").write_text(
@@ -40,8 +41,9 @@ class PluginLoaderIsolationTests(unittest.TestCase):
             self.assertEqual(set(host["TOOLS"]), {"good_tool"})
             self.assertIn("b_bad.py", host["PLUGIN_ERRORS"])
             self.assertNotIn("PLUGIN_PRIVATE_VALUE", host)
+            self.assertNotIn(str(plugin_dir), sys.path)
+            self.assertNotIn("helper_module", sys.modules)
             self.assertEqual(host["TOOLS"]["good_tool"]["fn"](), 42)
-            self.assertEqual(host["TOOLS"]["good_tool"]["fn"].__globals__["PLUGIN_PRIVATE_VALUE"], 42)
 
     def test_duplicate_tool_names_fail_atomically(self):
         root = Path(__file__).resolve().parents[1]
