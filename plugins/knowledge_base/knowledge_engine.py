@@ -14,6 +14,7 @@ import time
 import urllib.parse
 import urllib.request
 import urllib.robotparser
+import urllib.error
 import uuid
 from html.parser import HTMLParser
 from pathlib import Path
@@ -24,6 +25,16 @@ CHUNK_OVERLAP = 180
 USER_AGENT = "VISUAL-KnowledgeBot/1.0 (+user-initiated public-source indexing)"
 SKIP_TAGS = {"script", "style", "noscript", "svg", "nav", "footer", "header"}
 SECRET_RE = re.compile(r"(?i)(api[_-]?key|password|secret|access[_-]?token)\s*[:=]\s*[^\s<]{8,}")
+
+class _PublicRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Allow redirects only when the destination remains public HTTPS."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        clean, _ = _public_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, clean)
+
+def _open_public(req, timeout):
+    opener = urllib.request.build_opener(_PublicRedirectHandler())
+    return opener.open(req, timeout=timeout)
 
 class _Text(HTMLParser):
     def __init__(self):
@@ -52,7 +63,7 @@ def _connect(home=None):
     CREATE TABLE IF NOT EXISTS sources(
       id TEXT PRIMARY KEY, url TEXT UNIQUE NOT NULL, domain TEXT NOT NULL,
       title TEXT NOT NULL DEFAULT '', license TEXT NOT NULL DEFAULT 'unknown',
-      status TEXT NOT NULL, added_at REAL NOT NULL, fetched_at REAL,
+      topic TEXT NOT NULL DEFAULT 'general', status TEXT NOT NULL, added_at REAL NOT NULL, fetched_at REAL,
       etag TEXT, last_modified TEXT, content_hash TEXT, error TEXT NOT NULL DEFAULT ''
     );
     CREATE TABLE IF NOT EXISTS documents(
@@ -67,6 +78,9 @@ def _connect(home=None):
       UNIQUE(document_id, ordinal)
     );
     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(chunk_id UNINDEXED, text, tokenize='unicode61');
+    columns = {row[1] for row in db.execute("PRAGMA table_info(sources)")}
+    if "topic" not in columns:
+        db.execute("ALTER TABLE sources ADD COLUMN topic TEXT NOT NULL DEFAULT 'general'")
     CREATE INDEX IF NOT EXISTS idx_sources_domain ON sources(domain);
     CREATE INDEX IF NOT EXISTS idx_documents_topic ON documents(topic);
     """)
@@ -96,7 +110,7 @@ def _robots_allowed(url):
     parser.set_url(robots)
     request = urllib.request.Request(robots, headers={"User-Agent": USER_AGENT})
     try:
-        with urllib.request.urlopen(request, timeout=8) as response:
+        with _open_public(request, timeout=8) as response:
             raw = response.read(512 * 1024 + 1)
             if len(raw) > 512 * 1024:
                 return False
@@ -140,11 +154,13 @@ def _chunks(text):
 
 def add_source(url, license="unknown", topic="general", home=None):
     clean, domain = _public_url(url)
+    license = str(license or "unknown")
+    topic = str(topic or "general")
     if len(license) > 100 or len(topic) > 120: raise ValueError("Metadata bahut lamba hai.")
     sid = "src_" + uuid.uuid4().hex[:16]
     with _connect(home) as db:
-        db.execute("INSERT OR IGNORE INTO sources(id,url,domain,license,status,added_at) VALUES(?,?,?,?,?,?)",
-                   (sid, clean, domain, str(license)[:100], "queued", time.time()))
+        db.execute("INSERT OR IGNORE INTO sources(id,url,domain,license,topic,status,added_at) VALUES(?,?,?,?,?,?,?)",
+                   (sid, clean, domain, license[:100], topic[:120], "queued", time.time()))
         row = db.execute("SELECT id,status FROM sources WHERE url=?", (clean,)).fetchone()
     return {"source_id": row["id"], "status": row["status"], "url": clean}
 
@@ -159,7 +175,7 @@ def ingest_source(source_id, home=None, respect_robots=True):
         return {"status":"blocked","reason":"robots.txt"}
     req = urllib.request.Request(url, headers={"User-Agent":USER_AGENT, "Accept":"text/html,text/plain,application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=15) as response:
+        with _open_public(req, timeout=15) as response:
             ctype = response.headers.get("Content-Type", "")
             if not any(x in ctype.lower() for x in ("text/", "json", "xml")):
                 raise ValueError("Unsupported content type: " + ctype)
@@ -171,14 +187,18 @@ def ingest_source(source_id, home=None, respect_robots=True):
     except Exception as exc:
         with _connect(home) as db: db.execute("UPDATE sources SET status='error',error=? WHERE id=?", (str(exc)[:500], source_id))
         raise
-    if len(text) < 80: raise ValueError("Readable content bahut kam mila; page ko index nahi kiya.")
+    if len(text) < 80:
+        with _connect(home) as db:
+            db.execute("UPDATE sources SET status='error',error=? WHERE id=?",
+                       ("Readable content bahut kam mila; page ko index nahi kiya.", source_id))
+        raise ValueError("Readable content bahut kam mila; page ko index nahi kiya.")
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     with _connect(home) as db:
         existing = db.execute("SELECT id FROM documents WHERE content_hash=?", (digest,)).fetchone()
         if not existing:
             did = "doc_" + uuid.uuid4().hex[:16]
             db.execute("INSERT INTO documents(id,source_id,title,text,content_hash,topic,created_at) VALUES(?,?,?,?,?,?,?)",
-                       (did, source_id, title[:300], text, digest, "general", time.time()))
+                       (did, source_id, title[:300], text, digest, src["topic"], time.time()))
             for i, chunk in enumerate(_chunks(text)):
                 cid = "chk_" + uuid.uuid4().hex[:16]
                 db.execute("INSERT INTO chunks(id,document_id,ordinal,text) VALUES(?,?,?,?)",(cid,did,i,chunk))
