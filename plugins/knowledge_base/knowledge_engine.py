@@ -89,12 +89,26 @@ def _public_url(url):
     return clean, host
 
 def _robots_allowed(url):
+    """Check robots.txt with a hard network timeout; fail closed on network errors."""
     parts = urllib.parse.urlsplit(url)
     robots = urllib.parse.urlunsplit((parts.scheme, parts.netloc, "/robots.txt", "", ""))
     parser = urllib.robotparser.RobotFileParser()
     parser.set_url(robots)
-    try: parser.read()
-    except Exception: return False
+    request = urllib.request.Request(robots, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            raw = response.read(512 * 1024 + 1)
+            if len(raw) > 512 * 1024:
+                return False
+            parser.parse(raw.decode("utf-8", errors="replace").splitlines())
+    except urllib.error.HTTPError as exc:
+        # A missing robots.txt means there are no published crawl restrictions.
+        if exc.code == 404:
+            parser.parse([])
+        else:
+            return False
+    except Exception:
+        return False
     return parser.can_fetch(USER_AGENT, url)
 
 def _extract(raw, content_type):
