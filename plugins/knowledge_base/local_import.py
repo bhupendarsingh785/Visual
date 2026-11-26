@@ -99,12 +99,13 @@ def _records(path):
                 parser.feed(block)
             yield 1, _to_text("\n".join(parser.parts))
         else:
-            buf, line_no = [], 0
+            buf, line_no, buf_chars = [], 0, 0
             for line_no, line in enumerate(f, 1):
                 buf.append(line)
-                if sum(map(len, buf)) >= 16000:
+                buf_chars += len(line)
+                if buf_chars >= 16000:
                     yield line_no, _to_text("".join(buf))
-                    buf = []
+                    buf, buf_chars = [], 0
             if buf:
                 yield line_no, _to_text("".join(buf))
 
@@ -127,16 +128,15 @@ def import_local_file(path, topic="local-dataset", home=None, max_records=0):
                     "indexed", time.time(), time.time(), file_hash))
         source = db.execute("SELECT id FROM sources WHERE url=?", (source_url,)).fetchone()
         source_id = source["id"]
-    for ordinal, text in _records(p):
-        if max_records and indexed + skipped >= int(max_records):
-            break
-        text = text.strip()
-        if len(text) < 20:
-            skipped += 1
-            continue
-        record_hash = hashlib.sha256((file_hash + ":" + str(ordinal) + ":" + text).encode("utf-8")).hexdigest()
-        title = f"{p.name} · record {ordinal}"
-        with _connect(home) as db:
+        for ordinal, text in _records(p):
+            if max_records and indexed + skipped >= int(max_records):
+                break
+            text = text.strip()
+            if len(text) < 20:
+                skipped += 1
+                continue
+            record_hash = hashlib.sha256((file_hash + ":" + str(ordinal) + ":" + text).encode("utf-8")).hexdigest()
+            title = f"{p.name} · record {ordinal}"
             if db.execute("SELECT 1 FROM documents WHERE content_hash=?", (record_hash,)).fetchone():
                 skipped += 1
                 continue
@@ -148,8 +148,10 @@ def import_local_file(path, topic="local-dataset", home=None, max_records=0):
                 db.execute("INSERT INTO chunks(id,document_id,ordinal,text) VALUES(?,?,?,?)",
                            (chunk_id, doc_id, i, chunk))
                 db.execute("INSERT INTO chunks_fts(chunk_id,text) VALUES(?,?)", (chunk_id, chunk))
-        indexed += 1
-        chars += len(text)
+            indexed += 1
+            chars += len(text)
+            if indexed % 250 == 0:
+                db.commit()
     return {"file": str(p), "sha256": file_hash, "indexed_records": indexed,
             "skipped_or_duplicate": skipped, "errors": errors, "characters": chars,
             "database": str(db_path), "note": "Large datasets: prefer .jsonl.gz; each record is processed incrementally. File remains on device."}
