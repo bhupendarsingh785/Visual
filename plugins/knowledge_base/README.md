@@ -11,12 +11,13 @@ debugging, testing, and researching. It is separate from private user memory and
 - Deduplicated documents and overlapping text chunks.
 - Search returns excerpts with source URL and license label.
 - User/agent must explicitly add a URL, then explicitly ingest it.
-- HTTPS only; DNS-resolved non-global/private IPs blocked; robots.txt checked;
+- HTTPS only on port 443; DNS-resolved non-global/private IPs blocked and revalidated before requests/redirects; robots.txt checked;
   2 MiB per-response cap; text/HTML/JSON/XML only; obvious secret-like strings redacted.
 - No recursive crawling, no private repositories, no credential-bearing URLs.
 - Global research collector: 11 allowlisted APIs across 60+ subject areas; up to 300 provider-query tasks per run and 25 metadata records requested per task.
 - GitHub Actions collection schedule: every six hours; collection report and SQLite index are retained as a 30-day artifact. A task count is not a record count; inspect the report for actual successes and failures.
-- Provider-specific pacing for Crossref, Zenodo, PubMed, arXiv, Europe PMC and Wikidata; transient 429/5xx responses use bounded retries.
+- Provider-specific pacing for Crossref, Zenodo, PubMed, arXiv, Europe PMC, Wikidata, Hugging Face, Stack Exchange, GBIF and NASA; transient 429/5xx and network failures use bounded retries.
+- Global research cursor persists across manual runs and rotates across the full provider-query queue; scheduled runs also advance the batch offset.
 
 ## Knowledge policy
 Prioritize official documentation and permissively licensed material:
@@ -64,7 +65,7 @@ already stored knowledge. The system must clearly label stale or unverified know
 
 
 ## Offline local dataset ingestion
-`knowledge_import_local` imports user-owned or reuse-permitted local files directly into the same SQLite/FTS index; it does not need internet. It supports TXT, Markdown, RST, HTML, CSV, JSON, JSONL/NDJSON, XML and gzip-compressed variants. JSONL.GZ is the recommended format for very large datasets because records are read one at a time. Re-running an import deduplicates records by file hash + record number + content hash.
+`knowledge_import_local` imports user-owned or reuse-permitted local files directly into the same SQLite/FTS index; it does not need internet. It supports TXT, Markdown, RST, HTML, CSV, JSON, JSONL/NDJSON, XML and gzip-compressed variants. JSONL.GZ is the recommended format for very large datasets because records are read one at a time. Re-running an import deduplicates records by file hash + record number + content hash. Large imports use one SQLite session with batched commits rather than reconnecting for every record; malformed JSONL lines are counted and retained for inspection.
 
 Allowed paths are restricted to `~/.visual`, Android shared `Download`, and `Documents` folders. Example tool call from VISUAL:
 ```json
