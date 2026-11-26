@@ -1,7 +1,7 @@
 """Public-source Knowledge Base tools for VISUAL."""
 import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
-from catalog import queue_catalog
+from catalog import queue_catalog, collect_catalog
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
@@ -27,3 +27,9 @@ def knowledge_status():
 def knowledge_queue_catalog(topics=""):
     selected = [x.strip() for x in str(topics).split(",") if x.strip()]
     return json.dumps(queue_catalog(globals().get("HOME"), selected), ensure_ascii=False)[:12000]
+
+@tool("Curated public catalog ke queued sources ko abhi batch mein download aur local index karo. Max 30 pages per run; robots.txt, licensing notes aur bandwidth limits respect honge.",
+      {"limit": S("1 se 30 sources; default 10"), "topics": S("optional topic prefixes separated by commas")}, risky=True)
+def knowledge_collect_now(limit=10, topics=""):
+    selected = [x.strip() for x in str(topics).split(",") if x.strip()]
+    return json.dumps(collect_catalog(globals().get("HOME"), selected, limit), ensure_ascii=False)[:14000]
