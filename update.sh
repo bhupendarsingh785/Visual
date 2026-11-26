@@ -2,7 +2,7 @@
 # VISUAL safe updater: clean git update, backup, offline checks, automatic rollback.
 set -Eeuo pipefail
 
-ROOT="$HOME/visual"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_ROOT="$HOME/.visual/backups"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$BACKUP_ROOT/update-$STAMP"
