@@ -44,11 +44,18 @@ def record(task_id, role, outcome, notes="", home=None):
     elif role == "tester":
         if outcome == "pass":
             validation = validate_artifacts(task_id, home)
-            if validation.get("errors") or not validation.get("files"):
+            with _db(home) as db:
+                run = db.execute("SELECT detail FROM events WHERE task_id=? AND event='test_execution' ORDER BY id DESC LIMIT 1", (task_id,)).fetchone()
+            evidence = json.loads(run["detail"]) if run else {}
+            digest = workspace_fingerprint(task_id, home)
+            if validation.get("errors") or not validation.get("files") or evidence.get("status") != "passed" or evidence.get("workspace_sha256") != digest:
                 outcome = "revise"
-                notes = (str(notes) + "\nStatic validation failed or no artifacts: " + "; ".join(validation.get("errors", [])[:5]))[:2500]
+                notes = (str(notes) + "\nTester gate failed: static errors, missing isolated runtime pass, or stale workspace hash.")[:2500]
+                state["cycle"] += 1
+                state["role"] = "coder" if state["cycle"] < MAX_CYCLES else "blocked"
+                if state["role"] == "blocked": state["status"] = "blocked"
             else:
-                state["workspace_sha256"] = workspace_fingerprint(task_id, home)
+                state["workspace_sha256"] = digest
                 state["role"] = "security_reviewer"
         if outcome in {"revise", "fail", "blocked"}:
             state["cycle"] += 1
