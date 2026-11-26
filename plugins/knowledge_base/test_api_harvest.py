@@ -12,7 +12,7 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         self.assertIn("per-page=25", result["url"])
         self.assertIn("climate+adaptation", result["url"])
         add.assert_called_once()
-        ingest.assert_called_once_with("src_test", "/tmp/visual-test")
+        ingest.assert_called_once_with("src_test", "/tmp/visual-test", respect_robots=False)
 
     def test_unknown_provider_is_rejected(self):
         with self.assertRaises(ValueError):
@@ -22,7 +22,7 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         from api_harvest import PROVIDERS
         self.assertIn("gbif", PROVIDERS)
         self.assertIn("nasa_cmr", PROVIDERS)
-        for provider in ("huggingface", "pubmed", "stackoverflow", "arxiv"):
+        for provider in ("huggingface", "pubmed", "stackoverflow", "arxiv", "europe_pmc", "wikidata"):
             self.assertIn(provider, PROVIDERS)
 
     def test_animal_and_veterinary_topics_are_available(self):
