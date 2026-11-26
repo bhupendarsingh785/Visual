@@ -26,7 +26,7 @@ permissions:
   contents: read
 
 env:
-  VISUAL_HOME: ${{ runner.temp }}/.visual
+  VISUAL_HOME: ${{ github.workspace }}/.visual
 
 concurrency:
   group: visual-public-collection
@@ -46,7 +46,7 @@ jobs:
       - name: Restore previous local index cache
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}/.visual
+          path: ${{ github.workspace }}/.visual
           key: visual-kb-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             visual-kb-${{ runner.os }}-
