@@ -55,12 +55,14 @@ jobs:
           VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '100' }}
           VISUAL_PER_REQUEST: "25"
         run: python scripts/github_collect_public.py
+      - name: Stage SQLite knowledge index
+        run: cp "$HOME/.visual/knowledge.sqlite3" ./knowledge.sqlite3
       - name: Upload collection report and SQLite index
         uses: actions/upload-artifact@v4
         with:
           name: visual-public-knowledge-${{ github.run_id }}
           path: |
             visual-collection-report.json
-            ~/.visual/knowledge.sqlite3
+            knowledge.sqlite3
           if-no-files-found: warn
           retention-days: 30
