@@ -1,5 +1,12 @@
 import unittest
-from training_runtime import validate_training_limits
+import tempfile
+from pathlib import Path
+from training_runtime import validate_training_limits, run_training
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 class TrainingLimitTests(unittest.TestCase):
@@ -20,6 +27,35 @@ class TrainingLimitTests(unittest.TestCase):
             with self.subTest(kwargs=kwargs):
                 with self.assertRaises(ValueError):
                     validate_training_limits(**kwargs)
+
+@unittest.skipIf(torch is None, "PyTorch not installed in lightweight CI")
+class RealTrainingSmokeTests(unittest.TestCase):
+    def test_optimizer_updates_and_validation_steps_are_batches(self):
+        model = torch.nn.Linear(1, 1, bias=False)
+        with torch.no_grad():
+            model.weight.fill_(0.0)
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+        train = [
+            (torch.tensor([[1.0], [2.0]]), torch.tensor([[2.0], [4.0]])),
+            (torch.tensor([[3.0], [4.0]]), torch.tensor([[6.0], [8.0]])),
+        ]
+        validation = [
+            (torch.tensor([[1.0], [2.0], [3.0]]), torch.tensor([[2.0], [4.0], [6.0]])),
+            (torch.tensor([[4.0]]), torch.tensor([[8.0]])),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            result = run_training(
+                model, train, validation, optimizer,
+                lambda output, target: torch.nn.functional.mse_loss(output, target),
+                device="cpu", epochs=1, max_steps_per_epoch=1,
+                validation_steps=1, max_seconds=30, checkpoint_dir=tmp,
+            )
+            self.assertEqual(result["training_updates"], 1)
+            self.assertEqual(result["history"][0]["steps"], 1)
+            self.assertEqual(result["history"][0]["training_samples"], 2)
+            self.assertTrue(result["validation_is_sample_weighted"])
+            self.assertTrue(Path(result["best_checkpoint"]).is_file())
+            self.assertNotEqual(float(model.weight.detach().item()), 0.0)
 
 
 if __name__ == "__main__":
