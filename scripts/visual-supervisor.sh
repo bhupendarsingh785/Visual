@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # VISUAL supervisor for Termux/Termux:Boot. Restarts only after unexpected failure.
 set -u
-ROOT="${VISUAL_HOME_DIR:-$HOME/visual}"
+ROOT="${VISUAL_HOME_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 STATE="$HOME/.visual"
 LOG="$STATE/visual.log"
 PIDFILE="$STATE/supervisor.pid"
