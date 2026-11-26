@@ -14,6 +14,11 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         add.assert_called_once()
         ingest.assert_called_once_with("src_test", "/tmp/visual-test", respect_robots=False)
 
+    @patch("api_harvest.ingest_source", return_value={"status":"indexed","characters":500,"duplicate":False})
+    @patch("api_harvest.add_source", return_value={"source_id":"src_topic","status":"queued"})
+    def test_explicit_research_domain_is_stored(self, add, ingest):
+        harvest_public_metadata("openalex", "neural networks", 10, "/tmp/visual-test", topic="deep_learning")
+        self.assertEqual(add.call_args.args[2], "deep_learning")
     def test_unknown_provider_is_rejected(self):
         with self.assertRaises(ValueError):
             harvest_public_metadata("unknown", "test")
