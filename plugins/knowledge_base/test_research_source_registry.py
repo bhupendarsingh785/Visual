@@ -23,7 +23,7 @@ class ResearchSourceRegistryTests(unittest.TestCase):
         )
         code = (root / "global_research.py").read_text(encoding="utf-8")
         block = code.split("DOMAIN_QUERIES = {", 1)[1].split("\n}", 1)[0]
-        known = set(re.findall(r'^\\s*"([a-z0-9_]+)":', block, re.MULTILINE))
+        known = set(re.findall(r'^\s*"([a-z0-9_]+)":', block, re.MULTILINE))
         self.assertGreaterEqual(len(known), 100)
         for source in registry["sources"]:
             self.assertTrue(source.get("entry_url", "").startswith("https://"))
