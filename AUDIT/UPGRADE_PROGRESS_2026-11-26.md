@@ -15,7 +15,7 @@ This is an evidence ledger, not a completion claim.
 - DEVICE_AND_ADAPTER_TEST_PLAN.md defines evidence contracts for device, provider, app, browser, API, database and deployment checks.
 
 ## Important limitations found during recheck
-1. Plugin entry files are still executed by load_plugins() in the VISUAL host process using shared globals. Separate process isolation is NOT implemented yet. The existing Docker development runner isolates generated test execution, not plugin loading.
+1. The legacy _engineer() quality gate still checks old in-memory spec/tests_ok/critic fields and is not yet bridged to the durable dev_task/orchestration ledger. This can cause a false deadlock or misleading completion report; fix before relying on autonomous upgrade completion.\n2. Plugin entry files are still executed by load_plugins() in the VISUAL host process using shared globals. Separate process isolation is NOT implemented yet. The existing Docker development runner isolates generated test execution, not plugin loading.
 2. The orchestration module is a durable state/evidence gate. It does not yet invoke four independent LLM role agents automatically, provide typed role-specific tool grants, or run an independent SAST/DAST security reviewer. Do not describe it as a completed multi-agent autonomous pipeline.
 3. Android diagnostics have not been run on the owner's physical phone. Screen-off, Doze, microphone permission, foreground-service behavior, reboot recovery, battery and thermal tests remain unverified.
 4. No live provider smoke test was run in this session because owner credentials are stored on the phone and are not available to this repository session. The new tool must be run locally; a successful request can consume quota.
