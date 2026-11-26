@@ -167,7 +167,7 @@ def record_execution_result(task_id, report, home=None):
     status = str(report.get("status", "unknown"))
     if status not in {"passed", "failed", "unavailable"}:
         status = "failed"
-    results = [{"status": str(x.get("status",""))[:20], "exit_code": x.get("exit_code"), "command": x.get("command", [])[:8], "output_excerpt": str(x.get("output",""))[:120]} for x in report.get("results", [])[:8]]
+    results = [{"status": str(x.get("status",""))[:20], "exit_code": x.get("exit_code"), "command": [str(a)[:80] for a in x.get("command", [])[:4]], "output_excerpt": str(x.get("output",""))[:80]} for x in report.get("results", [])[:4]]
     fingerprint = workspace_fingerprint(task_id, home)
     detail = json.dumps({"status": status, "profile": str(report.get("profile",""))[:40], "network": report.get("network"), "secrets_forwarded": report.get("secrets_forwarded"), "workspace_sha256": fingerprint, "results": results}, ensure_ascii=False)[:2800]
     with _db(home) as db:
@@ -325,6 +325,6 @@ def validate_artifacts(task_id, home=None):
     report["workspace_sha256"] = workspace_fingerprint(task_id, home)
     with _db(home) as db:
         _task(db,task_id)
-        evidence = {"ok": report["ok"], "files": report["files"], "python_syntax_ok": report["python_syntax_ok"], "json_ok": report["json_ok"], "error_count": len(report["errors"]), "secret_hit_count": len(report["secret_hits"]), "errors": report["errors"][:8], "workspace_sha256": report["workspace_sha256"]}
+        evidence = {"ok": report["ok"], "files": report["files"], "python_syntax_ok": report["python_syntax_ok"], "json_ok": report["json_ok"], "error_count": len(report["errors"]), "secret_hit_count": len(report["secret_hits"]), "errors": [str(e)[:180] for e in report["errors"][:3]], "workspace_sha256": report["workspace_sha256"]}
         _event(db,task_id,"validator","static_validation",json.dumps(evidence,ensure_ascii=False)[:2500])
     return report
