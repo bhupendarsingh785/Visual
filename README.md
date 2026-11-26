@@ -190,7 +190,7 @@ Suraksha: system mitane wale command apne aap rukte hain; project folder ke baha
 `assistant_name`, `owner_name`, `keys`, `models` (jaise `{"gemini":"gemini-2.5-flash"}`), `provider_order`, `confirm_risky`, `speak_replies`, `web_pin` (agar dusre device se kholna ho, `web_host: "0.0.0.0"` ke saath).
 Key kabhi GitHub par mat daalna; wo sirf `~/.visual/` mein rehti hai.
 
-## Sach (seemaayein)
+## Remote browser link (temporary HTTPS)\n- `visual remote` creates an email-OTP-protected Cloudflare Quick Tunnel to this phone's existing browser chat panel. The AI agent, tools and local data remain on the phone.\n- Keep Termux and the tunnel running; Ctrl+C stops the link. Every start creates a new temporary URL. See `docs/REMOTE_BROWSER_BRIDGE.md`.\n\n## Sach (seemaayein)
 - Hamesha "Hey VISUAL" sunne wala wake-word abhi nahi: orb dabao ya `visual voice` chalao.
 - Screen control ke liye Wi-Fi + wireless debugging chahiye (bina root ke yahi tarika hai).
 - Free key ki daily limit hoti hai; zyada use par doosri key (Groq/OpenRouter) apne aap chalti hai.
