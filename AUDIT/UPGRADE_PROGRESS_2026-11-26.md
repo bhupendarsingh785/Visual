@@ -56,3 +56,34 @@ Do not merge PR #1 or call this upgrade complete until:
 - Planner/Coder/Tester/Security Reviewer are durable workflow roles, but are not yet four independent LLM agents with separately enforced tool grants. The security checklist is not an independent SAST/DAST scan.
 - Live provider tests, real Docker test execution on the target device, Android permission/audio/Doze/reboot tests, and executable browser/app/API/database/deployment adapters remain unverified or unimplemented.
 - Do not merge the draft PR or describe VISUAL as release-complete until those acceptance gates are independently satisfied.
+
+## Main-branch public knowledge pipeline hardening — 2026-11-26
+
+This section records the separate main-branch work on the public Knowledge Base and data-collection pipeline. It does not supersede the release gates above.
+
+### Implemented
+
+- Expanded the public research map to 70 domain keys and the allowlist to 15 public metadata APIs: OpenAlex, Crossref, Zenodo, GBIF, NASA CMR, Hugging Face Datasets, PubMed, Stack Exchange, arXiv, Europe PMC, Wikidata, Openverse Images, Openverse Audio, Wikimedia Commons and Internet Archive.
+- Expanded the curated dataset registry to 152 entries. Fifteen entries have bounded metadata connectors; automatic bulk-download flags remain disabled pending item-level rights, storage and manifest review.
+- Added provider-specific pacing, Retry-After handling and bounded retries for transient HTTP and network failures. Wikimedia Commons requests identify the project URL in the User-Agent and remain below the published user-agent request rate. Openverse anonymous page-size and pagination limits are respected.
+- Global collection runs are bounded to 300 provider-query tasks and at most 25 requested metadata records per task. Scheduled workflow runs every six hours; manual runs persist a cursor to avoid restarting from the first task batch.
+- JSON API ingestion distinguishes non-empty data, empty search results, malformed JSON and API error payloads. Empty search results are counted separately from actual failures.
+- SQLite connections close on context exit; source topics survive in documents and search results; source-status and topic metrics are reported.
+- Public URL ingestion validates HTTPS port 443, revalidates the original target before each request, and validates redirect destinations. Dataset download paths are restricted against traversal; resumed transfers validate Content-Range totals.
+- Local JSONL/JSONL.GZ imports now use one SQLite connection with batched commits and report malformed JSONL lines. Training staging groups by source domain to reduce train/test leakage and writes output files atomically.
+- Added regression tests for legacy SQLite migration, empty/error API payloads, provider query construction, catalog integrity, cursor rotation, download path safety, checksum and resume validation.
+
+### Verified evidence
+
+- Latest offline CI run for commit 16b40815: Python 3.11, 3.13 and 3.14 all passed, including compileall across the project, VISUAL/plugin import checks, shell syntax checks, and the subsystem test suites.
+- Completed public collection run 45765544918 (earlier 11-provider version): 300 API tasks attempted; 246 indexed/already indexed; 54 errors; 423 documents in the resulting index; 25,282 chunks; 21,660,539 indexed characters; SQLite file 165,298,176 bytes. The downloaded SQLite artifact passed PRAGMA integrity_check with ok. This is a real artifact, not an estimate.
+- The above collection report predates the 15-provider expansion and empty-result classification. Do not present its figures as the outcome of the newer 15-provider run.
+
+### Still not certified
+
+- The newest 15-provider collection run must finish, then its report and SQLite artifact must be inspected before publishing new record counts.
+- Bulk dataset files are not automatically mirrored; all 152 catalog entries remain disabled for bulk download. Large archives require item-level license review, storage preflight and resumable selective ingestion.
+- RAG/FTS indexing is not neural-network training. No model weights, tokenizer, fine-tuning run or benchmark evaluation were produced.
+- Physical Android/Termux background execution, microphone/camera permissions, Doze/reboot recovery, battery/thermal behavior and sustained phone-side ingestion still require testing on the actual device.
+- The separate plugin process/OS isolation and independent multi-agent/security review gates described above remain open.
+- Error-free cannot be guaranteed from CI alone; release readiness requires ongoing live-provider, device, security and regression evidence.
