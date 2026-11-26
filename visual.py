@@ -973,7 +973,7 @@ def load_plugins():
         try:
             with open(entry, encoding="utf-8") as stream: code = stream.read()
             namespace = dict(core)
-            namespace.update({"__name__": "visual_plugin_" + re.sub(r"\\W+", "_", fn),
+            namespace.update({"__name__": "visual_plugin_" + re.sub(r"\W+", "_", fn),
                               "__file__": entry, "PLUGIN_DIR": plugin_dir,
                               "TOOLS": staged_tools, "RISKY": staged_risky,
                               "tool": staged_tool})
