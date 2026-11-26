@@ -45,13 +45,13 @@ class KnowledgeBaseTests(unittest.TestCase):
 
     def test_empty_json_api_response_is_not_a_fetch_error(self):
         import json
-        source = add_source("https://api.example.org/search", "CC0", "test", self.home)
         class JSONResponse(Response):
             headers = {"Content-Type": "application/json"}
             def read(self, size=-1):
                 return json.dumps({"items": [], "has_more": False, "quota_remaining": 299}).encode()
         with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
              patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            source = add_source("https://api.example.org/search", "CC0", "test", self.home)
             result = ingest_source(source["source_id"], self.home, respect_robots=False)
         self.assertEqual(result["status"], "empty")
         self.assertEqual(knowledge_stats(self.home)["documents"], 0)
@@ -79,6 +79,7 @@ class KnowledgeBaseTests(unittest.TestCase):
                 return json.dumps({"error_id": 401, "error_message": "Invalid API key"}).encode()
         with patch("knowledge_engine._public_url", return_value=("https://api.example.org/search", "api.example.org")), \
              patch("knowledge_engine._open_public", return_value=JSONResponse()):
+            source = add_source("https://api.example.org/search", "CC0", "test", self.home)
             with self.assertRaises(ValueError):
                 ingest_source(source["source_id"], self.home, respect_robots=False)
         self.assertEqual(add_source("https://api.example.org/search", "CC0", "test", self.home)["status"], "error")
