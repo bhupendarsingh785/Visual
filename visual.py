@@ -970,6 +970,8 @@ def load_plugins():
                 if risky: staged_risky.add(name)
                 return func
             return deco
+        inserted_path = plugin_dir not in sys.path
+        modules_before = set(sys.modules)
         try:
             with open(entry, encoding="utf-8") as stream: code = stream.read()
             namespace = dict(core)
@@ -977,7 +979,8 @@ def load_plugins():
                               "__file__": entry, "PLUGIN_DIR": plugin_dir,
                               "TOOLS": staged_tools, "RISKY": staged_risky,
                               "tool": staged_tool})
-            if plugin_dir not in sys.path: sys.path.insert(0, plugin_dir)
+            # Sibling imports are available only while this trusted plugin initializes.
+            if inserted_path: sys.path.insert(0, plugin_dir)
             exec(compile(code, entry, "exec"), namespace, namespace)
             collisions = sorted(set(staged_tools).intersection(core["TOOLS"]))
             if collisions:
@@ -989,6 +992,20 @@ def load_plugins():
         except Exception as exc:
             import traceback
             PLUGIN_ERRORS[fn] = f"{type(exc).__name__}: {exc} | {traceback.format_exc()[-700:]}"
+        finally:
+            if inserted_path:
+                try: sys.path.remove(plugin_dir)
+                except ValueError: pass
+            # Keep module objects alive through function globals, but avoid global
+            # sys.modules name collisions between plugins with same-named helpers.
+            for module_name, module in list(sys.modules.items()):
+                module_file = getattr(module, "__file__", None)
+                if module_name not in modules_before and module_file:
+                    try:
+                        if os.path.commonpath([os.path.realpath(module_file), os.path.realpath(plugin_dir)]) == os.path.realpath(plugin_dir):
+                            sys.modules.pop(module_name, None)
+                    except (OSError, ValueError, TypeError):
+                        pass
     return loaded
 
 def _backup(label):
