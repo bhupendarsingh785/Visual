@@ -35,3 +35,11 @@ The `knowledge_download_dataset` tool downloads one explicitly supplied official
 ## Intelligence boundary
 
 The knowledge base is retrieval-augmented context, not model-weight training. It can make VISUAL more informed and useful offline after indexing, but independent reasoning also needs task planning, tool execution, source comparison, contradiction detection, confidence estimates, memory, tests and safe permission gates. No system can know all world data or be perfectly independent.
+
+## Bounded API metadata harvesting
+
+`knowledge_harvest_public_metadata` now searches the official public APIs for OpenAlex, Crossref, and Zenodo. It accepts a provider, a search query, and a record limit (1-25), then indexes the returned JSON response in the local Knowledge Base through the existing provenance-aware ingestion path.
+
+This is an initial acquisition path for searchable scholarly and dataset metadata, not a full repository mirror. It does not download article full text, Zenodo file payloads, OpenAlex snapshots, or every paginated result. Those require separate license-aware manifest discovery, cursor/resumption, storage preflight, and bulk-transfer stages. Each provider's license and access policy remains authoritative.
+
+A CI unit test checks provider allowlisting, query validation, and the 25-record ceiling. The workflow also verifies that the new tool is registered.
