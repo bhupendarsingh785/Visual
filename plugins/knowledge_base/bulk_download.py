@@ -86,7 +86,7 @@ def download_dataset(url, destination, max_bytes=DEFAULT_CAP, expected_sha256=""
             for block in iter(lambda: old.read(CHUNK), b""):
                 digest.update(block)
     with opener.open(req, timeout=30) as response:
-        status = getattr(response, "status", response.getcode())
+        status = response.status if hasattr(response, "status") else response.getcode()
         if offset and status != 206:
             raise ValueError("Server did not honor Range resume; partial file retained. Use a new destination for a fresh download.")
         if not offset and status != 200:
