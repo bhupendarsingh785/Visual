@@ -746,7 +746,9 @@ def deep_research(question, queries=""):
             seen.add(u)
             txt = read_webpage(u)
             notes.append(f"## Page: {dom}\n{u}\n{txt[:2200]}")
-    notes.append("Niyam: jawab sirf in sources par tikao, site ka naam batao; sources mein takraav ho to batao.")
+    notes.append("Niyam:
+- OFFLINE-FIRST KNOWLEDGE: coding, science, AI, education ya factual sawal par pehle knowledge_search se local indexed data dekho; source/license/provenance ko dhyan mein rakho. Local data kam ho tabhi web_search se naya data lao. Jo local result na mile use bana kar mat batao. Naye public sources ko knowledge_collect_now se index karo; phone ke local files aur JSONL.GZ dumps ke liye knowledge_import_local use karo. Data ko chhote resumable batches mein process karo.
+ jawab sirf in sources par tikao, site ka naam batao; sources mein takraav ho to batao.")
     return "\n\n".join(notes)[:14000]
 
 @tool("Web project (HTML/JS) ko internet par LIVE karo (GitHub Pages). Repo PUBLIC hona zaroori hai (free plan). Live link deta hai.",
