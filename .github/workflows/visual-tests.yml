@@ -22,7 +22,7 @@ jobs:
         run: python -m compileall -q visual.py plugins
       - name: Import VISUAL and verify integrated plugin tools
         run: |
-          VISUAL_SELFTEST=1 python -c "import sys; sys.argv=['visual.py']; import visual; required={'dev_task_create','dev_orchestration_start','self_intelligence_audit','store_last','recall_last','handle_dohrao','knowledge_add_source','knowledge_ingest','knowledge_search','knowledge_status','knowledge_queue_catalog','knowledge_collect_now','knowledge_import_local','knowledge_download_dataset','knowledge_harvest_public_metadata','knowledge_collect_global_research','hardware_status','hardware_optimization_plan','hardware_compute_fabric_plan','hardware_dataset_manifest','hardware_multi_gpu_topology','hardware_load_onnx_model'}; missing=required-set(visual.TOOLS); assert not visual.PLUGIN_ERRORS, visual.PLUGIN_ERRORS; assert not missing, 'missing plugin tools: '+str(sorted(missing)); print('plugin import OK; tools=',len(visual.TOOLS))"
+          VISUAL_SELFTEST=1 python -c "import sys; sys.argv=['visual.py']; import visual; required={'dev_task_create','dev_orchestration_start','self_intelligence_audit','store_last','recall_last','handle_dohrao','knowledge_add_source','knowledge_ingest','knowledge_search','knowledge_status','knowledge_queue_catalog','knowledge_collect_now','knowledge_import_local','knowledge_download_dataset','knowledge_harvest_public_metadata','knowledge_collect_global_research','hardware_status','hardware_optimization_plan','hardware_compute_fabric_plan','hardware_dataset_manifest','hardware_multi_gpu_topology','hardware_ddp_initialize','hardware_load_onnx_model'}; missing=required-set(visual.TOOLS); assert not visual.PLUGIN_ERRORS, visual.PLUGIN_ERRORS; assert not missing, 'missing plugin tools: '+str(sorted(missing)); print('plugin import OK; tools=',len(visual.TOOLS))"
       - name: Validate Termux shell scripts
         run: bash -n install.sh update.sh scripts/visual-supervisor.sh
       - name: Test continuous listening logic (mocked Termux)
@@ -77,3 +77,13 @@ jobs:
             plugins/hardware_optimizer/chip_design/tb/tb_visual_ai_chip_cluster.sv
       - name: Run multi-tile MAC cluster tests
         run: vvp /tmp/visual-ai-cluster.vvp
+
+  chip-rtl-synthesis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Yosys synthesis tool
+        run: sudo apt-get update && sudo apt-get install -y yosys
+      - name: Synthesize multi-tile INT8 MAC cluster and run structural checks
+        run: |
+          yosys -p "read_verilog -sv plugins/hardware_optimizer/chip_design/rtl/visual_ai_mac_tile.sv plugins/hardware_optimizer/chip_design/rtl/visual_ai_chip_cluster.sv; hierarchy -check -top visual_ai_chip_cluster; proc; opt; check; synth -top visual_ai_chip_cluster; check; stat"
