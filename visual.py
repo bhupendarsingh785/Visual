@@ -1615,8 +1615,10 @@ def _engineer(tid):
             t.update(status="owner approval pending", report=(report or "Development workflow owner approval ka intezar kar raha hai.") + "\\nDurable task: " + str(t.get("development_task_id")))
         elif t.get("durable_workflow_completed"):
             t.update(status="done", report=report or "Durable workflow completed with verified evidence.")
-        else:
+        elif is_up:
             t.update(status="fail" if report.startswith("❌") else "incomplete", report=report or "(khaali report)")
+        else:
+            t.update(status="fail" if report.startswith("❌") else "done", report=report or "(khaali report)")
     except Exception as e:
         import traceback; log_error("engineer", e, traceback.format_exc())
         t.update(status="fail", report=f"Engineer ruk gaya: {e}")
