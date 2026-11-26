@@ -9,7 +9,9 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sqlite3
+import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -267,7 +269,9 @@ def workspace_fingerprint(task_id, home=None):
 
 def validate_artifacts(task_id, home=None):
     ws = _workspace(task_id,home)
-    report = {"files":0,"python_syntax_ok":0,"json_ok":0,"errors":[],"secret_hits":[]}
+    report = {"files":0,"python_syntax_ok":0,"javascript_syntax_ok":0,"shell_syntax_ok":0,"json_ok":0,"checks_unavailable":[],"errors":[],"secret_hits":[]}
+    node = shutil.which("node")
+    bash = shutil.which("bash")
     for p in ws.rglob("*"):
         if not p.is_file() or p.is_symlink() or any(x in {".git","node_modules",".venv","__pycache__"} for x in p.parts):
             continue
@@ -289,6 +293,30 @@ def validate_artifacts(task_id, home=None):
                 json.loads(text); report["json_ok"] += 1
             except Exception as e:
                 report["errors"].append(f"{p.relative_to(ws)}: invalid JSON: {e}")
+        elif p.suffix in {".js", ".mjs", ".cjs"}:
+            if not node:
+                report["checks_unavailable"].append("Node.js syntax check")
+            else:
+                try:
+                    result = subprocess.run([node, "--check", str(p)], capture_output=True, text=True, timeout=10)
+                    if result.returncode:
+                        report["errors"].append(f"{p.relative_to(ws)}: JavaScript syntax error: {(result.stderr or result.stdout)[-500:]}")
+                    else:
+                        report["javascript_syntax_ok"] += 1
+                except Exception as e:
+                    report["errors"].append(f"{p.relative_to(ws)}: JavaScript syntax check failed: {str(e)[:200]}")
+        elif p.suffix == ".sh":
+            if not bash:
+                report["checks_unavailable"].append("Bash syntax check")
+            else:
+                try:
+                    result = subprocess.run([bash, "-n", str(p)], capture_output=True, text=True, timeout=10)
+                    if result.returncode:
+                        report["errors"].append(f"{p.relative_to(ws)}: shell syntax error: {(result.stderr or result.stdout)[-500:]}")
+                    else:
+                        report["shell_syntax_ok"] += 1
+                except Exception as e:
+                    report["errors"].append(f"{p.relative_to(ws)}: shell syntax check failed: {str(e)[:200]}")
     if report["secret_hits"]:
         report["errors"].append("secret-looking token patterns found in: "+", ".join(report["secret_hits"][:20]))
     report["ok"] = not report["errors"]
