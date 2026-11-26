@@ -39,3 +39,20 @@ jobs:
         run: PYTHONPATH=plugins/knowledge_base python -m unittest discover -s plugins/knowledge_base -p 'test_*.py' -v
       - name: Test Autonomous Development subsystem
         run: PYTHONPATH=plugins/autonomous_development python -m unittest discover -s plugins/autonomous_development -p 'test_*.py' -v
+
+  chip-rtl-simulation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog
+        run: sudo apt-get update && sudo apt-get install -y iverilog
+      - name: Compile AI compute tile
+        run: |
+          iverilog -g2012 -s tb_visual_ai_compute_tile -o /tmp/visual-chip.vvp \
+            plugins/chip_lab/rtl/ai_simd_vector.sv \
+            plugins/chip_lab/rtl/ai_xnor_popcount.sv \
+            plugins/chip_lab/rtl/ai_spiking_neuron.sv \
+            plugins/chip_lab/rtl/visual_ai_compute_tile.sv \
+            plugins/chip_lab/tb/tb_visual_ai_compute_tile.sv
+      - name: Run RTL smoke tests
+        run: vvp /tmp/visual-chip.vvp
