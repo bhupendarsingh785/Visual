@@ -45,6 +45,7 @@ print(json.dumps({
     "empty_results": result.get("empty_results", 0),
     "failed_requests": result["failed_requests"],
     "indexed_characters": result["indexed_characters"],
+    "fetched_characters": result.get("fetched_characters", 0),
     "collection_delta": result["collection_delta"],
     "provider_status_counts": result.get("provider_status_counts", {}),
     "database_integrity": result["database_integrity"],
