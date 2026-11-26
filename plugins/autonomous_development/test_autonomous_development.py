@@ -59,6 +59,26 @@ class DevelopmentEngineTests(unittest.TestCase):
         self.assertTrue(any("bad.py" in e for e in result["errors"]))
         self.assertFalse(marker.exists())
 
+
+    def test_plugin_registers_expected_tools(self):
+        import builtins
+        registered = {}
+        def fake_tool(description, params=None, risky=False):
+            def deco(fn):
+                registered[fn.__name__] = {"fn":fn,"risky":risky}
+                return fn
+            return deco
+        ns = {"tool":fake_tool,"S":lambda desc,**kw:{"type":"string","description":desc,**kw},
+              "N":lambda desc,**kw:{"type":"number","description":desc,**kw},
+              "HOME":self.home}
+        source = Path(__file__).with_name("plugin.py").read_text(encoding="utf-8")
+        exec(compile(source,"plugin.py","exec"),ns)
+        expected = {"dev_task_create","dev_task_status","dev_task_list","dev_task_transition",
+                    "dev_task_add_research","dev_task_write_file","dev_task_files","dev_task_validate",
+                    "dev_task_approve"}
+        self.assertTrue(expected.issubset(registered))
+        self.assertTrue(registered["dev_task_approve"]["risky"])
+
     def test_secret_pattern_rejected(self):
         with self.assertRaises(ValueError):
             write_artifact(self.tid, "secret.py", "TOKEN='sk-" + "a"*24 + "'", self.home)
