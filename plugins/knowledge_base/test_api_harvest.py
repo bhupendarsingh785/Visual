@@ -25,6 +25,12 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         for provider in ("huggingface", "pubmed", "stackoverflow", "arxiv", "europe_pmc", "wikidata"):
             self.assertIn(provider, PROVIDERS)
 
+    def test_global_research_rotates_all_allowlisted_api_providers(self):
+        from global_research import PROVIDERS
+        self.assertIn("europe_pmc", PROVIDERS)
+        self.assertIn("wikidata", PROVIDERS)
+        self.assertEqual(len(PROVIDERS), 11)
+
     def test_animal_and_veterinary_topics_are_available(self):
         from global_research import DOMAIN_QUERIES
         self.assertIn("animals_wildlife", DOMAIN_QUERIES)
