@@ -26,3 +26,5 @@ jobs:
         run: python -m unittest discover -s plugins/memory_repeat -p 'test_*.py' -v
       - name: Test core tool schema immutability
         run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Test Self-Intelligence subsystem
+        run: PYTHONPATH=plugins/self_intelligence python -m unittest discover -s plugins/self_intelligence -p 'test_*.py' -v
