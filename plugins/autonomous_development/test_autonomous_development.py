@@ -20,7 +20,7 @@ class DevelopmentEngineTests(unittest.TestCase):
 
     def test_task_state_transitions_are_checked_and_durable(self):
         self.assertEqual(transition(self.tid, "planning", "plan", home=self.home), "planning")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PermissionError):
             transition(self.tid, "completed", "skip validation", home=self.home)
         self.assertEqual(get_task(self.tid, self.home)["status"], "planning")
         self.assertEqual(list_tasks_for_test(self.home)[0]["id"], self.tid)
@@ -29,7 +29,7 @@ class DevelopmentEngineTests(unittest.TestCase):
         transition(self.tid, "planning", home=self.home)
         transition(self.tid, "implementing", home=self.home)
         transition(self.tid, "validating", home=self.home)
-        write_artifact(self.tid, "main.py", "print('ok')\\n", self.home)
+        write_artifact(self.tid, "main.py", "print('ok')\n", self.home)
         validate_artifacts(self.tid, self.home)
         transition(self.tid, "awaiting_approval", "static checks passed", home=self.home)
         with self.assertRaises(PermissionError):
@@ -45,7 +45,7 @@ class DevelopmentEngineTests(unittest.TestCase):
     def test_artifacts_are_confined_and_hashed(self):
         item = write_artifact(self.tid, "src/main.py", "print('hello')\n", self.home)
         self.assertEqual(len(item["sha256"]), 64)
-        self.assertEqual(list_artifacts(self.tid), ["src/main.py"])
+        self.assertEqual(list_artifacts(self.tid,self.home), ["src/main.py"])
         with self.assertRaises(ValueError):
             write_artifact(self.tid, "../escape.py", "bad", self.home)
 
