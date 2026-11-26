@@ -24,7 +24,7 @@ PROFILES = {
     "node": {
         "image": "node:22-alpine",
         "commands": [
-            ["node", "-e", "const fs=require('fs');const f=fs.readdirSync('.').filter(x=>x.endsWith('.test.js')||x.endsWith('.spec.js')||x.startsWith('test-'));console.log('Discovered tests:',f.length);process.exit(f.length?0:3)"],
+            ["node", "-e", "const fs=require('fs'),p=require('path');function w(d){return fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()&&!['node_modules','.git'].includes(e.name)?w(p.join(d,e.name)):[p.join(d,e.name)])};const f=w('.').filter(x=>x.endsWith('.test.js')||x.endsWith('.spec.js')||x.endsWith('.test.mjs')||x.endsWith('.spec.mjs')||x.endsWith('.test.cjs')||x.endsWith('.spec.cjs')||p.basename(x).startsWith('test-'));console.log('Discovered tests:',f.length);process.exit(f.length?0:3)"],
             ["node", "--test"],
         ],
     },
