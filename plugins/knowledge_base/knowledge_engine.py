@@ -78,12 +78,12 @@ def _connect(home=None):
       UNIQUE(document_id, ordinal)
     );
     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(chunk_id UNINDEXED, text, tokenize='unicode61');
-    columns = {row[1] for row in db.execute("PRAGMA table_info(sources)")}
-    if "topic" not in columns:
-        db.execute("ALTER TABLE sources ADD COLUMN topic TEXT NOT NULL DEFAULT 'general'")
     CREATE INDEX IF NOT EXISTS idx_sources_domain ON sources(domain);
     CREATE INDEX IF NOT EXISTS idx_documents_topic ON documents(topic);
     """)
+    columns = {row[1] for row in db.execute("PRAGMA table_info(sources)")}
+    if "topic" not in columns:
+        db.execute("ALTER TABLE sources ADD COLUMN topic TEXT NOT NULL DEFAULT 'general'")
     return db
 
 def _public_url(url):
