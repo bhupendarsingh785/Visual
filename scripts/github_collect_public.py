@@ -14,7 +14,7 @@ result = collect_global_research(
     per_request=int(os.environ.get("VISUAL_PER_REQUEST", "25")),
     max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "100")),
     home=home,
-    offset=int(os.environ.get("VISUAL_TASK_OFFSET", str(datetime.now(timezone.utc).timetuple().tm_yday * 100))),
+    offset=int(os.environ.get("VISUAL_TASK_OFFSET", str((datetime.now(timezone.utc).timetuple().tm_yday * 400) + ((datetime.now(timezone.utc).hour // 6) * 100)))),
 )
 result["local_index_stats"] = knowledge_stats(home)
 out = Path(os.environ.get("GITHUB_WORKSPACE", ".")) / "visual-collection-report.json"
