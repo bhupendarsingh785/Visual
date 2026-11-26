@@ -243,12 +243,21 @@ def search_knowledge(query, limit=8, home=None):
 
 def knowledge_stats(home=None):
     with _connect(home) as db:
-        return { "sources":db.execute("SELECT COUNT(*) FROM sources").fetchone()[0],
-          "indexed_sources":db.execute("SELECT COUNT(*) FROM sources WHERE status='indexed'").fetchone()[0],
-          "documents":db.execute("SELECT COUNT(*) FROM documents").fetchone()[0],
-          "chunks":db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0],
-          "db_bytes":_db_path(home).stat().st_size if _db_path(home).exists() else 0,
-          "storage_note":"Local device storage is finite; export/backup or attach larger storage for growth." }
+        stats = {
+            "sources": db.execute("SELECT COUNT(*) FROM sources").fetchone()[0],
+            "indexed_sources": db.execute("SELECT COUNT(*) FROM sources WHERE status='indexed'").fetchone()[0],
+            "documents": db.execute("SELECT COUNT(*) FROM documents").fetchone()[0],
+            "chunks": db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0],
+            "source_status_counts": {row["status"]: row["count"] for row in
+                                     db.execute("SELECT status,COUNT(*) AS count FROM sources GROUP BY status")},
+            "document_topic_counts": {row["topic"]: row["count"] for row in
+                                      db.execute("SELECT topic,COUNT(*) AS count FROM documents GROUP BY topic ORDER BY count DESC")},
+        }
+    path = _db_path(home)
+    stats["db_bytes"] = sum(p.stat().st_size for p in
+                            (path, Path(str(path) + "-wal"), Path(str(path) + "-shm")) if p.exists())
+    stats["storage_note"] = "Local device storage is finite; export/backup or attach larger storage for growth."
+    return stats
 
 
 def collect_queued(limit=10, home=None):
