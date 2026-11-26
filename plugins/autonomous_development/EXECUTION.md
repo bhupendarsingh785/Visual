@@ -22,3 +22,22 @@ A passing Python or Node test profile does not prove all app types are correct. 
 ```bash
 PYTHONPATH=plugins/autonomous_development python -m unittest discover -s plugins/autonomous_development -p 'test_*.py' -v
 ```
+
+
+## Research basis
+- OpenAI Agents SDK sandbox architecture separates the trusted orchestration/control plane from the sandbox compute plane: https://developers.openai.com/api/docs/guides/agents/sandboxes
+- OpenAI human-review guidance requires pausing before sensitive side effects and resuming only after approval: https://developers.openai.com/api/docs/guides/agents/guardrails-approvals
+- Android's own security guidance emphasizes app/process isolation and avoiding unnecessary privilege: https://source.android.com/docs/security/best-practices/app
+- Termux PRoot documentation explicitly states that PRoot does not provide real namespaces/cgroups/seccomp isolation: https://github.com/termux/proot-distro
+- OWASP Excessive Agency recommends minimum tool/permission scope, human approval, and SAST/DAST/IAST where appropriate: https://genai.owasp.org/llmrisk/llm062025-excessive-agency/
+
+## Test coverage roadmap
+The current executable profiles are Python and Node.js. The test manifest accepts argv arrays (never shell command strings) inside the isolated runner. Additional adapters must be added for:
+- Web UI/E2E: pinned Playwright image plus project-matched Playwright dependency and browser tests.
+- Android APK: pinned Android SDK/Gradle image, emulator/device test runner, signing kept outside the sandbox.
+- API/backend: disposable test database/service fixtures, contract tests and integration tests.
+- Security: dependency/SBOM checks, SAST, secret scan, DAST against an isolated staging target.
+- Performance/reliability: bounded load tests, crash/restart and resource budgets.
+- Device validation: real Android versions, permissions, background execution, battery and microphone tests.
+
+A test category is "not run" until its matching adapter and infrastructure produce evidence. A green syntax or unit-test result is not a universal quality certificate.
