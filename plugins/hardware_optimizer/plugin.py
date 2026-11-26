@@ -2,6 +2,7 @@
 import json
 from engine import hardware_profile, optimization_plan, create_onnx_session
 from compute_fabric import compute_fabric_plan
+from dataset_manifest import build_dataset_manifest
 
 _SESSIONS = {}
 
@@ -31,3 +32,13 @@ def hardware_load_onnx_model(model_path,intra_threads=0):
     _SESSIONS[report["model"]]=session
     report["session_lifetime"]="Current VISUAL process only; restart clears loaded sessions."
     return json.dumps(report,ensure_ascii=False,indent=2)
+
+@tool("Inventory a local dataset, calculate SHA-256 hashes and gate training eligibility on declared provenance, license and consent. Does not upload or download data.",
+      {"dataset_dir":S("absolute local dataset directory"),
+       "source":S("dataset source/provenance description or URL"),
+       "license_name":S("exact license identifier; use unknown to quarantine"),
+       "consent_status":S("not_applicable, verified, pending or denied")})
+def hardware_dataset_manifest(dataset_dir,source,license_name,consent_status="not_applicable"):
+    report=build_dataset_manifest(dataset_dir,source=source,license_name=license_name,
+                                   consent_status=consent_status)
+    return json.dumps(report,ensure_ascii=False,indent=2)[:18000]
