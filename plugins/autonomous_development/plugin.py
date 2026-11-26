@@ -48,7 +48,7 @@ def dev_task_files(task_id):
     return "\n".join(list_artifacts(task_id,globals().get("HOME"))) or "(abhi files nahi)"
 
 
-@tool("Task workspace ke Python syntax, JSON validity aur secret-like token patterns ki static validation chalao. Generated code execute nahi hota.",
+@tool("Task workspace ke Python/JavaScript/shell syntax, JSON validity aur secret-like token patterns ki static validation chalao. Generated code execute nahi hota.",
       {"task_id":S("task id")})
 def dev_task_validate(task_id):
     return json.dumps(validate_artifacts(task_id,globals().get("HOME")),ensure_ascii=False,indent=2)
