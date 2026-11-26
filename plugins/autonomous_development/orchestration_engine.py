@@ -36,7 +36,7 @@ def record(task_id, role, outcome, notes="", home=None):
             transition(task_id, "designing", "planner plan recorded", home=home)
         state["role"] = "coder"
     elif role == "coder" and outcome == "pass":
-        if t["status"] in {"planning", "designing"}:
+        if t["status"] in {"planning", "designing", "validating"}:
             if t["status"] == "planning":
                 transition(task_id, "designing", "plan accepted", home=home)
             transition(task_id, "implementing", "coder implementation recorded", home=home)
