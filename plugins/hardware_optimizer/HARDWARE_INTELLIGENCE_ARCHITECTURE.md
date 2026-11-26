@@ -61,3 +61,7 @@ Training jobs must be explicit and bounded. The reusable training runtime accept
 
 ## Dataset provenance and evaluation
 `dataset_manifest.py` inventories local training data without downloading or uploading it. Every file receives a SHA-256 digest and byte count; a declared source and license are mandatory, and unknown licenses or pending/denied consent quarantine the dataset from training eligibility. The manifest records paths and metadata, not dataset contents. `benchmark.py` provides bounded warm-up and synchronized latency measurements with median/p95 and throughput. Results must be collected on the target machine with identical inputs and runtime versions before claiming performance gains.
+
+
+## Multi-GPU replica fabric
+The `multi_gpu.py` layer inventories actual CUDA devices and assigns one model replica worker per detected GPU, with the CPU acting as coordinator and data pipeline. For two or more real CUDA GPUs, `run_multi_gpu_training` uses PyTorch `DataParallel` to replicate the model and split batches. It falls back to the existing single-device trainer on zero/one CUDA GPU. This does not manufacture GPUs by copying CPU/GPU code. CUDA-only in this implementation; multi-node DDP and MPS/XPU replica training remain future work. Validate VRAM fit, numerical equivalence, throughput and sustained thermals on the target computer before production use.
