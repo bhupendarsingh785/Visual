@@ -46,7 +46,12 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         from global_research import PROVIDERS
         self.assertIn("europe_pmc", PROVIDERS)
         self.assertIn("wikidata", PROVIDERS)
-        self.assertEqual(len(PROVIDERS), 11)
+        self.assertEqual(len(PROVIDERS), 15)
+
+    def test_open_media_and_archive_connectors_are_allowlisted(self):
+        from api_harvest import PROVIDERS
+        for provider in ("openverse_images", "openverse_audio", "wikimedia_commons", "internet_archive"):
+            self.assertIn(provider, PROVIDERS)
 
     def test_animal_and_veterinary_topics_are_available(self):
         from global_research import DOMAIN_QUERIES
