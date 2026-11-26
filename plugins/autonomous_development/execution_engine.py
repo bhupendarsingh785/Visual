@@ -33,15 +33,18 @@ MAX_SECONDS = 600
 MAX_OUTPUT = 12000
 
 
+# Resolve the sibling engine while the plugin loader temporarily exposes this
+# directory. Keep direct references so runtime calls still work after that path
+# is removed from sys.path and helper modules are evicted from the global cache.
+from autonomous_development_engine import record_execution_result, _workspace as get_workspace
+
+
 def _finish(task_id, report, home=None):
-    from autonomous_development_engine import record_execution_result
     record_execution_result(task_id, report, home)
     return report
 
 
 def _workspace(task_id, home=None):
-    # Import lazily to keep this module independently testable.
-    from autonomous_development_engine import _workspace as get_workspace
     return get_workspace(task_id, home)
 
 
