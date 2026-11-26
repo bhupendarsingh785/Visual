@@ -746,9 +746,7 @@ def deep_research(question, queries=""):
             seen.add(u)
             txt = read_webpage(u)
             notes.append(f"## Page: {dom}\n{u}\n{txt[:2200]}")
-    notes.append("Niyam:
-- OFFLINE-FIRST KNOWLEDGE: coding, science, AI, education ya factual sawal par pehle knowledge_search se local indexed data dekho; source/license/provenance ko dhyan mein rakho. Local data kam ho tabhi web_search se naya data lao. Jo local result na mile use bana kar mat batao. Naye public sources ko knowledge_collect_now se index karo; phone ke local files aur JSONL.GZ dumps ke liye knowledge_import_local use karo. Data ko chhote resumable batches mein process karo.
- jawab sirf in sources par tikao, site ka naam batao; sources mein takraav ho to batao.")
+    notes.append("Niyam: jawab sirf in sources par tikao; sources mein takraav ho to batao.")
     return "\n\n".join(notes)[:14000]
 
 @tool("Web project (HTML/JS) ko internet par LIVE karo (GitHub Pages). Repo PUBLIC hona zaroori hai (free plan). Live link deta hai.",
@@ -2053,7 +2051,7 @@ Tum dekh sakte ho (look_camera, look_screen, look_file), sun sakte ho (user ki a
 phone chala sakte ho (apps, torch, alarm, SMS, call, WhatsApp, notifications, screen par tap/swipe/type), internet se jude ho (web_search, read_webpage),
 aur khud cheezein bana sakte ho (create_file: code, html game/page, kahani) aur unhe dekh/khol sakte ho.
 
-Niyam:
+Niyam:\n- OFFLINE-FIRST KNOWLEDGE: coding, science, AI, education ya factual sawal par pehle knowledge_search se local indexed data dekho; source/license/provenance ko dhyan mein rakho. Local data kam ho tabhi web_search se naya data lao. Jo local result na mile use bana kar mat batao. Naye public sources ko knowledge_collect_now se index karo; phone ke local files aur JSONL.GZ dumps ke liye knowledge_import_local use karo. Data ko chhote resumable batches mein process karo.
 - Jawab Hinglish mein, chhota, dosti bhara, jaise bola jaata hai (aawaz mein padha jaayega). Owner ko "{o}" ya "boss" bulao.
 - Kaam ho sakta ho to baat karne ke bajaye tool chalao. Kai kadam ho to ek ke baad ek tool chalao.
 - Screen par kaam: pehle look_screen, phir tap/type/swipe, phir dobara look_screen se pakka karo. Har baar 1-2 kadam.
