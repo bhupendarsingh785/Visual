@@ -68,8 +68,9 @@ def _device(torch, requested=None):
 def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                  *, device=None, epochs=3, max_steps_per_epoch=500,
                  validation_steps=100, patience=3, max_seconds=3600,
-                 gradient_clip_norm=1.0, checkpoint_dir=None):
-    """Train a caller-supplied model with hard limits and best-checkpoint rollback."""
+                 gradient_clip_norm=1.0, checkpoint_dir=None,
+                 precision="fp32"):
+    """Train a caller-supplied model with bounded FP32/AMP and safe checkpoints."""
     limits = validate_training_limits(
         epochs, max_steps_per_epoch, validation_steps, patience,
         max_seconds, gradient_clip_norm
@@ -79,8 +80,17 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
     except ImportError as exc:
         raise RuntimeError("PyTorch is required; install a compatible build explicitly.") from exc
 
+    if precision not in {"fp32", "fp16", "bf16"}:
+        raise ValueError("precision must be fp32, fp16, or bf16")
     target = _device(torch, device)
+    if precision == "fp16" and target.type not in {"cuda", "xpu"}:
+        raise ValueError("fp16 AMP is supported here only on CUDA/XPU; use bf16 or fp32")
+    if precision == "bf16" and target.type not in {"cpu", "cuda", "xpu"}:
+        raise ValueError("bf16 AMP is not enabled for this device type")
     model.to(target)
+    amp_enabled = precision != "fp32"
+    amp_dtype = torch.float16 if precision == "fp16" else torch.bfloat16
+    scaler = torch.amp.GradScaler(target.type, enabled=(precision == "fp16"))
     started = time.monotonic()
     best_loss = float("inf")
     best_state = None
@@ -111,7 +121,9 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                     raise ValueError("Each batch must contain (inputs, targets)")
                 inputs = _move(batch[0], target, torch)
                 targets = _move(batch[1], target, torch)
-                loss = loss_fn(model(inputs), targets)
+                with torch.autocast(device_type=target.type, dtype=amp_dtype,
+                                    enabled=amp_enabled):
+                    loss = loss_fn(model(inputs), targets)
                 if not torch.isfinite(loss).all():
                     raise FloatingPointError("Non-finite validation loss")
                 batch_size = int(targets.shape[0]) if getattr(targets, "ndim", 0) > 0 else 1
@@ -143,12 +155,16 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                 inputs = _move(batch[0], target, torch)
                 targets = _move(batch[1], target, torch)
                 optimizer.zero_grad(set_to_none=True)
-                loss = loss_fn(model(inputs), targets)
+                with torch.autocast(device_type=target.type, dtype=amp_dtype,
+                                    enabled=amp_enabled):
+                    loss = loss_fn(model(inputs), targets)
                 if not torch.isfinite(loss).all():
                     raise FloatingPointError("Non-finite training loss")
-                loss.backward()
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), limits["gradient_clip_norm"])
-                optimizer.step()
+                scaler.step(optimizer)
+                scaler.update()
                 batch_size = int(targets.shape[0]) if getattr(targets, "ndim", 0) > 0 else 1
                 train_total += float(loss.detach().item()) * batch_size
                 train_samples += batch_size
@@ -221,4 +237,6 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
         "training_updates": sum(item["steps"] for item in history),
         "validation_is_sample_weighted": True,
         "validation_steps_unit": "batches",
+        "precision": precision,
+        "amp_enabled": amp_enabled,
     }
