@@ -1,63 +1,71 @@
-# VISUAL — Deep Research and 150 PB Data-Scale Roadmap
+# VISUAL — GitHub-Only Data Lake Plan (150 PB Aspirational Target)
 
-**Status:** target/architecture plan, not a claim that 150 PB has been collected.
+**Storage preference:** Keep VISUAL code, metadata, manifests, and any data GitHub permits in the same GitHub repository/account. Do not silently send datasets to another provider.
 
-## Target
+## Reality and hard limits
 
-- Long-term aspirational target: **150,000 TB (150 PB decimal)** of legally reusable, quality-checked research data and datasets.
-- Count only bytes that have actually been downloaded, checksum-verified, license-reviewed, and registered in the durable dataset manifest.
-- Keep metadata bytes, downloaded payload bytes, compressed bytes, extracted bytes, and model-training-ready bytes as separate measurements. Never add the same payload twice.
-- This target is not a one-run GitHub Actions artifact target. GitHub repository history and short-lived workflow artifacts are not a suitable 150 PB data lake.
+The long-term target is **150,000 TB (150 PB)** of unique, verified, license-cleared research data. This is a target, not collected volume.
 
-## Current verified baseline (2026-11-26)
+Current official GitHub limits checked 2026-11-26:
+- Git repository: GitHub recommends keeping on-disk repository size around 10 GB; push size is capped at 2 GB; regular Git files over 100 MiB are blocked. Recommended repo size is ideally under 1 GB and strongly under 5 GB. Sources: https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits and https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github
+- Git LFS: Free/Pro includes 10 GiB storage and 10 GiB monthly bandwidth; Free/Pro max LFS object is 2 GB. Paid metered usage is possible with billing enabled; without payment method/allowance, pushes stop when quota is exceeded. Source: https://docs.github.com/en/billing/concepts/product-billing/git-lfs and https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage
+- Actions artifacts: GitHub Free currently includes 500 MB artifact storage; Actions cache is not a permanent data lake. Source: https://docs.github.com/en/actions/reference/limits
+- Releases can distribute binaries, but each individual asset is still subject to GitHub's per-file limits. Source: https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github
 
-From workflow run https://github.com/bhupendarsingh785/Visual/actions/runs/45766635225:
+Therefore, GitHub-only storage can be expanded with Git LFS billing and Release assets, but **150 PB cannot be provisioned by a repository setting, workflow, or free account**. It would require an extraordinary GitHub-approved enterprise-scale storage arrangement and written confirmation from GitHub. Do not attempt to evade limits with many repos, accounts, or artificial shards.
+
+## GitHub-native layout
+
+- Git repository: code, schemas, documentation, small catalog files, checksums, and manifests only.
+- `datasets/`: local staging layout; large binary extensions are configured for Git LFS via `.gitattributes`.
+- Git LFS: large dataset objects only after LFS is enabled and account billing/quota has been reviewed.
+- GitHub Releases: immutable, versioned dataset bundles within individual asset limits.
+- Actions artifacts: short-lived run reports and small validation outputs only; never use as permanent dataset storage.
+
+## Enablement required in GitHub account
+
+1. Open GitHub Settings → Billing and licensing → Metered usage / Git LFS usage.
+2. Review the account's LFS storage and bandwidth allowance, payment method, and budget cap. A zero budget stops over-quota use; removing the budget may allow metered charges.
+3. Confirm the intended paid budget before any large upload. Do not enable unlimited spending automatically.
+4. Install Git LFS on the upload machine and run `git lfs install`.
+5. Check `git lfs track` patterns in this repository, commit `.gitattributes`, then push only a small test file first.
+6. Verify the object appears in GitHub LFS usage and can be downloaded with a matching SHA-256 before increasing the batch size.
+
+This repository cannot change account billing settings or accept charges on the user's behalf. No large upload should start until the account's paid LFS allowance is confirmed.
+
+## Data governance and Deep Learning quality
+
+Every dataset must have a record containing canonical provider and dataset ID, URL, exact version/date, item-level license, permitted purpose, attribution, declared and actual bytes, SHA-256, MIME/file signature, subject/domain tags, provenance, privacy/safety review, deduplication key, quality score, and train/validation/test assignment.
+
+Keep distinct measurements for:
+- metadata bytes;
+- downloaded bytes;
+- checksum-verified bytes;
+- license-cleared bytes;
+- unique bytes after deduplication;
+- quarantined/rejected bytes;
+- training-ready bytes.
+
+Never treat metadata, a URL, a catalog entry, an LFS pointer, or a queued workflow as downloaded payload. Never count the same data twice. Separate raw, cleaned, normalized, labeled, train, validation, and test partitions. Split by dataset/source/entity to prevent leakage. Data collection is not model training; weights, compute, fine-tuning, evaluation, and safety tests are separate.
+
+## Verified current collection baseline (2026-11-26)
+
+Workflow: https://github.com/bhupendarsingh785/Visual/actions/runs/45766635225
 
 - 300 provider-query tasks attempted.
-- 216 indexed results; 84 collection errors/insufficient-readable-content outcomes.
-- 28,574,610 indexed characters reported by the collector.
-- SQLite index: 970 sources, 639 indexed sources/documents, 43,429 chunks, 285,016,064 database bytes.
-- SQLite `PRAGMA integrity_check`: `ok`.
-- Workflow artifact ZIP: 49,996,545 bytes (about 47.7 MiB), containing the report and SQLite index.
-- These are primarily search metadata and indexed text, **not 150 PB of downloaded source datasets** and not model training.
+- 216 indexed results; 84 errors/insufficient-readable-content outcomes.
+- 28,574,610 indexed characters reported.
+- SQLite: 970 sources, 639 indexed sources/documents, 43,429 chunks, 285,016,064 database bytes.
+- SQLite integrity check: `ok`.
+- Workflow artifact ZIP: 49,996,545 bytes (about 47.7 MiB), report plus SQLite index.
+- This is mainly metadata and indexed text, not bulk dataset downloads.
 
-## Collection architecture required to approach 150 PB
+## Scale-up gates
 
-### 1. Research discovery and registry
-Maintain a versioned registry of datasets, repositories, papers, model weights, benchmark sets, media corpora, scientific archives, and public data portals. Record provider, dataset ID, canonical URL, subject tags, update date, declared size, format, license, attribution, access restrictions, privacy/safety review, and provenance.
+1. Verify Git LFS billing and a small round-trip test.
+2. Upload and verify a 1–5 GB licensed pilot using LFS/Release assets within current limits.
+3. Measure actual storage charges, bandwidth, transfer speed, restore, integrity, and duplicate ratio.
+4. Increase only after explicit account budget approval and verified capacity.
+5. For TB/PB targets, obtain written GitHub enterprise capacity approval before building a larger pipeline. If GitHub will not contractually provide the required capacity, the 150 PB target is not achievable under a GitHub-only constraint.
 
-### 2. Rights and quality gate
-Before downloading a payload:
-- Confirm item-level license and permitted use; reject unknown, non-commercial, no-derivatives, restricted, or incompatible items from training unless explicitly approved.
-- Exclude personal/sensitive data, credentials, malware, and unsafe payloads.
-- Validate MIME type, file signature, archive paths, decompression limits, and source authenticity.
-- Compute SHA-256; deduplicate by content hash and canonical dataset version.
-- Keep quarantine separate from approved research/training data.
-
-### 3. Durable storage and transfer
-Use GitHub only for code, manifests, small reports, and orchestration. Store large payloads in durable object storage or a controlled data-lake service with documented capacity, lifecycle, replication, access control, egress cost, and restore tests. Use resumable multipart transfers, per-object checksums, retry/backoff, and immutable manifests. Do not put huge binary datasets in Git history or workflow artifacts.
-
-### 4. Staged scale gates
-- Stage A: metadata discovery and license-aware registry.
-- Stage B: small representative downloads and end-to-end checksum/restore tests.
-- Stage C: 1 TB verified pilot.
-- Stage D: 10 TB, then 100 TB, with cost, throughput, integrity, deduplication, and restore gates.
-- Stage E: PB-scale capacity only after storage funding, provider agreements, and operations are demonstrated.
-- Stage F: 150,000 TB long-term target; publish actual verified bytes and remaining gap per stage.
-
-### 5. Deep Learning readiness
-Keep separate, versioned partitions for raw, cleaned, normalized, deduplicated, labeled, train, validation, and test data. Split by source/dataset or entity to reduce leakage. Store tokenizer/preprocessing versions, label schema, provenance, license, quality scores, and reproducible manifests. Build domain-specific benchmarks and holdout sets. Data collection alone is not training: model weights, compute, training runs, evaluation, and safety testing are separate milestones.
-
-## Mandatory reporting fields
-
-Every run must report:
-- bytes discovered (metadata only), bytes downloaded, bytes checksum-verified, bytes license-approved, bytes quarantined, bytes rejected;
-- unique payload bytes after deduplication;
-- provider/task success, empty, throttled, timeout, and validation-failure counts;
-- per-domain coverage and freshness;
-- storage backend, object count, integrity status, and restore-test status;
-- training-ready bytes separately from raw bytes.
-
-## Non-negotiable honesty rule
-
-Never describe a target, catalog entry, metadata result, cached index, or queued job as downloaded data. Never claim the 150 PB target is achieved until durable storage manifests prove the verified unique payload total. Current GitHub Actions collection is a small metadata/indexing pipeline and does not have the capacity to store 150 PB.
+**Honesty rule:** publish actual GitHub-stored unique verified bytes and the remaining target gap. Never claim 150 PB is stored until manifests and provider-side usage prove it.
