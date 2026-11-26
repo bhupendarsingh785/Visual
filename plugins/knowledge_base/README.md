@@ -6,7 +6,7 @@ debugging, testing, and researching. It is separate from private user memory and
 
 ## Current implementation
 - SQLite + FTS5 full-text index at `~/.visual/knowledge.sqlite3`.
-- Source provenance: canonical URL, domain, license/terms label, fetch time, ETag,
+- Source provenance: canonical URL, domain, topic, license/terms label, fetch time, ETag,
   Last-Modified, SHA-256 content hash, status and error.
 - Deduplicated documents and overlapping text chunks.
 - Search returns excerpts with source URL and license label.
@@ -14,6 +14,9 @@ debugging, testing, and researching. It is separate from private user memory and
 - HTTPS only; DNS-resolved non-global/private IPs blocked; robots.txt checked;
   2 MiB per-response cap; text/HTML/JSON/XML only; obvious secret-like strings redacted.
 - No recursive crawling, no private repositories, no credential-bearing URLs.
+- Global research collector: 11 allowlisted APIs across 60+ subject areas; up to 300 provider-query tasks per run and 25 metadata records requested per task.
+- GitHub Actions collection schedule: every six hours; collection report and SQLite index are retained as a 30-day artifact. A task count is not a record count; inspect the report for actual successes and failures.
+- Provider-specific pacing for Crossref, Zenodo, PubMed, arXiv, Europe PMC and Wikidata; transient 429/5xx responses use bounded retries.
 
 ## Knowledge policy
 Prioritize official documentation and permissively licensed material:
@@ -25,7 +28,7 @@ Do not ingest personal data, leaked secrets, private repos, paywalled content, o
 robots-disallowed pages.
 
 ## Continuous operation (next integration stage)
-A scheduled queue worker should run only while VISUAL is active / Android allows it:
+A GitHub Actions metadata collector now runs every six hours. This is cloud-side API metadata collection, not a 24/7 Android worker. A separate on-device worker remains a future integration and should run only while VISUAL is active / Android allows it:
 - refresh due sources with conditional HTTP requests;
 - discover new sources from curated catalogs, not arbitrary recursive crawling;
 - retry transient errors with exponential backoff and per-domain rate limits;
