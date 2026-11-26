@@ -41,9 +41,11 @@ class GlobalResearchTests(unittest.TestCase):
                 return {"status": "indexed", "indexed_characters": 100}
             with patch("global_research.harvest_public_metadata", side_effect=record), patch("global_research.time.sleep"):
                 first = collect_global_research(["medicine"], 25, 1, home)
+                all_topics = collect_global_research(None, 25, 1, home)
                 second = collect_global_research(["medicine"], 25, 1, home)
-            self.assertEqual(providers, ["openalex", "crossref"])
+            self.assertEqual(providers, ["openalex", "openalex", "crossref"])
             self.assertEqual(first["task_offset"], 0)
+            self.assertEqual(all_topics["task_offset"], 0)
             self.assertEqual(second["task_offset"], 1)
             self.assertEqual(second["next_task_offset"], 2)
 
