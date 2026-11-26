@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from autonomous_development_engine import (
-    add_research, create_task, get_task, list_artifacts, transition,
+    add_research, create_task, get_task, list_artifacts, record_execution_result, transition,
     validate_artifacts, write_artifact,
 )
 
@@ -31,7 +31,10 @@ class DevelopmentEngineTests(unittest.TestCase):
         transition(self.tid, "validating", home=self.home)
         write_artifact(self.tid, "main.py", "print('ok')\n", self.home)
         validate_artifacts(self.tid, self.home)
-        transition(self.tid, "awaiting_approval", "static checks passed", home=self.home)
+        with self.assertRaises(ValueError):
+            transition(self.tid, "awaiting_approval", "runtime tests missing", home=self.home)
+        record_execution_result(self.tid, {"status":"passed","profile":"python","network":"disabled","secrets_forwarded":False,"results":[{"status":"passed"}]}, self.home)
+        transition(self.tid, "awaiting_approval", "static and isolated runtime tests passed", home=self.home)
         with self.assertRaises(PermissionError):
             transition(self.tid, "completed", "agent tries self-approval", actor="agent", home=self.home)
         self.assertEqual(transition(self.tid, "completed", "owner approved", actor="owner", home=self.home), "completed")
