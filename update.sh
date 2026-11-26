@@ -57,7 +57,7 @@ cat > "$PREFIX/bin/visual" <<'EOW'
 #!/data/data/com.termux/files/usr/bin/bash
 ROOT="$HOME/visual"
 cd "$ROOT" || exit 1
-case "${1:-}" in setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
+case "${1:-}" in remote) shift; exec bash "$ROOT/scripts/visual-remote.sh" "$@";; setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
 if [ "$#" -eq 0 ] || [ "$1" = "always" ]; then
   exec bash "$ROOT/scripts/visual-supervisor.sh"
 fi

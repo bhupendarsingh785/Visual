@@ -2754,13 +2754,18 @@ class Web(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
 
     def _ok_origin(self):
-        """Doosri website (CSRF) se aaya hukm rokna: Origin/Referer sirf apna, aur gupt token zaroori."""
-        port = str(CFG["web_port"]); mine = {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
-        if CFG.get("web_host") not in ("127.0.0.1", "localhost"): mine.add(f"http://{self.headers.get('Host','')}")
-        o = self.headers.get("Origin") or ""
-        if o and o not in mine: return False
-        r = self.headers.get("Referer") or ""
-        if r and not any(r.startswith(m + "/") or r == m for m in mine): return False
+        """Same-origin CSRF guard; also supports HTTPS reverse tunnels without trusting arbitrary hosts."""
+        host = (self.headers.get("Host") or "").strip().lower()
+        def same_origin(value):
+            try:
+                parsed = urllib.parse.urlsplit(value)
+                return parsed.scheme in ("http", "https") and bool(host) and parsed.netloc.lower() == host
+            except Exception:
+                return False
+        origin = self.headers.get("Origin") or ""
+        if origin and not same_origin(origin): return False
+        referer = self.headers.get("Referer") or ""
+        if referer and not same_origin(referer): return False
         q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         return self.headers.get("X-Visual-Token") == WEB_TOKEN or q.get("t", [""])[0] == WEB_TOKEN
 
