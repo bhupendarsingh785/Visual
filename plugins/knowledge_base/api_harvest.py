@@ -1,11 +1,8 @@
-"""Bounded API metadata harvesting from selected public scholarly registries.
+"""Bounded metadata harvesting from allowlisted public research/data APIs.
 
-This is metadata collection, not full-text harvesting. Each provider's API and
-reuse terms remain authoritative. Requests are bounded and indexed locally.
+Search-result metadata only; not full-text harvesting or complete bulk mirrors.
 """
-import json
 import urllib.parse
-
 from knowledge_engine import add_source, ingest_source
 
 PROVIDERS = {
@@ -13,19 +10,15 @@ PROVIDERS = {
         "base": "https://api.openalex.org/works",
         "license": "CC0 metadata; linked full text has separate rights",
         "topic": "research-metadata",
-        "build": lambda q, n: {
-            "search": q, "per-page": n,
-            "select": "id,doi,title,publication_year,type,authorships,primary_location,open_access",
-        },
+        "build": lambda q, n: {"search": q, "per-page": n,
+            "select": "id,doi,title,publication_year,type,authorships,primary_location,open_access"},
     },
     "crossref": {
         "base": "https://api.crossref.org/works",
         "license": "CC0 bibliographic metadata; abstracts/full text may have separate rights",
         "topic": "research-metadata",
-        "build": lambda q, n: {
-            "query.bibliographic": q, "rows": n,
-            "select": "DOI,title,author,published,type,URL,license,abstract",
-        },
+        "build": lambda q, n: {"query.bibliographic": q, "rows": n,
+            "select": "DOI,title,author,published,type,URL,license,abstract"},
     },
     "zenodo": {
         "base": "https://zenodo.org/api/records/",
@@ -33,10 +26,22 @@ PROVIDERS = {
         "topic": "research-datasets-metadata",
         "build": lambda q, n: {"q": q, "size": n, "sort": "mostrecent"},
     },
+    "gbif": {
+        "base": "https://api.gbif.org/v1/occurrence/search",
+        "license": "Occurrence rights vary by record: CC0, CC BY or CC BY-NC",
+        "topic": "biodiversity-occurrence-metadata",
+        "build": lambda q, n: {"q": q, "limit": n},
+    },
+    "nasa_cmr": {
+        "base": "https://cmr.earthdata.nasa.gov/search/collections.json",
+        "license": "Collection metadata public; each data product has its own terms",
+        "topic": "earth-observation-metadata",
+        "build": lambda q, n: {"keyword": q, "page_size": n},
+    },
 }
 
 def harvest_public_metadata(provider, query, limit=10, home=None):
-    """Search one allowlisted public metadata API and index its bounded JSON response."""
+    """Search one allowlisted API and index a bounded response in the local KB."""
     key = str(provider).strip().lower()
     if key not in PROVIDERS:
         raise ValueError("Provider must be one of: " + ", ".join(sorted(PROVIDERS)))
@@ -49,17 +54,14 @@ def harvest_public_metadata(provider, query, limit=10, home=None):
     url = cfg["base"] + "?" + params
     queued = add_source(url, cfg["license"], cfg["topic"], home)
     if queued["status"] == "indexed":
-        return {"provider": key, "status": "already_indexed", "source_id": queued["source_id"], "url": url}
+        return {"provider": key, "status": "already_indexed",
+                "source_id": queued["source_id"], "url": url}
     result = ingest_source(queued["source_id"], home)
     return {
-        "provider": key,
-        "query": query,
-        "requested_records_max": limit,
-        "status": result.get("status"),
-        "source_id": queued["source_id"],
+        "provider": key, "query": query, "requested_records_max": limit,
+        "status": result.get("status"), "source_id": queued["source_id"],
         "indexed_characters": result.get("characters", 0),
-        "duplicate": result.get("duplicate", False),
-        "url": url,
+        "duplicate": result.get("duplicate", False), "url": url,
         "scope": "Search-result metadata only; not full-text or complete repository download.",
         "license_note": cfg["license"],
     }
