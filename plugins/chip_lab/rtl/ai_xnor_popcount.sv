@@ -5,12 +5,12 @@ module ai_xnor_popcount #(
 ) (
     input logic [WIDTH-1:0] activation,
     input logic [WIDTH-1:0] weight,
-    output logic [COUNT_W-1:0] matches
+    output logic [COUNT_W-1:0] match_count
 );
     integer i;
     always_comb begin
-        matches = '0;
+        match_count = '0;
         for (i = 0; i < WIDTH; i = i + 1)
-            matches = matches + (activation[i] ~^ weight[i]);
+            match_count = match_count + (activation[i] ~^ weight[i]);
     end
 endmodule
