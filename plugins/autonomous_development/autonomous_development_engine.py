@@ -166,7 +166,8 @@ def record_execution_result(task_id, report, home=None):
     if status not in {"passed", "failed", "unavailable"}:
         status = "failed"
     results = [{"status": str(x.get("status",""))[:20], "exit_code": x.get("exit_code"), "command": x.get("command", [])[:8], "output_excerpt": str(x.get("output",""))[:120]} for x in report.get("results", [])[:8]]
-    detail = json.dumps({"status": status, "profile": str(report.get("profile",""))[:40], "network": report.get("network"), "secrets_forwarded": report.get("secrets_forwarded"), "results": results}, ensure_ascii=False)[:2800]
+    fingerprint = workspace_fingerprint(task_id, home)
+    detail = json.dumps({"status": status, "profile": str(report.get("profile",""))[:40], "network": report.get("network"), "secrets_forwarded": report.get("secrets_forwarded"), "workspace_sha256": fingerprint, "results": results}, ensure_ascii=False)[:2800]
     with _db(home) as db:
         _task(db, task_id)
         _event(db, task_id, "isolated_runner", "test_execution", detail)
