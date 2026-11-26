@@ -76,7 +76,37 @@ DOMAIN_QUERIES = {
   "robotics_agents": ["robot learning manipulation navigation embodied AI agent benchmarks", "autonomous agents planning tool use reinforcement learning robotics"],
   "ancient_civilizations": ["ancient civilizations archaeology epigraphy artifacts trade technology", "historical engineering architecture metallurgy inventions manuscripts"],
 
-  "india": ["India public health agriculture census education", "India history languages geography"]
+  "india": ["India public health agriculture census education", "India history languages geography"],
+  "animal_taxonomy": ["global animal taxonomy species subspecies taxonomy phylogeny open datasets", "invertebrates vertebrates mammals birds reptiles amphibians fish taxonomy"],
+  "animal_morphology": ["animal morphology anatomy body size shape coloration pattern pigmentation", "animal development sexual dimorphism seasonal plumage coat morphology variation"],
+  "animal_behavior": ["animal behaviour ethology social behaviour feeding mating migration territoriality", "animal cognition problem solving tool use play cooperation learning"],
+  "animal_communication": ["animal communication signals calls courtship alarm contact vocal repertoire", "interspecies communication acoustic signaling chemical visual tactile signals"],
+  "animal_bioacoustics": ["animal bioacoustics birdsong mammal calls amphibian insects sound datasets", "whale dolphin bat echolocation wolf howling frog calls annotated audio"],
+  "animal_vision_color": ["animal coloration camouflage mimicry iridescence structural color visual ecology", "animal vision ultraviolet polarization color perception comparative datasets"],
+  "animal_life_history": ["animal life history development reproduction lifespan growth survival datasets", "seasonal behavior hibernation torpor migration breeding phenology animals"],
+  "plants_traits_ecology": ["plant morphology leaf flower root seed traits phenology open datasets", "plant behavior tropism signaling pollination dispersal ecological interactions"],
+  "ecosystems_foodwebs": ["ecosystem ecology food webs trophic interactions predator prey datasets", "population dynamics habitat connectivity biodiversity conservation monitoring"],
+  "neuroscience_cognition": ["neuroscience cognition perception attention memory decision making open datasets", "brain development plasticity learning executive function cognitive neuroscience"],
+  "brain_imaging": ["human brain MRI fMRI EEG MEG connectomics open neuroimaging datasets", "neural circuits brain atlases cell types electrophysiology neuroscience data"],
+  "learning_intelligence": ["learning science intelligence cognitive abilities reasoning problem solving research", "skill acquisition expertise metacognition education cognitive development datasets"],
+  "psychometrics_behavior": ["psychometrics measurement scales reliability validity cognitive assessment datasets", "human behavior social cognition personality decision making experimental research"],
+  "medicine_clinical": ["clinical medicine diagnosis treatment outcomes guidelines evidence datasets", "medical specialties cardiology neurology oncology infectious disease clinical research"],
+  "medicine_public_health": ["epidemiology disease surveillance public health health systems open datasets", "nutrition maternal child health environmental health occupational health research"],
+  "medical_methods": ["medical research methodology clinical study design randomized trials cohort studies", "systematic reviews meta analysis biostatistics reproducibility clinical evidence"],
+  "engineering_methods": ["engineering design methodology systems engineering reliability safety analysis", "engineering simulation finite element computational fluid dynamics optimization methods"],
+  "manufacturing_processes": ["manufacturing process planning quality control metrology lean production datasets", "industrial process monitoring failure analysis yield optimization maintenance research"],
+  "electronics_circuits": ["electronics analog digital circuits PCB embedded systems open hardware research", "semiconductor testing chip design verification signal integrity power electronics"],
+  "robotics_perception_control": ["robotics perception localization mapping motion planning control datasets", "robot manipulation locomotion grasping tactile sensing human robot interaction"],
+  "computer_science_methods": ["algorithms data structures distributed systems databases operating systems research", "programming languages formal methods software testing verification benchmarks"],
+  "materials_properties": ["materials properties mechanical thermal electrical optical chemical datasets", "materials characterization microscopy spectroscopy crystallography open data"],
+  "energy_systems": ["energy systems power generation transmission storage grid reliability datasets", "solar wind hydrogen batteries nuclear energy lifecycle research"],
+  "earth_observation": ["remote sensing satellite imagery land cover climate atmosphere ocean datasets", "geospatial GIS hydrology hazards geology earth observation research"],
+  "history_knowledge": ["world history primary sources archives manuscripts archaeology material culture", "history of science technology medicine engineering inventions methods"],
+  "philosophy_ethics": ["philosophy epistemology logic ethics reasoning knowledge theory research", "research ethics scientific integrity responsible innovation technology governance"],
+  "economics_work": ["labor economics productivity occupations workplace skills industry datasets", "development economics inequality institutions markets behavioral economics research"],
+  "agriculture_animal_husbandry": ["livestock animal husbandry breeding welfare behavior nutrition datasets", "crop science soil plant disease irrigation farm management open research"],
+  "language_culture": ["world languages linguistics phonetics dialects endangered language corpora", "cultural anthropology folklore oral history social practices public datasets"],
+  "audio_environment": ["environmental soundscape acoustic ecology urban rural sound datasets", "sound event detection machinery weather transport household acoustic research"]
 }
 
 # Each provider returns bounded public search metadata, not unrestricted file mirrors.
