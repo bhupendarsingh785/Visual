@@ -19,7 +19,7 @@ module visual_ai_compute_tile (
         .op(simd_op), .a(simd_a), .b(simd_b), .y(simd_y)
     );
     ai_xnor_popcount #(.WIDTH(32), .COUNT_W(6)) bnn (
-        .activation(bnn_activation), .weight(bnn_weight), .matches(bnn_matches)
+        .activation(bnn_activation), .weight(bnn_weight), .match_count(bnn_matches)
     );
     ai_spiking_neuron #(.STATE_W(16), .THRESHOLD(100), .LEAK(1)) neuron (
         .clk(clk), .rst_n(rst_n), .en(neuron_en),
