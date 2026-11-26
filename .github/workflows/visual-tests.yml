@@ -1,0 +1,26 @@
+name: VISUAL offline checks
+
+on:
+  push:
+    branches: ["main", "upgrade/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile Python sources
+        run: python -m compileall -q visual.py plugins
+      - name: Test continuous listening logic (mocked Termux)
+        run: python -m unittest discover -s plugins/continuous_listening -p 'test_*.py' -v
+      - name: Test memory repeat storage (temporary test file)
+        run: python -m unittest discover -s plugins/memory_repeat -p 'test_*.py' -v
