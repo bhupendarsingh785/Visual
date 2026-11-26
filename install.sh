@@ -13,7 +13,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 # chhota command: 'visual' likho aur chalu
 cat > "$PREFIX/bin/visual" <<'EOW'
 #!/data/data/com.termux/files/usr/bin/bash
-ROOT="$HOME/visual"
+ROOT="__VISUAL_ROOT__"
 cd "$ROOT" || exit 1
 case "${1:-}" in setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
 if [ "$#" -eq 0 ] || [ "$1" = "always" ]; then
@@ -27,6 +27,7 @@ while true; do
   sleep 3
 done
 EOW
+sed -i "s|__VISUAL_ROOT__|$DIR|g" "$PREFIX/bin/visual"
 chmod +x "$PREFIX/bin/visual"
 echo ""
 echo "Ab API key daalo (free Gemini key: aistudio.google.com/apikey)"
@@ -39,9 +40,10 @@ echo "Orb app: visual app  |  Band: bolo VISUAL band ho jao  |  Screen control: 
 mkdir -p ~/.termux/boot
 cat > ~/.termux/boot/start-visual <<'EOB'
 #!/data/data/com.termux/files/usr/bin/bash
-ROOT="$HOME/visual"
+ROOT="__VISUAL_ROOT__"
 mkdir -p "$HOME/.visual"
 exec bash "$ROOT/scripts/visual-supervisor.sh" >> "$HOME/.visual/boot.log" 2>&1
 EOB
+sed -i "s|__VISUAL_ROOT__|$DIR|g" ~/.termux/boot/start-visual
 chmod +x ~/.termux/boot/start-visual
 echo "Auto-start taiyaar (Termux:Boot app chahiye)."
