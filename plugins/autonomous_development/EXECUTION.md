@@ -6,7 +6,7 @@ This runner is an execution adapter for the Autonomous Development subsystem. It
 - Python: preloaded `python:3.12-slim`
 - Node.js: preloaded `node:22-alpine`
 
-The images must already exist locally. The agent cannot pull images or install packages as a side effect. The runner disables networking, forwards no API keys or host environment variables, drops Linux capabilities, enables no-new-privileges, uses a non-root UID, makes the root filesystem read-only, applies CPU/memory/PID limits, and mounts only the task workspace.
+The images must already exist locally. The agent cannot pull images or install packages as a side effect. The runner disables networking, forwards no API keys or host environment variables, drops Linux capabilities, enables no-new-privileges, uses a non-root UID, makes the root filesystem read-only, applies CPU/memory/PID limits, and mounts the task workspace read-only. Each run copies that source into a bounded ephemeral writable tmpfs, so test caches cannot alter the original artifacts.
 
 ## Tools
 - `dev_task_run_tests(task_id, profile, timeout)`: built-in test profile.
@@ -32,7 +32,7 @@ PYTHONPATH=plugins/autonomous_development python -m unittest discover -s plugins
 - OWASP Excessive Agency recommends minimum tool/permission scope, human approval, and SAST/DAST/IAST where appropriate: https://genai.owasp.org/llmrisk/llm062025-excessive-agency/
 
 ## Test coverage roadmap
-The current executable profiles are Python and Node.js. The test manifest accepts argv arrays (never shell command strings) inside the isolated runner. Additional adapters must be added for:
+The current executable profiles are Python and Node.js. Empty test suites are rejected; Python/Node test files must be discovered before a profile can pass. Static validation also parses JavaScript and shell files when those validators are present, and fails if a required parser is unavailable. The test manifest accepts argv arrays (never shell command strings) inside the isolated runner. Additional adapters must be added for:
 - Web UI/E2E: pinned Playwright image plus project-matched Playwright dependency and browser tests.
 - Android APK: pinned Android SDK/Gradle image, emulator/device test runner, signing kept outside the sandbox.
 - API/backend: disposable test database/service fixtures, contract tests and integration tests.
