@@ -14,9 +14,9 @@ debugging, testing, and researching. It is separate from private user memory and
 - HTTPS only on port 443; DNS-resolved non-global/private IPs blocked and revalidated before requests/redirects; robots.txt checked;
   2 MiB per-response cap; text/HTML/JSON/XML only; obvious secret-like strings redacted.
 - No recursive crawling, no private repositories, no credential-bearing URLs.
-- Global research collector: 15 allowlisted APIs across 100 subject areas; up to 300 provider-query tasks per run and 25 metadata records requested per task.
+- Global research collector: 15 allowlisted APIs across 100 subject areas with 393 configured search-query strings; up to 300 provider-query tasks per run and 25 metadata records requested per task.
 - Dataset registry: 152 curated entries, 15 metadata connectors enabled, and 0 automatic bulk-download entries enabled; every file still needs item-level rights and storage review.
-- GitHub Actions collection schedule: every six hours; collection report and SQLite index are retained as a 30-day artifact. A task count is not a record count; inspect the report for actual successes and failures.
+- GitHub Actions collection schedule: every three hours; collection report and SQLite index are retained as a 30-day artifact. A task count is not a record count; inspect the report for actual successes and failures.
 - Provider-specific pacing for Crossref, Zenodo, PubMed, arXiv, Europe PMC, Wikidata, Hugging Face, Stack Exchange, GBIF and NASA; transient 429/5xx and network failures use bounded retries.
 - Global research cursor persists across manual runs and rotates across the full provider-query queue; scheduled runs also advance the batch offset.
 
@@ -81,4 +81,14 @@ Allowed paths are restricted to `~/.visual`, Android shared `Download`, and `Doc
 
 ## Verified research-source registry
 
-`research_sources_registry.json` lists 32 priority research repositories and official portals for biodiversity, animal sounds, marine ecosystems, neuroscience, medicine, engineering and AI. It records the access method, dataset-level rights caveats, collection status and quality checks. Registry presence is discovery metadata only; it does not mean the source has been harvested, a media file has been downloaded, or a license has been granted. Validate the JSON and ensure every listed domain exists in `global_research.py` before expanding the collector.
+`research_sources_registry.json` lists 37 priority research repositories and official portals for biodiversity, animal sounds, marine ecosystems, neuroscience, medicine, engineering and AI. It records the access method, dataset-level rights caveats, collection status and quality checks. Registry presence is discovery metadata only; it does not mean the source has been harvested, a media file has been downloaded, or a license has been granted. Validate the JSON and ensure every listed domain exists in `global_research.py` before expanding the collector.
+
+
+## Advanced AI, chip and robotics research
+
+- `global_research.py` now has expanded search coverage for transformer and state-space architectures, self-supervised learning, fine-tuning, LoRA/QLoRA, distributed training, RAG evaluation, quantization, edge/CPU inference and data quality.
+- Chip research covers transistor/device physics, lithography, wafer process, yield, PPA, RTL, formal verification, timing closure, memory hierarchy, chiplets, advanced packaging, reliability and hardware security.
+- Robotics research covers kinematics, dynamics, SLAM, manipulation, tactile sensing, legged locomotion, MPC, ROS 2, MoveIt 2, Isaac ROS, sim-to-real and human-robot safety.
+- `advanced_technology_learning_map.json` defines the learning layers, reasoning skills and evidence fields. It is a curriculum map, not proof that VISUAL has trained or learned a model.
+- Primary documentation leads include [TensorRT](https://docs.nvidia.com/deeplearning/tensorrt/latest/), [RISC-V specifications](https://docs.riscv.org/), [ROS 2](https://docs.ros.org/), [MoveIt 2](https://moveit.picknik.ai/) and [Isaac ROS](https://developer.nvidia.com/isaac/ros).
+- Benchmark claims must include exact model, hardware, precision, batch size, power envelope, software versions, latency/throughput and memory use. Simulation success is not physical robot validation.
