@@ -171,6 +171,11 @@ def _workspace(task_id, home=None):
     if not ws.is_relative_to(base) or ws.is_symlink():
         raise ValueError("workspace boundary violation")
     ws.mkdir(parents=True,exist_ok=True)
+    # Non-root container UID needs to traverse the task bind mount; HOME remains private.
+    try:
+        ws.chmod(0o755)
+    except OSError:
+        pass
     return ws
 
 
