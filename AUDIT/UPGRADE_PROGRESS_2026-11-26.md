@@ -15,7 +15,7 @@ This is an evidence ledger, not a completion claim.
 - DEVICE_AND_ADAPTER_TEST_PLAN.md defines evidence contracts for device, provider, app, browser, API, database and deployment checks.
 
 ## Important limitations found during recheck
- Plugin loading now uses per-plugin Python namespaces and atomic tool publication, with collision checks and no partial tool registration on import failure. This is NOT process/OS isolation: plugin code still runs in the VISUAL interpreter and inherits its capabilities. A dedicated restricted worker process with narrow RPC capabilities remains required before loading untrusted plugins.
+1. Plugin loading now uses per-plugin Python namespaces and atomic tool publication, with collision checks and no partial tool registration on import failure. This is NOT process/OS isolation: plugin code still runs in the VISUAL interpreter and inherits its capabilities. A dedicated restricted worker process with narrow RPC capabilities remains required before loading untrusted plugins.
 2. The orchestration module is a durable state/evidence gate. It does not yet invoke four independent LLM role agents automatically, provide typed role-specific tool grants, or run an independent SAST/DAST security reviewer. Do not describe it as a completed multi-agent autonomous pipeline.
 3. Android diagnostics have not been run on the owner's physical phone. Screen-off, Doze, microphone permission, foreground-service behavior, reboot recovery, battery and thermal tests remain unverified.
 4. No live provider smoke test was run in this session because owner credentials are stored on the phone and are not available to this repository session. The new tool must be run locally; a successful request can consume quota.
