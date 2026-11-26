@@ -245,7 +245,7 @@ def tool(desc, params=None, risky=False):
         TOOLS[fn.__name__] = {"fn": fn, "schema": {"type": "function", "function": {
             "name": fn.__name__, "description": desc,
             "parameters": {"type": "object", "properties": params or {},
-                           "required": [k for k, v in (params or {}).items() if not v.pop("optional", False)]}}}}
+                           "required": [k for k, v in (params or {}).items() if not v.get("optional", False)]}}}}
         if risky: RISKY.add(fn.__name__)
         return fn
     return deco
@@ -651,13 +651,13 @@ def project_files(project):
         for x in fs: out.append(os.path.relpath(os.path.join(d, x), root))
     return "\n".join(sorted(out)[:300]) or "khaali"
 
-@tool("Project folder mein command chalao (test, build, python app.py, npm test, git...). Bina pooche chalta hai; khatarnak command apne aap rukte hain.",
-      {"project": S("project"), "command": S("shell command"), "timeout": N("second, default 300", optional=True)})
+@tool("Project folder mein shell command chalao. Ye powerful action hai aur har baar owner approval maangta hai.",
+      {"project": S("project"), "command": S("shell command"), "timeout": N("second, default 300", optional=True)}, risky=True)
 def project_run(project, command, timeout=300):
     return _run(command, _proj(project), int(timeout or 300))
 
 @tool("Zaroori package install karo. manager: pip (python library), pkg (Termux tool jaise nodejs, ffmpeg, git), npm (project ke andar JS library).",
-      {"manager": S("pip | pkg | npm"), "packages": S("naam, space se alag"), "project": S("npm ke liye project naam", optional=True)})
+      {"manager": S("pip | pkg | npm"), "packages": S("naam, space se alag"), "project": S("npm ke liye project naam", optional=True)}, risky=True)
 def install_packages(manager, packages, project=""):
     pk = " ".join(re.findall(r"[A-Za-z0-9@._/=<>~+-]+", packages))
     if not pk: return "koi package naam nahi"
@@ -694,7 +694,7 @@ def list_secrets(): return ", ".join(load_json(SECRETS, {}).keys()) or "koi nahi
 
 @tool("Project ko owner ke GitHub par ALAG repo banakar daalo (ya pehle se bana ho to update push). Link lautata hai.",
       {"project": S("project"), "repo": S("GitHub repo naam (khaali = project naam)", optional=True),
-       "private": {"type": "boolean", "description": "true = private (default)", "optional": True}, "message": S("commit message", optional=True)})
+       "private": {"type": "boolean", "description": "true = private (default)", "optional": True}, "message": S("commit message", optional=True)}, risky=True)
 def github_publish(project, repo="", private=True, message="VISUAL update"):
     root = _proj(project); repo = _slug(repo or project)
     if not has("gh"): return "gh nahi hai. Termux mein: pkg install gh && gh auth login"
@@ -746,7 +746,7 @@ def deep_research(question, queries=""):
             seen.add(u)
             txt = read_webpage(u)
             notes.append(f"## Page: {dom}\n{u}\n{txt[:2200]}")
-    notes.append("Niyam: jawab sirf in sources par tikao, site ka naam batao; sources mein takraav ho to batao.")
+    notes.append("Niyam: jawab sirf in sources par tikao; sources mein takraav ho to batao.")
     return "\n\n".join(notes)[:14000]
 
 @tool("Web project (HTML/JS) ko internet par LIVE karo (GitHub Pages). Repo PUBLIC hona zaroori hai (free plan). Live link deta hai.",
@@ -938,25 +938,74 @@ def _self_path(path):
     return p
 
 def load_plugins():
-    """plugins/*.py ko VISUAL ke andar load karo; har plugin @tool se naye kaam jod sakta hai."""
+    """Load trusted built-in plugins in isolated namespaces and atomically publish their tools.
+
+    Namespace isolation prevents global-name pollution and partial tool registration.
+    It is NOT an OS/process security boundary: plugins still share this interpreter
+    and inherited capabilities. Never load untrusted/generated plugin source here.
+    """
     PLUGIN_ERRORS.clear(); loaded = []
+    core = globals()
     for fn in sorted(os.listdir(PLUGINS)):
         if fn.startswith(("_", ".")): continue
         path = os.path.join(PLUGINS, fn)
-        if os.path.isdir(path):                      # bada plugin: plugins/<naam>/plugin.py + apne modules
+        if os.path.isdir(path):
             entry = os.path.join(path, "plugin.py")
-            if not os.path.exists(entry): continue
-            if path not in sys.path: sys.path.insert(0, path)
-        elif fn.endswith(".py"): entry = path
+            if not os.path.isfile(entry): continue
+            plugin_dir = path
+        elif fn.endswith(".py"):
+            entry = path; plugin_dir = os.path.dirname(entry)
         else: continue
+        staged_tools, staged_risky = {}, set()
+        def staged_tool(desc, params=None, risky=False):
+            def deco(func):
+                name = func.__name__
+                if name in staged_tools:
+                    raise ValueError("duplicate tool name inside plugin: " + name)
+                schema_params = params or {}
+                staged_tools[name] = {"fn": func, "schema": {"type": "function", "function": {
+                    "name": name, "description": desc,
+                    "parameters": {"type": "object", "properties": schema_params,
+                                   "required": [k for k,v in schema_params.items() if not v.get("optional", False)]}}}}
+                if risky: staged_risky.add(name)
+                return func
+            return deco
+        inserted_path = plugin_dir not in sys.path
+        modules_before = set(sys.modules)
         try:
-            with open(entry, encoding="utf-8") as f: code = f.read()
-            g = globals(); g["PLUGIN_DIR"] = os.path.dirname(entry)
-            exec(compile(code, entry, "exec"), g)
+            with open(entry, encoding="utf-8") as stream: code = stream.read()
+            namespace = dict(core)
+            namespace.update({"__name__": "visual_plugin_" + re.sub(r"\W+", "_", fn),
+                              "__file__": entry, "PLUGIN_DIR": plugin_dir,
+                              "TOOLS": staged_tools, "RISKY": staged_risky,
+                              "tool": staged_tool})
+            # Sibling imports are available only while this trusted plugin initializes.
+            if inserted_path: sys.path.insert(0, plugin_dir)
+            exec(compile(code, entry, "exec"), namespace, namespace)
+            collisions = sorted(set(staged_tools).intersection(core["TOOLS"]))
+            if collisions:
+                raise ValueError("tool name collision: " + ", ".join(collisions))
+            # Publish only after the complete plugin imports and executes successfully.
+            core["TOOLS"].update(staged_tools)
+            core["RISKY"].update(staged_risky)
             loaded.append(fn)
-        except Exception as e:
+        except Exception as exc:
             import traceback
-            PLUGIN_ERRORS[fn] = f"{type(e).__name__}: {e} | {traceback.format_exc()[-400:]}"
+            PLUGIN_ERRORS[fn] = f"{type(exc).__name__}: {exc} | {traceback.format_exc()[-700:]}"
+        finally:
+            if inserted_path:
+                try: sys.path.remove(plugin_dir)
+                except ValueError: pass
+            # Keep module objects alive through function globals, but avoid global
+            # sys.modules name collisions between plugins with same-named helpers.
+            for module_name, module in list(sys.modules.items()):
+                module_file = getattr(module, "__file__", None)
+                if module_name not in modules_before and module_file:
+                    try:
+                        if os.path.commonpath([os.path.realpath(module_file), os.path.realpath(plugin_dir)]) == os.path.realpath(plugin_dir):
+                            sys.modules.pop(module_name, None)
+                    except (OSError, ValueError, TypeError):
+                        pass
     return loaded
 
 def _backup(label):
@@ -1031,13 +1080,12 @@ def self_edit(path, old, new):
         return "FAIL, badlav wapas le liya (koi nuksaan nahi). Galti:\n" + out
     return f"badlav save + test pass. Ab self_restart chalao.\n{out[-300:]}"
 
-@tool("Upgrade ke baad VISUAL ko restart karo taaki naya code chalu ho (GitHub par bhi bhejta hai). Owner ko bata do ki 5 second mein wapas aaunga.",
-      {"note": S("kya upgrade hua (commit message)", optional=True)})
+@tool("Upgrade ke baad VISUAL ko local restart karo. GitHub par code publish nahi karta; release alag approval ke saath karo.",
+      {"note": S("kya upgrade hua (commit message)", optional=True)}, risky=True)
 def self_restart(note="self upgrade"):
     ok, out = _self_check()
     if not ok: return "Restart nahi kiya: naya code test mein fail hai.\n" + out
-    if os.path.isdir(os.path.join(HERE, ".git")):
-        _run('git add -A && git -c user.name="VISUAL" -c user.email="visual@users.noreply.github.com" commit -qm "%s" && git push -q || true' % note.replace('"', "'")[:100], HERE, 90)
+    # Restart is local only. Publishing code is a separate, explicitly approved release action.
     RESTART_PENDING["v"] = True
     def _go():
         time.sleep(2.5)
@@ -1046,7 +1094,7 @@ def self_restart(note="self upgrade"):
     return "restart ho raha hai (3-5 second). Naye kaam uske baad chalu."
 
 @tool("Pichhla upgrade galat laga to purana version wapas lao (backup se). Phir self_restart.",
-      {"which": S("kaunsa backup (khaali = sabse naya)", optional=True)})
+      {"which": S("kaunsa backup (khaali = sabse naya)", optional=True)}, risky=True)
 def self_rollback(which=""):
     bks = sorted(os.listdir(BACKUPS), key=lambda x: os.path.getmtime(os.path.join(BACKUPS, x)))
     if not bks: return "koi backup nahi"
@@ -1081,7 +1129,7 @@ def upgrade_spec(name, spec):
 
 @tool("UPGRADE kadam 3: bade plugin ki koi bhi file likho (plugins/<naam>/<path>). Entry file 'plugin.py' (isme @tool functions), baaki modules alag files mein, "
       "aur 'test_*.py' mein unittest wale asli test. Sirf file likhta hai; jaanch plugin_test se.",
-      {"name": S("plugin naam"), "path": S("jaise plugin.py, engine.py, test_engine.py"), "content": S("poora content")})
+      {"name": S("plugin naam"), "path": S("jaise plugin.py, engine.py, test_engine.py"), "content": S("poora content")}, risky=True)
 def plugin_file(name, path, content):
     d = _pdir(name); f = _inside(d, path)
     os.makedirs(os.path.dirname(f), exist_ok=True)
@@ -1092,24 +1140,25 @@ def plugin_file(name, path, content):
 @tool("UPGRADE kadam 4: plugin ki poori jaanch: compile, VISUAL ke saath load (tools judte hain ya nahi), aur test_*.py chalana. Nateeja + galti trace.",
       {"name": S("plugin naam")})
 def plugin_test(name):
+    """Static-only legacy check. Never imports or executes generated plugin code."""
     d = _pdir(name); rep = []
-    if not os.path.exists(os.path.join(d, "plugin.py")): return "❌ plugin.py nahi hai (entry file zaroori)"
-    for f in os.listdir(d):
-        if f.endswith(".py"):
-            r = _run(f'{sys.executable} -m py_compile "{os.path.join(d, f)}"', d, 60)
-            if "exit 0" not in r.splitlines()[0]: rep.append(f"❌ compile {f}: {r[-400:]}")
-    ok, out = _self_check(); rep.append(("✅" if ok else "❌") + " VISUAL ke saath load: " + out[-500:])
-    tests = [f for f in os.listdir(d) if f.startswith("test") and f.endswith(".py")]
-    if not tests: rep.append("❌ koi test_*.py nahi: asli test likho")
-    else:
-        env_cmd = f'cd "{d}" && PYTHONPATH="{d}:{HERE}" VISUAL_SELFTEST=1 {sys.executable} -m unittest discover -p "test*.py" -v 2>&1'
-        r = _run(env_cmd, d, 300); passed = re.search(r"\nOK", r) is not None
-        n = re.search(r"Ran (\d+) test", r); n = int(n.group(1)) if n else 0
-        rep.append(("✅" if passed and n > 0 else "❌") + f" tests: {n} chale\n" + r[-1800:])
+    if not os.path.isfile(os.path.join(d, "plugin.py")):
+        return "❌ plugin.py nahi hai (entry file zaroori)"
+    files = [x for x in os.listdir(d) if x.endswith(".py") and os.path.isfile(os.path.join(d,x))]
+    if not any(x.startswith("test") for x in files):
+        rep.append("❌ koi test_*.py nahi: test file zaroori")
+    for fn in files:
+        try:
+            with open(os.path.join(d,fn),encoding="utf-8") as fh: source=fh.read()
+            compile(source,fn,"exec")
+            rep.append("✅ syntax: "+fn)
+        except Exception as exc:
+            rep.append(f"❌ syntax: {fn}: {type(exc).__name__}: {str(exc)[:250]}")
+    rep.append("⚠️ runtime/import tests yahan nahi chalte. Host-process execution band hai; isolated Docker runner se alag dev_task workspace mein test karein.")
     good = not any(x.startswith("❌") for x in rep)
     t = getattr(_CTX, "task", None)
-    if t: t["tests_ok"] = good
-    return ("NATEEJA: SAB PASS ✅" if good else "NATEEJA: FAIL ❌ (galti theek karo)") + "\n" + "\n".join(rep)[:6000]
+    if t: t["tests_ok"] = False
+    return ("STATIC CHECK PASS (runtime unverified)" if good else "STATIC CHECK FAIL") + "\\n" + "\\n".join(rep)[:6000]
 
 CRITIC_SYS = ("Tum ek bahut sakht senior engineer CRITIC ho (duniya ke best product jaise standard). Tumhara kaam kamiyan pakadna hai, tareef nahi. "
               "SPEC aur code padh kar dekho: kya sab features asli mein bane hain ya sirf naam ke; galti sambhalna; edge cases; suraksha; "
@@ -1218,50 +1267,31 @@ def _run_unittest(d, target, env, timeout=150):
     return res, n, out
 
 def _sandbox_eval(files, spec_tests):
-    """Ek namoone ko alag jagah (asli ~/.visual ko chhue bina) chala kar number do."""
-    import tempfile
-    base = tempfile.mkdtemp(prefix="sangam-"); d = os.path.join(base, "p"); home = os.path.join(base, "home")
-    os.makedirs(d); os.makedirs(home)
-    try:
-        for path, body in files.items():
-            fp = os.path.join(d, path); os.makedirs(os.path.dirname(fp), exist_ok=True)
-            with open(fp, "w", encoding="utf-8") as f: f.write(body)
-        with open(os.path.join(d, "vtest.py"), "w", encoding="utf-8") as f: f.write(VTEST_PY)
-        if spec_tests:
-            with open(os.path.join(d, "spec_check.py"), "w", encoding="utf-8") as f: f.write(spec_tests)
-        ev = {"compile": [], "loads": False, "new_tools": [], "spec": {}, "spec_n": 0, "own_ok": 0, "own_n": 0, "log": ""}
-        if "plugin.py" not in files: ev["log"] = "plugin.py nahi diya"; return ev
-        for path in files:
-            if path.endswith(".py"):
-                try: compile(files[path], path, "exec")
-                except SyntaxError as e: ev["compile"].append(f"{path}:{e.lineno}: {e.msg}")
-        if ev["compile"]: ev["log"] = "SYNTAX: " + "; ".join(ev["compile"]); return ev
-        bad = [pth for pth, body in files.items() if AI_CODE_RISK.search(body)]
-        if bad: ev["log"] = "KHATARNAK CODE (chalaya nahi): " + ", ".join(bad) + " -> " + AI_CODE_RISK.search(files[bad[0]]).group(0)[:60]; return ev
-        env = dict(os.environ); env.update({"VISUAL_SELFTEST": "1", "VISUAL_SANDBOX": "1", "HOME": home, "PYTHONPATH": d + os.pathsep + HERE, "PYTHONDONTWRITEBYTECODE": "1"})
-        try:
-            r = subprocess.run([sys.executable, "-c", "import vtest; print('NEW', ','.join(vtest.NEW_TOOLS))"], cwd=d, env=env,
-                               capture_output=True, text=True, timeout=90)
-            m = re.search(r"^NEW (.*)$", r.stdout, re.M)
-            if m and m.group(1).strip():
-                ev["loads"] = True; ev["new_tools"] = m.group(1).strip().split(",")
-            else:
-                ev["log"] = "LOAD FAIL (VISUAL mein jud nahi paaya / koi @tool nahi): " + (r.stdout + r.stderr)[-1500:]; return ev
-        except subprocess.TimeoutExpired:
-            ev["log"] = "LOAD TIMEOUT (import par atak gaya)"; return ev
-        logs = []
-        if spec_tests:
-            res, n, out = _run_unittest(d, "spec_check", env); ev["spec"] = res; ev["spec_n"] = n
-            if any(v != "ok" for v in res.values()) or n == 0: logs.append("SPEC TESTS:\n" + out[-2500:])
-        own = [p for p in files if re.match(r"(.*/)?test\w*\.py$", p)]
-        if own:
-            res2, n2, out2 = _run_unittest(d, "discover", env)
-            ev["own_n"] = len(res2) or n2; ev["own_ok"] = sum(1 for v in res2.values() if v == "ok")
-            if ev["own_ok"] < ev["own_n"]: logs.append("APNE TESTS:\n" + out2[-1500:])
-        ev["log"] = "\n".join(logs)[-4000:]
+    """Fail closed: never execute generated code in the VISUAL host process."""
+    ev = {"compile": [], "loads": False, "new_tools": [], "spec": {},
+          "spec_n": 0, "own_ok": 0, "own_n": 0, "log": ""}
+    if not isinstance(files, dict) or "plugin.py" not in files:
+        ev["log"] = "plugin.py nahi diya"
         return ev
-    finally:
-        shutil.rmtree(base, ignore_errors=True)
+    for path, body in files.items():
+        if not isinstance(path, str) or not isinstance(body, str):
+            ev["log"] = "invalid file entry"
+            return ev
+        normalized = path.replace("\\\\", "/")
+        if os.path.isabs(path) or ".." in normalized.split("/"):
+            ev["log"] = "unsafe artifact path: " + path[:120]
+            return ev
+        if path.endswith(".py"):
+            try:
+                compile(body, path, "exec")
+            except SyntaxError as exc:
+                ev["compile"].append(f"{path}:{exc.lineno}: {exc.msg}")
+    if ev["compile"]:
+        ev["log"] = "SYNTAX: " + "; ".join(ev["compile"])
+        return ev
+    ev["log"] = ("BLOCKED: legacy in-process execution disabled. Static syntax passed; "
+                 "runtime is UNVERIFIED. Use the isolated development-task runner.")
+    return ev
 
 def _score(ev, valid_tests):
     if not ev or not ev.get("loads"): return 0.0
@@ -1307,7 +1337,7 @@ def _gen_candidate(p, temp, spec, tests, extra=""):
       "asli chala kar jaancho, sabse achha chuno, galti wale ko doosre models se sudhaarwao, sabse achhe do ko milao, phir install + plugin_test + critic. "
       "Bada upgrade/naya feature BANANE ke liye plugin_file se pehle ye use karo. Lamba chalta hai (minute).",
       {"name": S("plugin naam"), "spec": S("poora SPEC (khaali ho to plugins/<naam>/SPEC.md)", optional=True),
-       "k": N("kitne namoone (default 4)", optional=True), "rounds": N("sudhaar chakkar (default 3)", optional=True)})
+       "k": N("kitne namoone (default 4)", optional=True), "rounds": N("sudhaar chakkar (default 3)", optional=True)}, risky=True)
 def ensemble_code(name, spec="", k=4, rounds=3):
     d = _pdir(name)
     if not spec:
@@ -1520,10 +1550,16 @@ def resume_tasks():
 ENGINEER_RULES = """
 TUM AB "ENGINEER" HO: VISUAL ka gehra kaam karne wala dimaag. Owner tumse seedhe baat nahi kar raha; kaam pura karke report do.
 Tareeka (har baar):
-1. think: lakshya saaf karo, chhote kadam ka plan, kaunsa stack/library/API, kaise test karoge.
-2. Bahar ki jaankari ya library/API par shak ho: check_packages / check_url / cross_check. Nakli library kabhi mat daalo.
-3. Kaam karo (project_* tools, self_* tools, install_packages).
-4. JAANCHO: code ho to verify_code + project_run (asli chala kar). Khud ka upgrade ho to self_plugin/self_edit ka test nateeja padho.
+1. Har substantial build/upgrade/debug/research ke liye dev_task_create se durable task workspace banao; task ID report mein rakho.
+2. think: lakshya saaf karo, chhote kadam ka plan, kaunsa stack/library/API, kaise test karoge. Planning/research/design/implementation/validation ke dauran dev_task_transition se state update karo.
+3. Research mein deep_research/web_search use karo. Har source URL, title, summary aur evidence dev_task_add_research se ledger mein record karo; source aur inference ko alag rakho.
+4. Bahar ki jaankari ya library/API par shak ho: check_packages / check_url / cross_check. Nakli library kabhi mat daalo.
+5. Generated source files dev_task_write_file se alag workspace mein banao; dev_task_files aur dev_task_status se artifacts/history verify karo. Live VISUAL source ko seedha overwrite mat karo.
+6. dev_task_validate se Python syntax/JSON/secret-pattern static checks chalao. Phir dev_task_run_tests (Python/Node) ya dev_task_run_manifest se isolated runtime tests chalao. Har test result ledger mein save hota hai; build/upgrade/debug/tool task ko awaiting_approval tak le jaane se pehle isolated runtime tests pass hona anivarya hai.
+7. Docker/approved sandbox unavailable ho to fail-closed report do. Generated code ko Termux/VISUAL process mein seedha execute karke sandbox hone ka daawa kabhi mat karo. Missing test infrastructure ko 'unavailable' likho, 'passed' nahi.
+8. UI/E2E/API/database/load/security/device tests ke liye project ke hisab se test manifest aur matching emulator/service/remote runner chahiye. Sirf Python/Node base profile se sab app types pass hone ka daawa mat karo.
+9. Real package install, publishing, deployment ya live-core change se pehle owner approval aur isolated test environment zaroori hai. Existing project_* tools sirf owner-approved project scope mein use karo; untrusted code ko Termux user ke unrestricted environment mein mat chalao.
+8. Validation evidence ke baad dev_task_transition(..., "awaiting_approval"). Sirf owner dev_task_approve se complete kar sakta hai; agent apne task ko khud complete nahi karega.
 5. Galti mile to trace dhyan se padho, asli wajah dhoondho (andaaze se patch nahi), theek karo, dobara jaancho. Jab tak pass na ho, rukna nahi.
 6. Khud ki galti dhoondhni ho to self_diagnose aur self_errors se shuru karo, phir self_read se code padho.
 7. Kaam pura hone par hi khatam: project ho to github_publish. Khud ka upgrade ho to self_restart (ye kaam ke BAAD apne aap hoga).
@@ -1534,16 +1570,14 @@ Jhooth mat bolo: jo test nahi hua use 'test nahi hua' likho.
 NO_ENGINEER = {"agent_task", "task_status"}
 
 UPGRADE_RULES = """
-YE "UPGRADE/BADA SYSTEM" KAAM HAI. MINIMUM WALA KAAM BILKUL NAHI. Socho: is cheez ka duniya ka sabse achha version kaisa hota hai, wahi banao.
-Zaroori kadam (code inhe jaanchta hai; chhodoge to kaam khatam nahi maana jayega):
-1. RESEARCH: deep_research / web_search se best tareeke, asli libraries/APIs (check_packages, check_url se pakka).
-2. SPEC: upgrade_spec mein poora design: features (advanced wale bhi), architecture (kai files), galti sambhalna, retries/cache, config, keys, test.
-3. BUILD: ensemble_code(name) chalao (SANGAM: kai desh ke AI se kai namoone + alag test + asli chala kar sabse achha + sudhaar + milaan + install).
-   Ye fail ho ya chhota sudhaar chahiye tab plugin_file se files theek karo. Ek file mein sab thoos mat do.
-   Mushkil design faisla ho to council (kai models ki parishad) se poochho.
-4. TEST: plugin_test (ensemble_code khud bhi chalata hai). FAIL ho to trace padh kar asli wajah theek karo.
-5. CRITIC: critic_review. SCORE 8 se kam ho to uski har kami theek karo, phir dobara plugin_test + critic_review.
-6. Jab tests pass + SCORE >= 8 tab self_restart, phir report (kya naya, kaise use kare, score, kya baaki).
+BADA UPGRADE: legacy SANGAM/plugin_test execution path is disabled for safety.
+Use ONLY the durable dev_task_* workflow:
+1. Create a durable task; plan and research; store every source in the research ledger.
+2. Write generated files only into the task workspace.
+3. Run static validation, then isolated Docker Python/Node tests. If Docker is unavailable, mark runtime unavailable; never claim pass.
+4. Inspect failures, patch the workspace, and rerun validation and tests until evidence matches the final workspace hash.
+5. Move to awaiting_approval only with current passing evidence. Never self-approve, install, publish, deploy, or edit live VISUAL code.
+6. Report unsupported test profiles and missing device/service fixtures explicitly.
 """
 
 def _engineer(tid):
@@ -1570,16 +1604,30 @@ def _engineer(tid):
             calls = msg.get("tool_calls") or []
             if not calls:
                 report = (msg.get("content") or "").strip()
-                if is_up and step < budget - 3:            # QUALITY GATE: bina pipeline pure kiye khatam nahi
+                if is_up and step < budget - 3:            # durable workflow evidence gate
                     missing = []
-                    if not t.get("spec"): missing.append("upgrade_spec (research ke baad poora SPEC)")
-                    if not t.get("tests_ok"): missing.append("plugin_test PASS (asli test ke saath)")
-                    if t.get("critic", 0) < 8 and t.get("critic_rounds", 0) < 4: missing.append(f"critic_review SCORE>=8 (abhi {t.get('critic', 'nahi chala')})")
+                    dev_id = t.get("development_task_id")
+                    if not dev_id:
+                        missing.append("dev_task_create aur dev_orchestration_start: durable task/workflow abhi link nahi hua")
+                    else:
+                        try:
+                            state = json.loads(TOOLS["dev_orchestration_status"]["fn"](dev_id))
+                            stage = state.get("status")
+                            if stage == "awaiting_owner_approval":
+                                t["awaiting_owner_approval"] = True
+                            elif stage == "completed":
+                                t["durable_workflow_completed"] = True
+                            else:
+                                missing.append("durable workflow abhi " + str(state.get("role", "unknown")) + " stage par hai")
+                        except Exception as gate_error:
+                            missing.append("durable workflow status verify nahi hua: " + type(gate_error).__name__)
                     if missing:
                         work.append({"role": "assistant", "content": report or "(khaali)"})
-                        work.append({"role": "user", "content": "QUALITY GATE: kaam abhi pura nahi maana gaya. Baaki: " + "; ".join(missing)
-                                     + ". Minimum par mat ruko; isse advanced banao aur ye kadam pure karo."})
+                        work.append({"role": "user", "content": "QUALITY GATE: kaam abhi pura nahi maana gaya. " + "; ".join(missing)
+                                     + ". Durable Planner-Coder-Tester-Security Reviewer workflow ko evidence ke saath aage badhao; owner approval kabhi khud mat do."})
                         t["steps"].append("quality-gate"); continue
+                    if t.get("awaiting_owner_approval") or t.get("durable_workflow_completed"):
+                        break
                 break
             work.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": calls})
             for c in calls:
@@ -1594,6 +1642,14 @@ def _engineer(tid):
                     res = "Ye kaam (SMS/call/shell) peeche se owner ki haan ke bina nahi hota. Report mein likho ki owner khud bole."
                 else:
                     res = run_tool(name, args)
+                    if name == "dev_task_create":
+                        try:
+                            created = json.loads(res)
+                            if created.get("id"):
+                                t["development_task_id"] = created["id"]
+                                _save_tasks()
+                        except Exception:
+                            pass
                 work.append({"role": "tool", "tool_call_id": c.get("id", name), "content": res[:7000]})
             if PENDING_IMAGES:
                 imgs = PENDING_IMAGES[:]; PENDING_IMAGES.clear()
@@ -1604,7 +1660,14 @@ def _engineer(tid):
         else:
             report = f"{budget} kadam ho gaye, kaam adhoora. Jitna hua: " + ", ".join(t["steps"][-10:])
         if is_up: report += f"\n(Critic score: {t.get('critic', '-')}/10, tests: {'pass' if t.get('tests_ok') else 'fail/nahi'})"
-        t.update(status="fail" if report.startswith("❌") else "done", report=report or "(khaali report)")
+        if t.get("awaiting_owner_approval"):
+            t.update(status="owner approval pending", report=(report or "Development workflow owner approval ka intezar kar raha hai.") + "\\nDurable task: " + str(t.get("development_task_id")))
+        elif t.get("durable_workflow_completed"):
+            t.update(status="done", report=report or "Durable workflow completed with verified evidence.")
+        elif is_up:
+            t.update(status="fail" if report.startswith("❌") else "incomplete", report=report or "(khaali report)")
+        else:
+            t.update(status="fail" if report.startswith("❌") else "done", report=report or "(khaali report)")
     except Exception as e:
         import traceback; log_error("engineer", e, traceback.format_exc())
         t.update(status="fail", report=f"Engineer ruk gaya: {e}")
@@ -1794,7 +1857,7 @@ def data_sync():
         MEMORY["last_data_sync"] = time.strftime("%Y-%m-%d %H:%M") if ok else MEMORY.get("last_data_sync")
         return (f"✅ data GitHub (private) par surakshit: https://github.com/{full}" if ok else "push fail: " + r[-400:])
 
-@tool("Naye/reset phone par: private GitHub repo 'visual-data' se VISUAL ka saara data (yaadein, baatcheet, banayi cheezein) wapas lao.")
+@tool("Naye/reset phone par: private GitHub repo 'visual-data' se VISUAL ka saara data (yaadein, baatcheet, banayi cheezein) wapas lao.", risky=True)
 def data_restore():
     user = _gh_user()
     if not user: return "GitHub login nahi (gh auth login)"
@@ -1988,7 +2051,7 @@ Tum dekh sakte ho (look_camera, look_screen, look_file), sun sakte ho (user ki a
 phone chala sakte ho (apps, torch, alarm, SMS, call, WhatsApp, notifications, screen par tap/swipe/type), internet se jude ho (web_search, read_webpage),
 aur khud cheezein bana sakte ho (create_file: code, html game/page, kahani) aur unhe dekh/khol sakte ho.
 
-Niyam:
+Niyam:\n- OFFLINE-FIRST KNOWLEDGE: coding, science, AI, education ya factual sawal par pehle knowledge_search se local indexed data dekho; source/license/provenance ko dhyan mein rakho. Local data kam ho tabhi web_search se naya data lao. Jo local result na mile use bana kar mat batao. Naye public sources ko knowledge_collect_now se index karo; phone ke local files aur JSONL.GZ dumps ke liye knowledge_import_local use karo. Data ko chhote resumable batches mein process karo.
 - Jawab Hinglish mein, chhota, dosti bhara, jaise bola jaata hai (aawaz mein padha jaayega). Owner ko "{o}" ya "boss" bulao.
 - Kaam ho sakta ho to baat karne ke bajaye tool chalao. Kai kadam ho to ek ke baad ek tool chalao.
 - Screen par kaam: pehle look_screen, phir tap/type/swipe, phir dobara look_screen se pakka karo. Har baar 1-2 kadam.
@@ -2357,6 +2420,64 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
     lim = any(" 429 " in x for x in errs)
     return {"role": "assistant", "content": ("Free AI ki minute/din ki limit poori ho gayi. Thodi der baad dobara, ya ek aur free key "
             "(kisi bhi desh ki) 'visual keys' mein daalo. " if lim else "Dimaag se jud nahi paaya: ") + " | ".join(errs)[:300]}, []
+
+@tool("Configured AI provider ki REAL authenticated live connectivity smoke test. Missing key ko unavailable batata hai; key kabhi print nahi hoti.", {"provider": S("provider naam, optional; khaali = sab configured providers", optional=True)})
+def provider_live_check(provider=""):
+    targets = [provider.strip().lower()] if provider.strip() else list(PROVIDERS)
+    reports = []
+    for p in targets:
+        if p not in PROVIDERS:
+            reports.append({"provider": p, "status": "unknown_provider"})
+            continue
+        key = pkey(p)
+        if not key:
+            reports.append({"provider": p, "status": "unavailable", "reason": "no_configured_key"})
+            continue
+        model = provider_model(p, "chat")
+        payload = {"model": model, "messages": [{"role": "user", "content": "Reply only: OK"}], "max_tokens": 8, "temperature": 0}
+        req = urllib.request.Request(PROVIDERS[p]["base"].rstrip("/") + "/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "VISUAL-provider-health/1.0"})
+        started = time.time()
+        try:
+            with urllib.request.urlopen(req, timeout=25) as response:
+                raw = response.read(12000).decode("utf-8", "replace")
+                data = json.loads(raw)
+                ok = bool(data.get("choices") and isinstance(data["choices"], list))
+                reports.append({"provider": p, "model": model, "status": "passed" if ok else "failed",
+                    "http_status": response.status, "latency_ms": round((time.time()-started)*1000),
+                    "capability": "basic_chat_completion" if ok else "unexpected_response_schema"})
+        except urllib.error.HTTPError as exc:
+            body = exc.read(1500).decode("utf-8", "replace")
+            reason = "auth_failed" if exc.code in (401,403) else ("rate_limited" if exc.code == 429 else ("model_or_endpoint_error" if exc.code in (400,404) else "http_error"))
+            reports.append({"provider": p, "model": model, "status": "failed", "http_status": exc.code,
+                "latency_ms": round((time.time()-started)*1000), "reason": reason,
+                "error_excerpt": strip_html(body)[:180]})
+        except Exception as exc:
+            reports.append({"provider": p, "model": model, "status": "unavailable",
+                "latency_ms": round((time.time()-started)*1000), "reason": type(exc).__name__})
+    return json.dumps({"checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "results": reports, "note": "Only configured keys were tested; each successful call may consume provider quota."},
+        ensure_ascii=False, indent=2)[:10000]
+
+@tool("Asli Android/Termux runtime diagnostics: Android release/API, CPU, RAM/storage, Python aur Termux:API command availability. Ye permission/audio background test nahi hai.", {})
+def device_runtime_diagnostics():
+    def probe(cmd, timeout=8):
+        try: return sh(cmd, timeout)[:500]
+        except Exception as exc: return "ERROR: " + type(exc).__name__
+    android = probe(["getprop", "ro.build.version.release"]) if has("getprop") else "unavailable"
+    sdk = probe(["getprop", "ro.build.version.sdk"]) if has("getprop") else "unavailable"
+    mem = probe(["sh", "-c", "grep -E 'MemTotal|MemAvailable' /proc/meminfo"]) if has("sh") else "unavailable"
+    storage = probe(["df", "-h", HOME]) if has("df") else "unavailable"
+    commands = ["termux-battery-status", "termux-microphone-record", "termux-speech-to-text",
+                "termux-tts-speak", "termux-camera-info", "termux-notification", "termux-wake-lock", "adb"]
+    return json.dumps({"timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "platform": sys.platform, "python": sys.version.split()[0], "architecture": __import__("platform").machine(),
+        "android_release": android, "android_api": sdk, "memory": mem, "storage": storage,
+        "termux_api_commands_present": {name: has(name) for name in commands},
+        "limitations": ["Command presence does not prove Android permission or hardware operation.",
+                        "Screen-off/Doze/reboot and microphone foreground-service behavior need interactive physical-device tests."]},
+        ensure_ascii=False, indent=2)[:7000]
 
 YES = re.compile(r"^\s*(haan|ha|haa|han|yes|y|ok|okay|kar do|karo|theek hai|thik hai|bhej do|chalo|done|hmm+)\b", re.I)
 NO = re.compile(r"^\s*(nahi|nahin|na|no|mat|cancel|ruko|rehne do)\b", re.I)
