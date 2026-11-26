@@ -60,6 +60,19 @@ DOMAIN_QUERIES = {
   "open_hardware": ["open source hardware electronics robotics designs", "microcontroller embedded systems circuit schematics open projects"],
   "public_policy": ["public policy governance institutions development open data", "government services public administration regulatory research"],
   "discovery_frontier": ["recent scientific discoveries emerging technologies research frontiers", "interdisciplinary unexplored research questions open science"],
+  "deep_learning": ["deep learning neural network architectures optimization training benchmarks", "self supervised learning representation learning foundation models research"],
+  "computer_vision": ["computer vision image video understanding object detection segmentation open datasets", "human pose estimation action recognition facial action units gaze tracking"],
+  "multimodal_ai": ["multimodal AI vision language audio video models benchmarks", "cross modal representation learning grounding perception research"],
+  "medical_imaging": ["medical imaging radiology MRI CT ultrasound pathology open research datasets", "medical image segmentation detection clinical validation explainable AI"],
+  "clinical_trials": ["clinical trials interventions outcomes trial registries open research", "randomized controlled trials systematic reviews treatment evidence"],
+  "genomics_proteomics": ["genomics transcriptomics proteomics single cell biology open datasets", "protein structure function molecular biology bioinformatics research"],
+  "human_motion": ["human activity recognition gait pose estimation body movement datasets", "hand gestures sign language facial expression body posture motion capture"],
+  "audio_speech": ["speech emotion recognition speaker diarization acoustic phonetics open corpora", "environmental sound classification animal vocalization audio datasets"],
+  "semiconductor_research": ["semiconductor device physics chip fabrication lithography packaging reliability", "integrated circuits transistor process nodes materials yield testing research"],
+  "materials_science": ["materials science alloys polymers ceramics nanomaterials characterization datasets", "battery materials catalysts superconductors crystal structures research"],
+  "robotics_agents": ["robot learning manipulation navigation embodied AI agent benchmarks", "autonomous agents planning tool use reinforcement learning robotics"],
+  "ancient_civilizations": ["ancient civilizations archaeology epigraphy artifacts trade technology", "historical engineering architecture metallurgy inventions manuscripts"],
+
   "india": ["India public health agriculture census education", "India history languages geography"]
 }
 
