@@ -29,6 +29,9 @@ class KnowledgeBaseTests(unittest.TestCase):
         found = search_knowledge("Python programming debugging", home=self.home)
         self.assertTrue(found)
         self.assertEqual(found[0]["topic"], "deep_learning")
+        stats = knowledge_stats(self.home)
+        self.assertEqual(stats["document_topic_counts"]["deep_learning"], 1)
+        self.assertEqual(stats["source_status_counts"]["indexed"], 1)
 
     @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
     def test_short_response_is_marked_error(self, _url):
