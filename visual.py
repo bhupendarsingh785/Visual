@@ -652,12 +652,12 @@ def project_files(project):
     return "\n".join(sorted(out)[:300]) or "khaali"
 
 @tool("Project folder mein command chalao (test, build, python app.py, npm test, git...). Bina pooche chalta hai; khatarnak command apne aap rukte hain.",
-      {"project": S("project"), "command": S("shell command"), "timeout": N("second, default 300", optional=True)})
+      {"project": S("project"), "command": S("shell command"), "timeout": N("second, default 300", optional=True)}, risky=True)
 def project_run(project, command, timeout=300):
     return _run(command, _proj(project), int(timeout or 300))
 
 @tool("Zaroori package install karo. manager: pip (python library), pkg (Termux tool jaise nodejs, ffmpeg, git), npm (project ke andar JS library).",
-      {"manager": S("pip | pkg | npm"), "packages": S("naam, space se alag"), "project": S("npm ke liye project naam", optional=True)})
+      {"manager": S("pip | pkg | npm"), "packages": S("naam, space se alag"), "project": S("npm ke liye project naam", optional=True)}, risky=True)
 def install_packages(manager, packages, project=""):
     pk = " ".join(re.findall(r"[A-Za-z0-9@._/=<>~+-]+", packages))
     if not pk: return "koi package naam nahi"
@@ -694,7 +694,7 @@ def list_secrets(): return ", ".join(load_json(SECRETS, {}).keys()) or "koi nahi
 
 @tool("Project ko owner ke GitHub par ALAG repo banakar daalo (ya pehle se bana ho to update push). Link lautata hai.",
       {"project": S("project"), "repo": S("GitHub repo naam (khaali = project naam)", optional=True),
-       "private": {"type": "boolean", "description": "true = private (default)", "optional": True}, "message": S("commit message", optional=True)})
+       "private": {"type": "boolean", "description": "true = private (default)", "optional": True}, "message": S("commit message", optional=True)}, risky=True)
 def github_publish(project, repo="", private=True, message="VISUAL update"):
     root = _proj(project); repo = _slug(repo or project)
     if not has("gh"): return "gh nahi hai. Termux mein: pkg install gh && gh auth login"
@@ -1032,12 +1032,11 @@ def self_edit(path, old, new):
     return f"badlav save + test pass. Ab self_restart chalao.\n{out[-300:]}"
 
 @tool("Upgrade ke baad VISUAL ko restart karo taaki naya code chalu ho (GitHub par bhi bhejta hai). Owner ko bata do ki 5 second mein wapas aaunga.",
-      {"note": S("kya upgrade hua (commit message)", optional=True)})
+      {"note": S("kya upgrade hua (commit message)", optional=True)}, risky=True)
 def self_restart(note="self upgrade"):
     ok, out = _self_check()
     if not ok: return "Restart nahi kiya: naya code test mein fail hai.\n" + out
-    if os.path.isdir(os.path.join(HERE, ".git")):
-        _run('git add -A && git -c user.name="VISUAL" -c user.email="visual@users.noreply.github.com" commit -qm "%s" && git push -q || true' % note.replace('"', "'")[:100], HERE, 90)
+    # Restart is local only. Publishing code is a separate, explicitly approved release action.
     RESTART_PENDING["v"] = True
     def _go():
         time.sleep(2.5)
@@ -1046,7 +1045,7 @@ def self_restart(note="self upgrade"):
     return "restart ho raha hai (3-5 second). Naye kaam uske baad chalu."
 
 @tool("Pichhla upgrade galat laga to purana version wapas lao (backup se). Phir self_restart.",
-      {"which": S("kaunsa backup (khaali = sabse naya)", optional=True)})
+      {"which": S("kaunsa backup (khaali = sabse naya)", optional=True)}, risky=True)
 def self_rollback(which=""):
     bks = sorted(os.listdir(BACKUPS), key=lambda x: os.path.getmtime(os.path.join(BACKUPS, x)))
     if not bks: return "koi backup nahi"
@@ -1800,7 +1799,7 @@ def data_sync():
         MEMORY["last_data_sync"] = time.strftime("%Y-%m-%d %H:%M") if ok else MEMORY.get("last_data_sync")
         return (f"✅ data GitHub (private) par surakshit: https://github.com/{full}" if ok else "push fail: " + r[-400:])
 
-@tool("Naye/reset phone par: private GitHub repo 'visual-data' se VISUAL ka saara data (yaadein, baatcheet, banayi cheezein) wapas lao.")
+@tool("Naye/reset phone par: private GitHub repo 'visual-data' se VISUAL ka saara data (yaadein, baatcheet, banayi cheezein) wapas lao.", risky=True)
 def data_restore():
     user = _gh_user()
     if not user: return "GitHub login nahi (gh auth login)"
