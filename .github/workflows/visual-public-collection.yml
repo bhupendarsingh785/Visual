@@ -14,7 +14,7 @@ on:
         type: number
         default: 100
   schedule:
-    - cron: "17 2 * * *"
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: read
