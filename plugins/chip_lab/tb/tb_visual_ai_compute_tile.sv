@@ -30,6 +30,9 @@ module tb_visual_ai_compute_tile;
         simd_op=2'b10; #1;
         if (simd_y !== {16'd160,16'd90,16'd40,16'd10}) $fatal(1,"SIMD multiply failed");
         @(negedge clk); neuron_en=1; neuron_current=16'd60;
+        @(posedge clk); #1;
+        if (neuron_spike !== 1'b0 || neuron_membrane !== 16'd59)
+            $fatal(1,"spiking neuron integration/leak step failed");
         @(negedge clk); neuron_current=16'd50;
         @(posedge clk); #1;
         if (neuron_spike !== 1'b1) $fatal(1,"spiking neuron threshold failed");
