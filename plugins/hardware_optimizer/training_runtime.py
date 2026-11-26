@@ -94,7 +94,7 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
     root.mkdir(parents=True, exist_ok=True)
     if not root.is_dir():
         raise ValueError("checkpoint_dir must be a directory")
-    checkpoint_path = root / "visual-best-training.pt"
+    checkpoint_path = root / f"visual-training-{time.time_ns()}.pt"
 
     def run_validation():
         model.eval()
@@ -104,6 +104,8 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
             for batch in validation_loader:
                 if count >= limits["validation_steps"]:
                     break
+                if time.monotonic() - started >= limits["max_seconds"]:
+                    return None
                 if not isinstance(batch, (tuple, list)) or len(batch) < 2:
                     raise ValueError("Each batch must contain (inputs, targets)")
                 inputs = _move(batch[0], target, torch)
@@ -111,9 +113,12 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                 loss = loss_fn(model(inputs), targets)
                 if not torch.isfinite(loss).all():
                     raise FloatingPointError("Non-finite validation loss")
-                total += float(loss.detach().item())
-                count += 1
+                batch_size = int(targets.shape[0]) if getattr(targets, "ndim", 0) > 0 else 1
+                total += float(loss.detach().item()) * batch_size
+                count += batch_size
         if not count:
+            if time.monotonic() - started >= limits["max_seconds"]:
+                return None
             raise ValueError("validation_loader produced no batches")
         return total / count
 
@@ -147,6 +152,9 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                 break
 
             validation_loss = run_validation()
+            if validation_loss is None:
+                stopped_reason = "time_limit"
+                break
             record = {
                 "epoch": epoch + 1,
                 "train_loss": train_total / train_count,
