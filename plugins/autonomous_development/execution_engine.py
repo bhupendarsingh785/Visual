@@ -24,6 +24,7 @@ PROFILES = {
     "node": {
         "image": "node:22-alpine",
         "commands": [
+            ["node", "-e", "const fs=require('fs');const f=fs.readdirSync('.').filter(x=>x.endsWith('.test.js')||x.endsWith('.spec.js')||x.startsWith('test-'));console.log('Discovered tests:',f.length);process.exit(f.length?0:3)"],
             ["node", "--test"],
         ],
     },
