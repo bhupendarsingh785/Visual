@@ -1,0 +1,60 @@
+name: VISUAL public knowledge collection
+
+on:
+  workflow_dispatch:
+    inputs:
+      topics:
+        description: "Comma-separated domain keys; blank means all domains"
+        required: false
+        type: string
+        default: ""
+      max_requests:
+        description: "API requests for this run (1-30)"
+        required: false
+        type: number
+        default: 30
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-public-collection
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: upgrade/global-intelligence-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore previous local index cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.visual
+          key: visual-kb-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            visual-kb-${{ runner.os }}-
+      - name: Collect public research metadata
+        env:
+          PYTHONPATH: plugins/knowledge_base
+          VISUAL_HOME: ~/.visual
+          VISUAL_TOPICS: ${{ inputs.topics || '' }}
+          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '30' }}
+          VISUAL_PER_REQUEST: "25"
+        run: python scripts/github_collect_public.py
+      - name: Upload collection report and SQLite index
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-public-knowledge-${{ github.run_id }}
+          path: |
+            visual-collection-report.json
+            ~/.visual/knowledge.sqlite3
+          if-no-files-found: warn
+          retention-days: 30
