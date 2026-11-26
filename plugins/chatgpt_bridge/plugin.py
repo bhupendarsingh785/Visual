@@ -68,6 +68,13 @@ def _bridge_check():
     private = _gh(["api", "repos/" + BRIDGE_REPO, "--jq", ".private"])
     if private.lower() != "true":
         raise RuntimeError("queue repository is not private; refusing to use it")
+    # Create the queue label once; tolerate only the expected already-exists response.
+    try:
+        _gh(["api", "repos/" + BRIDGE_REPO + "/labels", "-f", "name=" + BRIDGE_LABEL,
+             "-f", "color=1d76db", "-f", "description=Owner-approved VISUAL command queue"], timeout=20)
+    except Exception as exc:
+        if "already_exists" not in str(exc).lower() and "422" not in str(exc):
+            raise
     return {"github_login": login, "repository": BRIDGE_REPO, "private": True}
 
 def shutil_which(name):
@@ -157,6 +164,11 @@ def _bridge_once():
         key = str(number)
         if key in state["handled"]:
             continue
+        if any(v.get("nonce") == command["nonce"] for v in state["handled"].values()):
+            _bridge_comment(number, "VISUAL bridge: duplicate nonce rejected. No action was run.")
+            _bridge_close(number)
+            processed.append({"issue": number, "status": "rejected_duplicate_nonce"})
+            continue
         # Persist before execution: crash after this point is UNKNOWN and is never replayed.
         state["handled"][key] = {"status": "running", "nonce": command["nonce"], "started_at": time.time()}
         _bridge_save_state(state)
@@ -205,6 +217,17 @@ def chatgpt_bridge_start():
     with _BRIDGE_LOCK:
         if _BRIDGE_THREAD and _BRIDGE_THREAD.is_alive():
             return "Bridge pehle se chalu hai: " + info["repository"]
+        cfg = _bridge_cfg()
+        cfg["chatgpt_bridge_enabled"] = True
+        saver = globals().get("save_json")
+        conf_path = globals().get("CONF")
+        if not callable(saver) or not conf_path:
+            raise RuntimeError("VISUAL config writer unavailable")
+        saver(conf_path, cfg)
+        try:
+            os.chmod(conf_path, 0o600)
+        except OSError:
+            pass
         _BRIDGE_STOP.clear()
         _BRIDGE_THREAD = threading.Thread(target=_bridge_loop, name="visual-chatgpt-bridge", daemon=True)
         _BRIDGE_THREAD.start()
@@ -213,7 +236,17 @@ def chatgpt_bridge_start():
 @tool("ChatGPT Control Bridge polling band karo. Already-running command ko beech mein zabardasti nahi roka jaata.")
 def chatgpt_bridge_stop():
     _BRIDGE_STOP.set()
-    return "Bridge stop signal bhej diya."
+    cfg = _bridge_cfg()
+    cfg["chatgpt_bridge_enabled"] = False
+    saver = globals().get("save_json")
+    conf_path = globals().get("CONF")
+    if callable(saver) and conf_path:
+        saver(conf_path, cfg)
+        try:
+            os.chmod(conf_path, 0o600)
+        except OSError:
+            pass
+    return "Bridge stop signal bhej diya; restart ke baad bhi band rahega."
 
 @tool("Private GitHub queue se ek baar commands check karo. Bridge status/test ke liye; command allowlist aur owner checks lagu rahenge.", {}, risky=True)
 def chatgpt_bridge_poll_once():
