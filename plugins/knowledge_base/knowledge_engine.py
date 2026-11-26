@@ -23,7 +23,7 @@ CHUNK_CHARS = 1800
 CHUNK_OVERLAP = 180
 USER_AGENT = "VISUAL-KnowledgeBot/1.0 (+user-initiated public-source indexing)"
 SKIP_TAGS = {"script", "style", "noscript", "svg", "nav", "footer", "header"}
-SECRET_RE = re.compile(r"(?i)(api[_-]?key|password|secret|access[_-]?token)\\s*[:=]\\s*[^\\s<]{8,}")
+SECRET_RE = re.compile(r"(?i)(api[_-]?key|password|secret|access[_-]?token)\s*[:=]\s*[^\s<]{8,}")
 
 class _Text(HTMLParser):
     def __init__(self):
@@ -99,19 +99,19 @@ def _robots_allowed(url):
 
 def _extract(raw, content_type):
     charset = "utf-8"
-    m = re.search(r"charset=([\\w-]+)", content_type or "", re.I)
+    m = re.search(r"charset=([\w-]+)", content_type or "", re.I)
     if m: charset = m.group(1)
     decoded = raw.decode(charset, errors="replace")
     if "html" in (content_type or "").lower() or re.search(r"<html|<!doctype", decoded[:500], re.I):
         parser = _Text()
         parser.feed(decoded)
-        decoded = "\\n".join(parser.parts)
+        decoded = "\n".join(parser.parts)
     decoded = html.unescape(decoded)
     decoded = SECRET_RE.sub("[REDACTED_SECRET]", decoded)
-    return re.sub(r"\\n{3,}", "\\n\\n", decoded).strip()
+    return re.sub(r"\n{3,}", "\n\n", decoded).strip()
 
 def _chunks(text):
-    text = re.sub(r"[ \\t]+", " ", text)
+    text = re.sub(r"[ \t]+", " ", text)
     out, pos = [], 0
     while pos < len(text):
         end = min(len(text), pos + CHUNK_CHARS)
@@ -176,7 +176,7 @@ def ingest_source(source_id, home=None):
 def search_knowledge(query, limit=8, home=None):
     query = str(query).strip()
     if not query: raise ValueError("Search query required")
-    terms = re.findall(r"[\\w.-]{2,}", query)[:12]
+    terms = re.findall(r"[\w.-]{2,}", query)[:12]
     if not terms: return []
     match = " OR ".join('"' + t.replace('"','') + '"' for t in terms)
     limit = max(1,min(int(limit),20))
