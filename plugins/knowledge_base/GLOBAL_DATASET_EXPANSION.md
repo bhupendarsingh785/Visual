@@ -4,7 +4,7 @@ VISUAL's curated web-page catalog is only a seed list. This registry is a broade
 
 ## Registry
 
-- `datasets_catalog.json` currently lists 148 public dataset entries across research, health, education, programming, standards, biodiversity, climate, geospatial, humanities, economics, agriculture and India-specific public data.
+- `datasets_catalog.json` currently lists 152 public dataset entries across research, health, education, programming, standards, biodiversity, climate, geospatial, humanities, economics, agriculture and India-specific public data.
 - Each entry records access pattern, region, approximate size class and a license/rights warning.
 - Entries are disabled by default. Listing a dataset does not mean it has been downloaded, verified, or approved for reuse.
 
@@ -38,7 +38,7 @@ The knowledge base is retrieval-augmented context, not model-weight training. It
 
 ## Bounded API metadata harvesting
 
-`knowledge_harvest_public_metadata` searches 11 allowlisted public APIs: OpenAlex, Crossref, Zenodo, GBIF, NASA CMR, Hugging Face Datasets, PubMed, Stack Exchange, arXiv, Europe PMC, and Wikidata. It accepts a provider, query and record limit (1-25), then indexes bounded public search metadata through the provenance-aware ingestion path. Provider-specific pacing is conservative: Crossref public queries are spaced above one second, Zenodo search is paced below 30 requests/minute, PubMed is kept below unauthenticated E-utilities limits, arXiv uses a three-second delay, and Europe PMC/Wikidata have explicit delays. Retry-After and bounded exponential retry are used for transient HTTP 429/5xx responses.
+`knowledge_harvest_public_metadata` searches 11 allowlisted public APIs: OpenAlex, Crossref, Zenodo, GBIF, NASA CMR, Hugging Face Datasets, PubMed, Stack Exchange, arXiv, Europe PMC, Wikidata, Openverse Images/Audio, Wikimedia Commons and Internet Archive. It accepts a provider, query and record limit (1-25), then indexes bounded public search metadata through the provenance-aware ingestion path. Provider-specific pacing is conservative: Crossref public queries are spaced above one second, Zenodo search is paced below 30 requests/minute, PubMed is kept below unauthenticated E-utilities limits, arXiv uses a three-second delay, and Europe PMC/Wikidata have explicit delays. Retry-After and bounded exponential retry are used for transient HTTP 429/5xx responses.
 
 This is an initial acquisition path for searchable scholarly and dataset metadata, not a full repository mirror. It does not download article full text, Zenodo file payloads, OpenAlex snapshots, or every paginated result. Those require separate license-aware manifest discovery, cursor/resumption, storage preflight, and bulk-transfer stages. Each provider's license and access policy remains authoritative.
 
