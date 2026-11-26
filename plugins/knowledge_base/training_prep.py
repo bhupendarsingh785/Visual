@@ -81,6 +81,7 @@ def prepare_training_corpus(home=None, output_dir=None, limit=100000):
         "counts": counts, "skipped": skipped,
         "total_eligible": sum(counts.values()),
         "license_policy": sorted(ALLOWED_LICENSES),
+        "metadata_cc0_prefixes": list(METADATA_CC0_PREFIXES),
         "minimum_characters": MIN_CHARS,
         "split_policy": "deterministic source-domain split: 90% train, 5% validation, 5% test; all documents from one domain stay together",
         "warning": "Prepared corpus only. No tokenizer, model training, fine-tuning or weights were run.",
