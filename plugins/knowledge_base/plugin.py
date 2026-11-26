@@ -67,3 +67,25 @@ def knowledge_harvest_public_metadata(provider, query, limit=10):
 def knowledge_collect_global_research(topics="", per_request=25, max_requests=300):
     selected = [x.strip() for x in str(topics).split(",") if x.strip()]
     return json.dumps(collect_global_research(selected, per_request, max_requests, globals().get("HOME")), ensure_ascii=False)[:24000]
+
+
+# Register the expanded Hindi/Indic/Indian textual-heritage domains.
+from bharat_knowledge import install_bharat_domains
+install_bharat_domains()
+
+@tool("Hindi varnamala, Devanagari, Hindi language, Sanskrit, Hindu textual traditions, Indian philosophy, Indian knowledge systems, literature and oral traditions ke curated public research metadata ko VISUAL ke local Knowledge Base mein resumable batch mein collect karo. Metadata-only; full texts ke liye item-level copyright/license verification zaroori hai.",
+      {"topics": S("comma-separated keys: hindi_language, indic_scripts, sanskrit_language, hindu_texts, hindu_philosophy, indian_knowledge_systems, indian_literature, indian_oral_traditions; blank = all eight"),
+       "per_request": S("1-25 metadata records per API request; default 25"),
+       "max_requests": S("1-300 API requests per run; default 300")}, risky=True)
+def knowledge_collect_bharat_knowledge(topics="", per_request=25, max_requests=300):
+    from global_research import collect_global_research
+    available = install_bharat_domains()
+    selected = [x.strip() for x in str(topics).split(",") if x.strip()]
+    if selected:
+        invalid = sorted(set(selected) - set(available))
+        if invalid:
+            raise ValueError("Unknown Bharat knowledge topics: " + ", ".join(invalid))
+    return json.dumps(
+        collect_global_research(selected, per_request, max_requests, globals().get("HOME")),
+        ensure_ascii=False, indent=2
+    )[:24000]
