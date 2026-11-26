@@ -806,8 +806,7 @@
         "patents_inventions",
         "engineering_methods",
         "semiconductor_research",
-        "materials_science",
-        "technology"
+        "materials_science"
       ],
       "data_types": [
         "patent bibliographic metadata",
