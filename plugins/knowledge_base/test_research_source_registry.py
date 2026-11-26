@@ -12,7 +12,7 @@ class ResearchSourceRegistryTests(unittest.TestCase):
         )
         self.assertEqual(registry["registry_version"], 1)
         sources = registry["sources"]
-        self.assertGreaterEqual(len(sources), 15)
+        self.assertGreaterEqual(len(sources), 26)
         ids = [item["id"] for item in sources]
         self.assertEqual(len(ids), len(set(ids)))
 
