@@ -22,7 +22,7 @@ jobs:
         run: python -m compileall -q visual.py plugins
       - name: Import VISUAL and verify integrated plugin tools
         run: |
-          VISUAL_SELFTEST=1 python -c "import sys; sys.argv=['visual.py']; import visual; required={'dev_task_create','dev_orchestration_start','self_intelligence_audit','store_last','recall_last','handle_dohrao','knowledge_add_source','knowledge_ingest','knowledge_search','knowledge_status'}; missing=required-set(visual.TOOLS); assert not visual.PLUGIN_ERRORS, visual.PLUGIN_ERRORS; assert not missing, 'missing plugin tools: '+str(sorted(missing)); print('plugin import OK; tools=',len(visual.TOOLS))"
+          VISUAL_SELFTEST=1 python -c "import sys; sys.argv=['visual.py']; import visual; required={'dev_task_create','dev_orchestration_start','self_intelligence_audit','store_last','recall_last','handle_dohrao','knowledge_add_source','knowledge_ingest','knowledge_search','knowledge_status','knowledge_queue_catalog'}; missing=required-set(visual.TOOLS); assert not visual.PLUGIN_ERRORS, visual.PLUGIN_ERRORS; assert not missing, 'missing plugin tools: '+str(sorted(missing)); print('plugin import OK; tools=',len(visual.TOOLS))"
       - name: Validate Termux shell scripts
         run: bash -n install.sh update.sh scripts/visual-supervisor.sh
       - name: Test continuous listening logic (mocked Termux)
