@@ -30,7 +30,7 @@ env:
 
 concurrency:
   group: visual-public-collection
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   collect:
