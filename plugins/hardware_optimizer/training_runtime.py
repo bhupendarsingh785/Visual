@@ -51,7 +51,7 @@ def _device(torch, requested=None):
             raise RuntimeError("CUDA requested but unavailable")
         if device.type == "mps" and not torch.backends.mps.is_available():
             raise RuntimeError("MPS requested but unavailable")
-        if device.type == "xpu" and not getattr(torch, "xpu", None).is_available():
+        if device.type == "xpu" and (getattr(torch, "xpu", None) is None or not torch.xpu.is_available()):
             raise RuntimeError("XPU requested but unavailable")
         return device
     if torch.cuda.is_available():
