@@ -20,6 +20,7 @@ PROVIDERS = {
     },
     "crossref": {
         "base": "https://api.crossref.org/works",
+        "delay": 1.1,  # public query pool: keep below 1 request/second
         "license": "CC0 bibliographic metadata; abstracts/full text may have separate rights",
         "topic": "research-metadata",
         "build": lambda q, n: {"query.bibliographic": q, "rows": n,
@@ -27,6 +28,7 @@ PROVIDERS = {
     },
     "zenodo": {
         "base": "https://zenodo.org/api/records/",
+        "delay": 2.1,  # search REST API: conservative 30 requests/minute
         "license": "Metadata CC0; files have item-level access and licenses",
         "topic": "research-datasets-metadata",
         "build": lambda q, n: {"q": q, "size": n, "sort": "mostrecent"},
@@ -51,6 +53,7 @@ PROVIDERS = {
     },
     "pubmed": {
         "base": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+        "delay": 0.4,  # remain below the unauthenticated NCBI E-utilities rate
         "license": "PubMed bibliographic metadata; article full-text rights vary",
         "topic": "biomedical-literature-metadata",
         "build": lambda q, n: {"db": "pubmed", "term": q, "retmax": n, "retmode": "json"},
