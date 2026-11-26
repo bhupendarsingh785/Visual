@@ -77,34 +77,34 @@ def _records(path):
             for line_no, line in enumerate(f, 1):
                 if line.strip():
                     try:
-                        yield line_no, _to_text(json.loads(line))
+                        yield line_no, _to_text(json.loads(line)), False
                     except json.JSONDecodeError:
-                        yield line_no, _to_text(line)
+                        yield line_no, _to_text(line), True
         elif suffix == ".csv":
             reader = csv.DictReader(f)
             for row_no, row in enumerate(reader, 2):
-                yield row_no, _to_text(row)
+                yield row_no, _to_text(row), False
         elif suffix == ".json":
             # JSON arrays/objects can be big; standard parser is acceptable only for
             # moderate files. JSONL is the recommended path for very large datasets.
             data = json.load(f)
             if isinstance(data, list):
                 for i, item in enumerate(data, 1):
-                    yield i, _to_text(item)
+                    yield i, _to_text(item), False
             else:
-                yield 1, _to_text(data)
+                yield 1, _to_text(data), False
         elif suffix in {".html", ".htm"}:
             parser = _HTMLText()
             for block in iter(lambda: f.read(65536), ""):
                 parser.feed(block)
-            yield 1, _to_text("\n".join(parser.parts))
+            yield 1, _to_text("\n".join(parser.parts)), False
         else:
             buf, line_no, buf_chars = [], 0, 0
             for line_no, line in enumerate(f, 1):
                 buf.append(line)
                 buf_chars += len(line)
                 if buf_chars >= 16000:
-                    yield line_no, _to_text("".join(buf))
+                    yield line_no, _to_text("".join(buf)), False
                     buf, buf_chars = [], 0
             if buf:
                 yield line_no, _to_text("".join(buf))
@@ -128,7 +128,9 @@ def import_local_file(path, topic="local-dataset", home=None, max_records=0):
                     "indexed", time.time(), time.time(), file_hash))
         source = db.execute("SELECT id FROM sources WHERE url=?", (source_url,)).fetchone()
         source_id = source["id"]
-        for ordinal, text in _records(p):
+        for ordinal, text, malformed in _records(p):
+            if malformed:
+                errors += 1
             if max_records and indexed + skipped >= int(max_records):
                 break
             text = text.strip()
