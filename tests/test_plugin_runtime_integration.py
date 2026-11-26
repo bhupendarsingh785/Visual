@@ -11,6 +11,21 @@ import visual
 
 
 class PluginRuntimeIntegrationTests(unittest.TestCase):
+    def test_memory_repeat_tools_share_persistent_store(self):
+        save = visual.TOOLS["store_last"]["fn"]
+        recall = visual.TOOLS["recall_last"]["fn"]
+        repeat = visual.TOOLS["handle_dohrao"]["fn"]
+        store = save.__globals__["store"]
+        previous_path = store.MEMORY_FILE
+        with tempfile.TemporaryDirectory() as home:
+            store.MEMORY_FILE = os.path.join(home, "last_statement.json")
+            try:
+                self.assertIn("saved", save("integration check"))
+                self.assertEqual(recall(), "integration check")
+                self.assertEqual(repeat(), "integration check")
+            finally:
+                store.MEMORY_FILE = previous_path
+
     def test_development_plugin_runner_keeps_engine_references_after_load(self):
         create = visual.TOOLS["dev_task_create"]["fn"]
         run_tests = visual.TOOLS["dev_task_run_tests"]["fn"]
