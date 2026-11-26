@@ -31,6 +31,19 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         self.assertEqual(ingest.call_count, 2)
         self.assertGreaterEqual(sleep.call_count, 2)
         self.assertEqual(sleep.call_args_list[-1].args[0], 2.0)
+    def test_open_media_and_archive_query_shapes(self):
+        from api_harvest import PROVIDERS
+        images = PROVIDERS["openverse_images"]["build"]("forest wildlife", 25)
+        audio = PROVIDERS["openverse_audio"]["build"]("wolf howling", 25)
+        commons = PROVIDERS["wikimedia_commons"]["build"]("ancient architecture", 25)
+        archive = PROVIDERS["internet_archive"]["build"]("ancient manuscripts", 25)
+        self.assertEqual(images["page_size"], 20)
+        self.assertEqual(audio["page_size"], 20)
+        self.assertEqual(commons["gsrlimit"], 25)
+        self.assertIn("extmetadata", commons["iiprop"])
+        self.assertEqual(archive["rows"], 25)
+        self.assertIn("licenseurl", archive["fl[]"])
+
     def test_unknown_provider_is_rejected(self):
         with self.assertRaises(ValueError):
             harvest_public_metadata("unknown", "test")
