@@ -20,7 +20,7 @@ on:
         type: number
         default: 300
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 */3 * * *"
 
 permissions:
   contents: read
@@ -68,5 +68,8 @@ jobs:
           path: |
             visual-collection-report.json
             knowledge.sqlite3
+            plugins/knowledge_base/research_sources_registry.json
+            plugins/knowledge_base/datasets_catalog.json
+            DEEP_LEARNING_DATA_STRATEGY.md
           if-no-files-found: warn
           retention-days: 30
