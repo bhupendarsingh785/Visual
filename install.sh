@@ -13,12 +13,18 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 # chhota command: 'visual' likho aur chalu
 cat > "$PREFIX/bin/visual" <<'EOW'
 #!/data/data/com.termux/files/usr/bin/bash
-cd ~/visual
-case "$1" in setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
+ROOT="$HOME/visual"
+cd "$ROOT" || exit 1
+case "${1:-}" in setup|adb|stop|chat|keys|brains|sync|restore) exec python visual.py "$@";; esac
+if [ "$#" -eq 0 ] || [ "$1" = "always" ]; then
+  exec bash "$ROOT/scripts/visual-supervisor.sh"
+fi
 while true; do
-  python visual.py "$@"; code=$?
-  if [ $code -eq 0 ] || [ $code -eq 130 ]; then break; fi
-  echo "VISUAL ruk gaya (code $code). 3 second mein khud dobara chalu..."; sleep 3
+  python visual.py "$@"
+  code=$?
+  if [ "$code" -eq 0 ] || [ "$code" -eq 130 ]; then exit "$code"; fi
+  echo "VISUAL ruk gaya (code $code). 3 second mein dobara chalu..."
+  sleep 3
 done
 EOW
 chmod +x "$PREFIX/bin/visual"
@@ -31,10 +37,11 @@ echo "Orb app: visual app  |  Band: bolo VISUAL band ho jao  |  Screen control: 
 
 # phone restart par apne aap chalu (Termux:Boot app F-Droid se install karo, ek baar kholo)
 mkdir -p ~/.termux/boot
-cat > ~/.termux/boot/start-visual <<EOB
+cat > ~/.termux/boot/start-visual <<'EOB'
 #!/data/data/com.termux/files/usr/bin/bash
-termux-wake-lock
-cd "$DIR" && nohup python visual.py always > ~/.visual/visual.log 2>&1 &
+ROOT="$HOME/visual"
+mkdir -p "$HOME/.visual"
+exec bash "$ROOT/scripts/visual-supervisor.sh" >> "$HOME/.visual/boot.log" 2>&1
 EOB
 chmod +x ~/.termux/boot/start-visual
 echo "Auto-start taiyaar (Termux:Boot app chahiye)."
