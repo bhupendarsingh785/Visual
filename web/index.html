@@ -11,6 +11,7 @@
 html,body{height:100%;background:radial-gradient(ellipse at 50% 30%,#0a1d2b 0%,var(--bg) 65%);color:var(--t);
  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 .app{display:flex;flex-direction:column;height:100%;max-width:560px;margin:auto;padding:12px 14px env(safe-area-inset-bottom)}
+.nav{display:flex;gap:8px;margin:10px 0}.nav button{flex:1;border:1px solid #17445a;background:#061722;color:var(--m);border-radius:12px;padding:10px;font-weight:700}.nav button.active{border-color:var(--c);color:var(--c);background:#0b2636}.inbox-head{display:flex;justify-content:space-between;align-items:center;padding:7px 2px;color:var(--c);font-size:13px;font-weight:700}.inbox-sub{font-size:11px;color:var(--m);font-weight:400}.task-feed{max-height:105px;overflow:auto;display:flex;flex-direction:column;gap:5px;padding:3px 0}.task-card{border:1px solid #15394b;background:#061722;border-radius:10px;padding:7px 9px;font-size:11px;color:var(--m)}.task-card strong{color:var(--c)}.task-card button{float:right;background:transparent;border:1px solid #1d4d6e;color:var(--c);border-radius:8px;padding:3px 7px}.voice-mode .stage{height:38vh}.inbox-mode .stage{display:none}.inbox-mode .log{min-height:0}
 header{display:flex;align-items:center;justify-content:space-between}
 .brand{font-weight:800;letter-spacing:.42em;font-size:15px;color:var(--c);text-shadow:0 0 14px var(--c)}
 .chips{display:flex;gap:6px}
@@ -55,6 +56,9 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
     <div class="brand">{{NAME}} <small id="moodtxt" style="font-size:9px;letter-spacing:.08em;color:var(--c);margin-left:6px"></small> <small id="ver" style="font-size:9px;letter-spacing:.05em;color:#6c8a99"></small></div>
     <div class="chips"><span class="chip" id="cBrain">dimaag</span><span class="chip" id="cPhone">phone</span><span class="chip" id="cScreen">screen</span></div>
   </header>
+  <nav class="nav"><button id="inboxTab" class="active" type="button">✉ INBOX / MESSAGE</button><button id="voiceTab" type="button">◉ VOICE</button></nav>
+  <section class="inbox-head" id="inboxHead"><span>VISUAL INBOX</span><span class="inbox-sub">Sawal poochhein · upgrade kahein · jawab dekhein</span></section>
+  <div class="task-feed" id="taskFeed" aria-live="polite"></div>
   <div class="stage">
     <div class="orb" id="orb"><div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div></div>
     <div class="state" id="state">orb dabao aur bolo</div>
@@ -72,6 +76,9 @@ video{display:none;position:fixed;inset:auto 14px 90px auto;width:42vw;max-width
 <video id="vid" autoplay playsinline muted></video>
 <script>
 const $=id=>document.getElementById(id), app=$('app'), log=$('log');
+let pageMode='inbox';
+function setPageMode(mode){pageMode=mode;app.classList.toggle('inbox-mode',mode==='inbox');app.classList.toggle('voice-mode',mode==='voice');$('inboxTab').classList.toggle('active',mode==='inbox');$('voiceTab').classList.toggle('active',mode==='voice');$('inboxHead').style.display=mode==='inbox'?'flex':'none';$('taskFeed').style.display=mode==='inbox'?'flex':'none';}
+$('inboxTab').onclick=()=>setPageMode('inbox');$('voiceTab').onclick=()=>setPageMode('voice');
 let pin=new URLSearchParams(location.search).get('pin')||localStorage.getItem('vpin')||'';
 window.VTOKEN='{{TOKEN}}';
 let camStream=null, rec=null, busy=false;
@@ -179,11 +186,12 @@ $('cam').onclick=async()=>{if(camStream){camStream.getTracks().forEach(t=>t.stop
  add('ai','Camera chalu. Ab jo bologe, main saath mein dekhunga bhi. Dobara dabao to band.')}
  catch(e){$('file').click()}};
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>send($('txt').value.trim()||'Ye dekho',r.result);r.readAsDataURL(f)};
-add('ai','Namaste {{OWNER}}! Main {{NAME}} hoon. Mic EK BAAR dabao: LIVE baat shuru. Seedhe bolte raho, beech mein tok bhi sakte ho. Rokna ho to "band ho jao" bolo ya mic dobara dabao.');
-status();speechSynthesis&&speechSynthesis.getVoices();
+add('ai','Namaste {{OWNER}}! VISUAL INBOX taiyaar hai. Yahan message likhkar sawal poochhein, system check karwaein, feature banwaein ya upgrade kahein. Bade coding/upgrade kaam Engineer ko diye ja sakte hain; risky live changes approval maangenge. Voice ke liye VOICE tab kholein.');
+setPageMode('inbox');status();speechSynthesis&&speechSynthesis.getVoices();
 // Engineer ke kaam: haal dikhao, pura hone par batao (Live ho to bolkar)
 async function pollTasks(){try{const ts=await api('/api/tasks');
  $('tasks').innerHTML=ts.filter(t=>t.status==='chal raha').map(t=>'🛠 Engineer: '+t.goal.slice(0,50)+' … <i>'+(t.steps.slice(-2).join(', '))+'</i>').join('<br>');
+ const feed=$('taskFeed');feed.replaceChildren();ts.slice().reverse().forEach(t=>{const card=document.createElement('div');card.className='task-card';const title=document.createElement('strong');title.textContent=(t.status==='chal raha'?'● ':'✓ ')+t.status+' — ';const goal=document.createElement('span');goal.textContent=t.goal;const btn=document.createElement('button');btn.type='button';btn.textContent='Baat karein';btn.onclick=()=>{$('txt').value='Mere is task ka poora status, kiye gaye badlav aur baaki kaam batao: '+t.goal;$('txt').focus()};card.append(title,goal,btn);if(t.report){const report=document.createElement('div');report.textContent=t.report.slice(0,260);report.style.marginTop='5px';card.appendChild(report)}feed.appendChild(card)});
  for(const t of ts){if(t.status!=='chal raha'&&!t.announced){
    add('ai','🛠 Engineer report:\n'+t.report);
    if(!(window.VLive&&VLive.on&&VLive.announce(t.report)))say(t.report.split('\n').slice(0,3).join('. '));
