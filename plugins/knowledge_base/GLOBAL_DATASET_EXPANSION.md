@@ -45,3 +45,23 @@ This is an initial acquisition path for searchable scholarly and dataset metadat
 A CI unit test checks provider allowlisting, query validation, and the 25-record ceiling. The workflow also verifies that the new tool is registered.
 
 The metadata harvester allowlist additionally includes GBIF occurrence search and NASA CMR collection search. These endpoints discover bounded record/collection metadata only. GBIF bulk occurrence downloads require the provider's authenticated download workflow; NASA granule data require product-specific access and terms. Neither connector silently mirrors the complete archive.
+
+## One-command multi-domain research collection
+
+`knowledge_collect_global_research` provides a bounded multi-domain metadata collection run. The domain map includes medicine/public health, biology, ancient history/archaeology, education/teaching, coding/software engineering, AI/deep learning, agents/tool use, developer tools, mathematics, physics, chemistry, agriculture, climate, space, engineering, energy, economics, law, languages, culture, geography, environment, oceans, disasters, cybersecurity, business, sports, and India-focused research.
+
+The default run is capped at 20 API requests (hard cap 30); each request asks for at most 25 results. This is intentionally bounded so users can repeat runs, inspect provenance and failures, and avoid runaway bandwidth. Search results are metadata, not all underlying papers/files. For old/ancient knowledge, searches target archaeology, manuscripts, historical archives, epigraphy, oral history, and cultural heritage; dates and item rights must be checked at record level.
+
+## Data, RAG, and deep-learning training are separate
+
+1. **Collection:** retrieve public datasets, documents, code, and metadata with provenance and rights.
+2. **Preparation:** parse, normalize, deduplicate, detect language, remove corruption/secrets/PII where required, label quality, and split by source/time.
+3. **Knowledge retrieval (RAG):** index documents and return grounded passages with citations. This updates the knowledge store, not neural weights.
+4. **Model training:** train or fine-tune a model on selected licensed examples. This changes model weights and needs a tokenizer, training objective, curated train/validation/test splits, compute, checkpoints, evaluation, and rollback.
+5. **Agent runtime:** connect a model to scoped tools, planning, memory, permission checks, tests, and audit logs. Agents are not made reliable merely by adding more text.
+
+For phone-first VISUAL, begin with local search/RAG and small adapter experiments only after the dataset is validated. Large-scale pretraining is a separate compute project and is not realistic on a typical 6 GB Android phone. Hugging Face documents streaming specifically for datasets larger than local disk and for iterative training; Parquet row groups and JSONL can be processed incrementally. See the dataset streaming and loading guidance: https://huggingface.co/docs/datasets/stream and https://huggingface.co/docs/datasets/en/loading.
+
+## Medical and professional-domain safeguards
+
+Collect public medical research, guidelines, drug references, anatomy and educational resources only where reuse is allowed. Do not treat raw research abstracts as clinical protocols, and do not ingest identifiable patient records without a lawful basis and strong safeguards. Keep medical knowledge retrieval separate from diagnosis/treatment decision automation. Teacher resources, coding references, tool manuals, agent benchmarks, historical archives and scientific papers each need their own domain labels and evaluation sets.
