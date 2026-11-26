@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "purpose": "Advanced research taxonomy for VISUAL technology reasoning. This is a curriculum and query map, not a claim that these topics have already been collected or learned by a model.",
+  "learning_layers": [
+    {
+      "id": "mathematical_foundations",
+      "topics": ["linear algebra", "calculus", "probability", "statistics", "information theory", "optimization", "numerical methods", "control theory", "graph theory"],
+      "reasoning_skills": ["derive assumptions", "check units and dimensions", "estimate uncertainty", "compare analytical and numerical solutions"]
+    },
+    {
+      "id": "deep_learning_fundamentals",
+      "topics": ["perceptrons and MLP", "CNN", "RNN and LSTM", "attention and transformers", "state space models", "graph neural networks", "diffusion models", "self-supervised learning", "representation learning"],
+      "reasoning_skills": ["explain architecture and inductive bias", "trace tensor shapes", "identify compute and memory complexity", "design ablations"]
+    },
+    {
+      "id": "training_and_evaluation",
+      "topics": ["data curation", "tokenization", "pretraining", "SFT", "LoRA and QLoRA", "preference optimization", "RL", "distributed training", "quantization", "distillation", "benchmark design"],
+      "reasoning_skills": ["prevent leakage", "audit provenance", "choose baselines", "measure calibration and robustness", "reproduce experiments"]
+    },
+    {
+      "id": "computer_architecture",
+      "topics": ["instruction set architecture", "CPU pipelines", "SIMD and vector units", "GPU SIMT", "NPU accelerators", "DSP", "cache hierarchy", "memory bandwidth", "interconnects", "power and thermal management"],
+      "reasoning_skills": ["map workloads to hardware", "estimate latency and throughput", "identify memory bottlenecks", "calculate energy per operation"]
+    },
+    {
+      "id": "semiconductor_device_and_fabrication",
+      "topics": ["MOSFET device physics", "FinFET and gate-all-around", "lithography and EUV", "deposition and etch", "doping and annealing", "cleanroom contamination", "wafer metrology", "yield and reliability", "advanced packaging", "chiplets"],
+      "reasoning_skills": ["connect process steps to device behavior", "interpret PPA trade-offs", "trace defect mechanisms", "distinguish measured data from vendor claims"]
+    },
+    {
+      "id": "digital_analog_chip_design",
+      "topics": ["RTL and SystemVerilog", "verification and UVM", "formal methods", "synthesis", "static timing", "floorplanning and routing", "clock and power delivery", "analog mixed signal", "RF", "EDA and open PDK"],
+      "reasoning_skills": ["follow RTL-to-GDS flow", "verify functional and timing correctness", "reason about PPA and signoff", "record toolchain versions"]
+    },
+    {
+      "id": "robotics_and_embodied_ai",
+      "topics": ["kinematics and dynamics", "SLAM", "localization", "motion planning", "manipulation and grasping", "tactile sensing", "legged locomotion", "MPC and impedance control", "ROS 2", "sim-to-real", "human-robot interaction"],
+      "reasoning_skills": ["connect perception to action", "reason about coordinate frames", "evaluate safety envelopes", "measure sim-to-real gap", "analyze failure recovery"]
+    },
+    {
+      "id": "sensing_and_perception",
+      "topics": ["RGB and depth cameras", "LiDAR", "radar", "IMU", "event cameras", "microphones", "sensor fusion", "calibration", "3D reconstruction", "scene understanding"],
+      "reasoning_skills": ["quantify sensor uncertainty", "synchronize timestamps", "diagnose calibration drift", "compare modalities under adverse conditions"]
+    },
+    {
+      "id": "embedded_edge_and_mobile",
+      "topics": ["ARM and RISC-V", "microcontrollers", "RTOS", "Linux embedded", "CPU-only inference", "NPU delegation", "memory-mapped I/O", "battery and thermal limits", "offline operation", "model compression"],
+      "reasoning_skills": ["budget RAM and flash", "measure worst-case latency", "profile energy and heat", "design graceful fallbacks"]
+    },
+    {
+      "id": "systems_safety_and_security",
+      "topics": ["functional safety", "fault analysis", "secure boot", "hardware roots of trust", "side-channel attacks", "supply-chain security", "privacy", "robot safety standards", "reliability engineering"],
+      "reasoning_skills": ["threat model", "failure mode analysis", "independent verification", "safe-state design", "auditability"]
+    },
+    {
+      "id": "materials_and_manufacturing",
+      "topics": ["semiconductor materials", "wide-bandgap devices", "battery materials", "composites", "additive manufacturing", "CNC", "digital twins", "predictive maintenance", "metrology", "statistical process control"],
+      "reasoning_skills": ["link process-structure-property", "interpret measurement uncertainty", "trace quality variation", "validate digital-twin assumptions"]
+    }
+  ],
+  "required_evidence_fields": [
+    "canonical_source_url",
+    "retrieved_at_utc",
+    "dataset_or_document_version",
+    "license_and_attribution_evidence",
+    "content_hash_or_file_checksum",
+    "schema_and_units",
+    "measurement_or_annotation_method",
+    "uncertainty_and_known_limitations",
+    "independent_validation_status",
+    "software_and_hardware_environment"
+  ],
+  "reasoning_protocol": [
+    "Separate observation, source claim, model inference and hypothesis.",
+    "Cite primary specifications, standards, papers, dataset cards and reproducible implementations before secondary summaries.",
+    "Cross-check critical technical claims against at least two independent sources where possible.",
+    "Never treat simulation as physical validation or benchmark scores as universal capability.",
+    "Record negative results, uncertainty, failed replications and known limitations.",
+    "For hardware comparisons normalize workload, precision, batch size, power envelope, memory and software stack.",
+    "For robotics separate simulation success, lab trials and field performance.",
+    "For chip process claims distinguish public research, foundry announcements and independently verified production capability."
+  ]
+}
