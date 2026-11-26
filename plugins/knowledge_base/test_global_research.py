@@ -30,6 +30,8 @@ class GlobalResearchTests(unittest.TestCase):
             self.assertEqual(result["successful_requests"], 1)
             self.assertEqual(result["empty_results"], 1)
             self.assertEqual(result["failed_requests"], 0)
+            self.assertEqual(result["provider_status_counts"]["openalex"]["empty"], 1)
+            self.assertEqual(result["provider_status_counts"]["crossref"]["indexed"], 1)
 
     def test_manual_runs_persist_and_rotate_task_cursor(self):
         with tempfile.TemporaryDirectory() as home:
