@@ -33,6 +33,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Test Self-Intelligence subsystem
         run: PYTHONPATH=plugins/self_intelligence python -m unittest discover -s plugins/self_intelligence -p 'test_*.py' -v
+      - name: Test Hardware Optimizer
+        run: python -m unittest discover -s plugins/hardware_optimizer -p 'test_*.py' -v
       - name: Test public Knowledge Base
         run: PYTHONPATH=plugins/knowledge_base python -m unittest discover -s plugins/knowledge_base -p 'test_*.py' -v
       - name: Test Autonomous Development subsystem
