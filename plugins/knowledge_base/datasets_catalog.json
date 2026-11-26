@@ -1,5 +1,5 @@
 {
-  "catalog_version": 3,
+  "catalog_version": 4,
   "purpose": "Discovery registry for large public datasets. Registry entries are leads, not blanket permission to download or reuse.",
   "download_policy": {
     "require_license_review": true,
@@ -19,7 +19,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Crossref Metadata",
@@ -30,7 +31,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Europe PMC",
@@ -41,7 +43,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "PubMed",
@@ -52,7 +55,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "PubMed Central Open Access",
@@ -63,7 +67,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "WHO Global Health Observatory",
@@ -74,7 +79,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "World Bank Indicators",
@@ -85,7 +91,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "IMF Data",
@@ -96,7 +103,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "UNData",
@@ -107,7 +115,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "FAOSTAT",
@@ -118,7 +127,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "UNICEF Data",
@@ -129,7 +139,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "ILO Statistics",
@@ -140,7 +151,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "OECD Data Explorer",
@@ -151,7 +163,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Eurostat",
@@ -162,7 +175,8 @@
       "size_class": "large",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "data.europa.eu",
@@ -173,7 +187,8 @@
       "size_class": "catalog",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "GBIF Occurrence",
@@ -184,7 +199,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Catalogue of Life",
@@ -195,7 +211,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "NASA Open Data",
@@ -206,7 +223,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "NASA Earthdata",
@@ -217,7 +235,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "NOAA NCEI",
@@ -228,7 +247,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Copernicus Climate Data Store",
@@ -239,7 +259,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "USGS ScienceBase",
@@ -250,7 +271,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenStreetMap Planet",
@@ -261,7 +283,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Wikidata",
@@ -272,7 +295,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Wikipedia dumps",
@@ -283,7 +307,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "DBpedia",
@@ -294,7 +319,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Project Gutenberg",
@@ -305,7 +331,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Internet Archive",
@@ -316,7 +343,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Library of Congress",
@@ -327,7 +355,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Europeana",
@@ -338,7 +367,8 @@
       "size_class": "large",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenStax",
@@ -349,7 +379,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "MIT OpenCourseWare",
@@ -360,7 +391,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Khan Academy",
@@ -371,7 +403,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "arXiv",
@@ -382,7 +415,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Semantic Scholar Open Research Corpus",
@@ -393,7 +427,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Hugging Face Datasets",
@@ -404,7 +439,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Common Crawl",
@@ -415,7 +451,8 @@
       "size_class": "extreme",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Stack Exchange Data Dump",
@@ -426,7 +463,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "GitHub Archive",
@@ -437,7 +475,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "NIST Publications",
@@ -448,7 +487,8 @@
       "size_class": "medium",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "RFC Editor",
@@ -459,7 +499,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "W3C Standards",
@@ -470,7 +511,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "OWASP Cheat Sheets",
@@ -481,7 +523,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Python Documentation",
@@ -492,7 +535,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "MDN Web Docs",
@@ -503,7 +547,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Android Open Source Project",
@@ -514,7 +559,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Linux Kernel",
@@ -525,7 +571,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenML",
@@ -536,7 +583,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "UCI Machine Learning Repository",
@@ -547,7 +595,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "India data.gov.in",
@@ -558,7 +607,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "India Open Government Data API",
@@ -569,7 +619,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "MOSPI India",
@@ -580,7 +631,8 @@
       "size_class": "medium",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "RBI DBIE",
@@ -591,7 +643,8 @@
       "size_class": "medium",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "ISRO Bhuvan",
@@ -602,7 +655,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "India Meteorological Department",
@@ -613,7 +667,8 @@
       "size_class": "medium",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "ICAR",
@@ -624,7 +679,8 @@
       "size_class": "medium",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "Indian National Digital Library",
@@ -635,7 +691,8 @@
       "size_class": "catalog",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading."
+      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
+      "metadata_enabled": false
     },
     {
       "name": "UNESCO Data",
@@ -646,7 +703,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UNESCO World Heritage",
@@ -657,7 +715,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UNESCO Institute for Statistics",
@@ -668,7 +727,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UNHCR Refugee Data",
@@ -679,7 +739,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UNODC Data",
@@ -690,7 +751,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "WTO Statistics",
@@ -701,7 +763,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "IRENA Statistics",
@@ -712,7 +775,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "IEA Data",
@@ -723,7 +787,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Our World in Data",
@@ -734,7 +799,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "FRED",
@@ -745,7 +811,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "IPUMS",
@@ -756,7 +823,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "DHS Program",
@@ -767,7 +835,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "GDELT",
@@ -778,7 +847,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ACLED",
@@ -789,7 +859,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ReliefWeb",
@@ -800,7 +871,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "EM-DAT",
@@ -811,7 +883,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Global Forest Watch",
@@ -822,7 +895,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Protected Planet",
@@ -833,7 +907,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "IUCN Red List",
@@ -844,7 +919,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Marine Data (EMODnet)",
@@ -855,7 +931,8 @@
       "size_class": "large",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Ocean Biodiversity OBIS",
@@ -866,7 +943,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "PANGAEA",
@@ -877,7 +955,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "EarthChem",
@@ -888,7 +967,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Materials Project",
@@ -899,7 +979,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "PubChem",
@@ -910,7 +991,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Protein Data Bank",
@@ -921,7 +1003,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UniProt",
@@ -932,7 +1015,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Ensembl",
@@ -943,7 +1027,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "NCBI GenBank",
@@ -954,7 +1039,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ClinicalTrials.gov",
@@ -965,7 +1051,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Open Targets",
@@ -976,7 +1063,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Allen Brain Atlas",
@@ -987,7 +1075,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Humanitarian Data Exchange",
@@ -998,7 +1087,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UNICEF SDG Data",
@@ -1009,7 +1099,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "UN Statistics SDG",
@@ -1020,7 +1111,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "FAO AQUASTAT",
@@ -1031,7 +1123,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "WorldClim",
@@ -1042,7 +1135,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "CHELSA Climate",
@@ -1053,7 +1147,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Global Carbon Project",
@@ -1064,7 +1159,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "EDGAR Emissions",
@@ -1075,7 +1171,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAQ",
@@ -1086,7 +1183,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAlex Institutions",
@@ -1097,7 +1195,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ROR Registry",
@@ -1108,7 +1207,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ORCID Public Data",
@@ -1119,7 +1219,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Zenodo",
@@ -1130,7 +1231,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. This does not enable bulk file mirroring; check item-level license before downloading files.",
+      "metadata_enabled": true
     },
     {
       "name": "Figshare",
@@ -1141,7 +1243,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Dryad",
@@ -1152,7 +1255,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OSF",
@@ -1163,7 +1267,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "CORE",
@@ -1174,7 +1279,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "DOAJ",
@@ -1185,7 +1291,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Open Library",
@@ -1196,7 +1303,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "WorldCat",
@@ -1207,7 +1315,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Wikimedia Commons",
@@ -1218,7 +1327,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Flickr Commons",
@@ -1229,7 +1339,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Europeana Sounds",
@@ -1240,7 +1351,8 @@
       "size_class": "large",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Smithsonian Open Access",
@@ -1251,7 +1363,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Getty Vocabularies",
@@ -1262,7 +1375,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Wiktionary Dumps",
@@ -1273,7 +1387,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OPUS Corpora",
@@ -1284,7 +1399,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Mozilla Common Voice",
@@ -1295,7 +1411,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "FLORES-200",
@@ -1306,7 +1423,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Universal Dependencies",
@@ -1317,7 +1435,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Glottolog",
@@ -1328,7 +1447,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Ethnologue",
@@ -1339,7 +1459,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAlex Concepts",
@@ -1350,7 +1471,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "DBpedia Spotlight",
@@ -1361,7 +1483,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Open Food Facts",
@@ -1372,7 +1495,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "USDA FoodData Central",
@@ -1383,7 +1507,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Ag Data Commons",
@@ -1394,7 +1519,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "CGIAR Research Data",
@@ -1405,7 +1531,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Global Energy Monitor",
@@ -1416,7 +1543,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Open Power System Data",
@@ -1427,7 +1555,8 @@
       "size_class": "medium",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "ENTSO-E Transparency",
@@ -1438,7 +1567,8 @@
       "size_class": "large",
       "coverage": "Europe",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAQ Stations",
@@ -1449,7 +1579,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "World Bank Microdata",
@@ -1460,7 +1591,8 @@
       "size_class": "catalog",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Census Digital Library",
@@ -1471,7 +1603,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Bhuvan",
@@ -1482,7 +1615,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Open Data - Education",
@@ -1493,7 +1627,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Parliamentary Data",
@@ -1504,7 +1639,8 @@
       "size_class": "medium",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Supreme Court Judgments",
@@ -1515,7 +1651,8 @@
       "size_class": "large",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "India Patent Advanced Search",
@@ -1526,7 +1663,8 @@
       "size_class": "catalog",
       "coverage": "India",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "World Intellectual Property Organization",
@@ -1537,7 +1675,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "USPTO Open Data",
@@ -1548,7 +1687,8 @@
       "size_class": "large",
       "coverage": "United States",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAlex Books/Works",
@@ -1559,7 +1699,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "Internet Engineering Task Force",
@@ -1570,7 +1711,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenSSF Security Data",
@@ -1581,7 +1723,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "CVE Program",
@@ -1592,7 +1735,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "NVD",
@@ -1603,7 +1747,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "MITRE ATT&CK",
@@ -1614,7 +1759,8 @@
       "size_class": "medium",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "CISA KEV",
@@ -1625,7 +1771,8 @@
       "size_class": "small",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     },
     {
       "name": "OpenAlex",
@@ -1636,8 +1783,15 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download."
+      "notes": "Verify current endpoint, exact license, attribution, rate limits and manifest before download.",
+      "metadata_enabled": false
     }
   ],
-  "expansion_note": "Expanded cross-domain public dataset discovery registry. Disabled by default; no dataset is claimed downloaded. See GLOBAL_DATASET_EXPANSION.md for safe acquisition pipeline."
+  "expansion_note": "Expanded cross-domain public dataset discovery registry. Disabled by default; no dataset is claimed downloaded. See GLOBAL_DATASET_EXPANSION.md for safe acquisition pipeline.",
+  "metadata_collection_policy": {
+    "description": "metadata_enabled activates only the matching bounded search-metadata connector in api_harvest.py; it does not authorize or trigger bulk file downloads.",
+    "bulk_download_requires_separate_license_review": true,
+    "full_text_download_requires_item_level_rights": true,
+    "never_auto_download_full_bulk_dumps": true
+  }
 }
