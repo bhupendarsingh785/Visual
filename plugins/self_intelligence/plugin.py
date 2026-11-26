@@ -16,7 +16,7 @@ def _self_context():
         "providers": globals().get("PROVIDERS", {}),
         "tasks": globals().get("TASKS", {}),
         "tools": globals().get("TOOLS", {}),
-        "plugins": {name: True for name in (globals().get("PLUGINS") and __import__("os").listdir(globals()["PLUGINS"]) or [])},
+        "plugins": {name: True for name in (globals().get("PLUGINS") and __import__("os").listdir(globals()["PLUGINS"]) or []) if __import__("os").path.isfile(__import__("os").path.join(globals()["PLUGINS"], name, "plugin.py"))},
         "plugin_errors": globals().get("PLUGIN_ERRORS", {}),
         "config": globals().get("CFG", {}),
     }
@@ -48,10 +48,10 @@ def self_improvement_propose(title, scope, rationale, risk, acceptance):
 
 
 @tool("Self-improvement plan ka status badlo. Allowed: proposed, approved, in_progress, needs_review, rejected, completed. Status change audit ledger mein save hota hai.",
-      {"plan_id": S("plan ID"), "status": S("allowed workflow status"), "notes": S("review/test evidence ya wajah")})
+      {"plan_id": S("plan ID"), "status": S("proposed, approved, in_progress, needs_review, rejected"), "notes": S("review/test evidence ya wajah")}, risky=True)
 def self_improvement_update(plan_id, status, notes):
     update_plan(plan_id, status, notes, globals().get("HOME"))
-    return "Plan " + plan_id + " status updated to " + status + ". 'completed' sirf tab use karein jab independent test evidence record ho."
+    return "Plan " + plan_id + " status updated to " + status + ". Completion cannot be self-certified by this tool."
 
 
 @tool("VISUAL ke pichhle self-improvement plans aur unke acceptance criteria dekho.")
