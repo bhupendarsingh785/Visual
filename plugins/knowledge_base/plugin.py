@@ -1,7 +1,7 @@
 """Public-source Knowledge Base tools for VISUAL."""
 import json
 from knowledge_engine import add_source, ingest_source, search_knowledge, knowledge_stats
-from catalog import queue_catalog, collect_catalog
+from catalog import queue_catalog, collect_catalog\nfrom local_import import import_local_file
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
@@ -33,3 +33,11 @@ def knowledge_queue_catalog(topics=""):
 def knowledge_collect_now(limit=10, topics=""):
     selected = [x.strip() for x in str(topics).split(",") if x.strip()]
     return json.dumps(collect_catalog(globals().get("HOME"), selected, limit), ensure_ascii=False)[:14000]
+
+
+@tool("Phone ya Termux ke local Download/Documents folder se TXT, Markdown, HTML, CSV, JSON, JSONL aur gzip datasets ko internet ke bina VISUAL ke local Knowledge Base mein index karo. Bade datasets ke liye JSONL.GZ behtar hai; data user ke phone par hi rahega.",
+      {"path": S("exact local file path, e.g. /storage/emulated/0/Download/data.jsonl.gz"),
+       "topic": S("subject/category label"),
+       "max_records": S("0 = all records; otherwise a bounded number")}, risky=True)
+def knowledge_import_local(path, topic="local-dataset", max_records=0):
+    return json.dumps(import_local_file(path, topic, globals().get("HOME"), max_records), ensure_ascii=False)[:12000]
