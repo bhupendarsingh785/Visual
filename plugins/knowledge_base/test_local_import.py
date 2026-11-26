@@ -35,8 +35,8 @@ class LocalImportTests(unittest.TestCase):
             home = Path(td) / ".visual"
             home.mkdir(parents=True, exist_ok=True)
             source = home / "partial.jsonl"
-            source.write_text('{"id":"ok","text":"This valid record contains enough words for indexing."}\\n' +
-                              '{"id": malformed line that should be counted and retained as text for inspection}\\n', encoding="utf-8")
+            source.write_text('{"id":"ok","text":"This valid record contains enough words for indexing."}\n' +
+                              '{"id": malformed line that should be counted and retained as text for inspection}\n', encoding="utf-8")
             result = import_local_file(str(source), "test", str(home))
             self.assertEqual(result["indexed_records"], 2)
             self.assertEqual(result["errors"], 1)
