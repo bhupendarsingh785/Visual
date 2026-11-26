@@ -35,6 +35,10 @@ class ExecutionEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             execution_engine.run_manifest(self.task["id"], {"profile":"python","commands":[["python","\x00"]]}, self.home)
 
+    def test_manifest_rejects_shell_entrypoints(self):
+        with self.assertRaises(ValueError):
+            execution_engine.run_manifest(self.task["id"], {"profile":"python","commands":[["sh","-c","id"]]}, self.home)
+
     @patch("execution_engine._docker_available", return_value=(None, "not installed"))
     def test_manifest_does_not_fallback_to_host(self, _docker):
         result = execution_engine.run_manifest(self.task["id"], {"profile":"python","commands":[["python","-m","unittest"]]}, self.home)
