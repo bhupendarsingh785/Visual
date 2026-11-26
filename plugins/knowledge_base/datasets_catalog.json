@@ -1,5 +1,5 @@
 {
-  "catalog_version": 4,
+  "catalog_version": 5,
   "purpose": "Discovery registry for large public datasets. Registry entries are leads, not blanket permission to download or reuse.",
   "download_policy": {
     "require_license_review": true,
@@ -43,8 +43,8 @@
       "size_class": "large",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
-      "metadata_enabled": false
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. Full text, media and bulk downloads remain subject to item-level rights and separate review.",
+      "metadata_enabled": true
     },
     {
       "name": "PubMed",
@@ -295,8 +295,8 @@
       "size_class": "huge",
       "coverage": "global",
       "enabled": false,
-      "notes": "Verify endpoint, license, attribution, rate limits and checksum/manifest before downloading.",
-      "metadata_enabled": false
+      "notes": "Bounded public search-metadata connector enabled in VISUAL. Full text, media and bulk downloads remain subject to item-level rights and separate review.",
+      "metadata_enabled": true
     },
     {
       "name": "Wikipedia dumps",
