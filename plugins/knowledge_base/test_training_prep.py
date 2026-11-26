@@ -15,6 +15,7 @@ class TrainingPrepTests(unittest.TestCase):
                     ("s2", "unknown", "https://example.org/b", "B" * 400),
                     ("s3", "CC-BY-4.0", "https://example.org/c", "C" * 400),
                     ("s4", "CC-BY-NC", "https://example.org/d", "D" * 400),
+                    ("s5", "CC0 metadata; linked full text has separate rights", "https://example.org/e", "E" * 400),
                 ]:
                     db.execute("INSERT INTO sources(id,url,domain,license,status,added_at) VALUES(?,?,?,?,?,?)",
                                (sid,url,"example.org",license_name,"indexed",1))
@@ -24,7 +25,7 @@ class TrainingPrepTests(unittest.TestCase):
                                ("d"+sid,sid,"title",text,digest,"test",1))
             out = Path(tmp) / "prepared"
             result = prepare_training_corpus(home=home, output_dir=out)
-            self.assertEqual(result["total_eligible"], 2)
+            self.assertEqual(result["total_eligible"], 3)
             self.assertEqual(result["skipped"]["license"], 2)
             self.assertEqual(result["skipped"]["duplicate"], 0)
             records=[]
@@ -33,6 +34,8 @@ class TrainingPrepTests(unittest.TestCase):
             self.assertEqual(len(records),2)
             self.assertTrue(all(x["source_url"].startswith("https://") for x in records))
             self.assertTrue((out/"dataset_manifest.json").exists())
+            split_counts = [sum(1 for line in (out/(split+".jsonl")).read_text().splitlines()) for split in ("train","validation","test")]
+            self.assertEqual(sum(1 for count in split_counts if count), 1, "same source domain must not leak across splits")
 
 if __name__ == "__main__":
     unittest.main()
