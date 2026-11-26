@@ -2,7 +2,7 @@
 import json
 import os
 
-MEMORY_FILE = os.path.join(os.path.dirname(__file__), "last_statement.json")
+MEMORY_FILE = os.path.join(os.path.expanduser("~"), ".visual", "last_statement.json")
 
 
 class MemoryStore:
@@ -21,6 +21,7 @@ class MemoryStore:
 
     def _save(self):
         try:
+            os.makedirs(os.path.dirname(MEMORY_FILE), exist_ok=True)
             with open(MEMORY_FILE, "w", encoding="utf-8") as f:
                 json.dump({"last_statement": self._last}, f, ensure_ascii=False)
         except Exception:
