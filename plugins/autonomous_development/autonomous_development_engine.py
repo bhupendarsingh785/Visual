@@ -143,8 +143,14 @@ def transition(task_id, status, notes="", actor="agent", home=None):
                 raise ValueError("approval se pehle successful static validation zaroori hai")
             if t["kind"] in {"build", "upgrade", "debug", "tool"}:
                 run = db.execute("SELECT detail FROM events WHERE task_id=? AND event='test_execution' ORDER BY id DESC LIMIT 1",(task_id,)).fetchone()
-                if not run or json.loads(run["detail"]).get("status") != "passed":
-                    raise ValueError("approval se pehle isolated runtime tests pass hone chahiye; runner unavailable ho to ise complete mat mark karo")
+                if not run:
+                    raise ValueError("approval se pehle isolated runtime tests pass hone chahiye")
+                test_evidence = json.loads(run["detail"])
+                validation = json.loads(last["detail"])
+                if test_evidence.get("status") != "passed":
+                    raise ValueError("isolated runtime tests pass nahi hue")
+                if not test_evidence.get("workspace_sha256") or test_evidence.get("workspace_sha256") != validation.get("workspace_sha256"):
+                    raise ValueError("tests ke baad workspace badla hai; static aur runtime tests dobara chalao")
         if status == "completed" and t["status"] != "awaiting_approval":
             raise ValueError("owner approval se pehle task awaiting_approval hona chahiye")
         if status not in _TRANSITIONS[t["status"]]:
@@ -243,6 +249,21 @@ def list_artifacts(task_id, home=None):
     return sorted(str(p.relative_to(ws)) for p in ws.rglob("*") if p.is_file() and not p.is_symlink())
 
 
+def workspace_fingerprint(task_id, home=None):
+    ws = _workspace(task_id, home)
+    digest = hashlib.sha256()
+    for p in sorted(ws.rglob('*')):
+        if not p.is_file() or p.is_symlink() or any(x in {'.git','node_modules','.venv','__pycache__'} for x in p.parts):
+            continue
+        rel = str(p.relative_to(ws)).replace('\\\\','/')
+        digest.update(rel.encode('utf-8'))
+        digest.update(bytes([0]))
+        with p.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(65536), b''):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
 def validate_artifacts(task_id, home=None):
     ws = _workspace(task_id,home)
     report = {"files":0,"python_syntax_ok":0,"json_ok":0,"errors":[],"secret_hits":[]}
@@ -270,6 +291,7 @@ def validate_artifacts(task_id, home=None):
     if report["secret_hits"]:
         report["errors"].append("secret-looking token patterns found in: "+", ".join(report["secret_hits"][:20]))
     report["ok"] = not report["errors"]
+    report["workspace_sha256"] = workspace_fingerprint(task_id, home)
     with _db(home) as db:
         _task(db,task_id)
         _event(db,task_id,"validator","static_validation",json.dumps(report,ensure_ascii=False)[:2500])
