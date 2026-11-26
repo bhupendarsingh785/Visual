@@ -102,7 +102,7 @@ def run_profile(task_id, profile, home=None, timeout=MAX_SECONDS):
     }
     if not docker:
         report["limitations"] = "No direct execution fallback is allowed. Configure a supported isolated Docker host or managed sandbox."
-        return report
+        return _finish(task_id, report, home)
     image = PROFILES[profile]["image"]
     # Never download images from an agent task; image must be preloaded by the owner.
     try:
@@ -111,10 +111,10 @@ def run_profile(task_id, profile, home=None, timeout=MAX_SECONDS):
                                       env={"PATH": os.environ.get("PATH", "")})
     except Exception as exc:
         report["limitations"] = "Image check failed: " + str(exc)[:200]
-        return report
+        return _finish(task_id, report, home)
     if image_check.returncode:
         report["limitations"] = f"Required local image {image} is not present. Runner will not pull it or access the network."
-        return report
+        return _finish(task_id, report, home)
     for argv in PROFILES[profile]["commands"]:
         result = _run_one(docker, ws, image, argv, timeout)
         result["command"] = argv
@@ -123,7 +123,7 @@ def run_profile(task_id, profile, home=None, timeout=MAX_SECONDS):
             break
     report["status"] = "passed" if report["results"] and all(x["status"] == "passed" for x in report["results"]) else "failed"
     report["finished_at"] = time.time()
-    return report
+    return _finish(task_id, report, home)
 
 
 def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
@@ -148,13 +148,13 @@ def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
               "results": [], "status": "unavailable", "manifest_commands": clean}
     if not docker:
         report["limitations"] = "No direct local execution fallback. Configure isolated Docker or managed sandbox."
-        return report
+        return _finish(task_id, report, home)
     image = PROFILES[profile]["image"]
     check = subprocess.run([docker, "image", "inspect", image], capture_output=True,
                            text=True, timeout=10, env={"PATH": os.environ.get("PATH", "")})
     if check.returncode:
         report["limitations"] = f"Required local image {image} is missing; automatic pull is disabled."
-        return report
+        return _finish(task_id, report, home)
     for argv in clean:
         result = _run_one(docker, ws, image, argv, max(1,min(int(timeout),MAX_SECONDS)))
         result["command"] = argv
@@ -163,4 +163,4 @@ def run_manifest(task_id, manifest, home=None, timeout=MAX_SECONDS):
             break
     report["status"] = "passed" if len(report["results"]) == len(clean) and all(x["status"] == "passed" for x in report["results"]) else "failed"
     report["finished_at"] = time.time()
-    return report
+    return _finish(task_id, report, home)
