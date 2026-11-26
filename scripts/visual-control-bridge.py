@@ -80,7 +80,7 @@ def handle_issue(issue,state):
   post_comment(n,"VISUAL RESULT\nAction: "+action+"\nStatus: error\n\n"+type(e).__name__+": "+str(e)[:1000]); state["issues"][k]["status"]="error"
  state["issues"][k]["updated_at"]=int(time.time()); save_state(state); close_issue(n)
 def poll_once(state):
- issues=json.loads(gh("api",f"repos/{REPO}/issues","-f","state=open","-f","per_page=100","-f","labels="+LABEL))
+ issues=json.loads(gh("api",f"repos/{REPO}/issues","-X","GET","-f","state=open","-f","per_page=100","-f","labels="+LABEL))
  for issue in issues:
   if "pull_request" not in issue: handle_issue(issue,state)
 def main():
