@@ -24,7 +24,7 @@ class PluginRuntimeIntegrationTests(unittest.TestCase):
                 report = json.loads(run_tests(task["id"], "python", 1))
                 self.assertIn(report["status"], {"passed", "failed", "unavailable"})
                 current = json.loads(status(task["id"]))
-                self.assertEqual(current["task"]["id"], task["id"])
+                self.assertEqual(current["id"], task["id"])
                 self.assertTrue(current["events"])
             finally:
                 namespace["HOME"] = previous_home
