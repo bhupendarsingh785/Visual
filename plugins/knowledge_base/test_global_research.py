@@ -23,8 +23,8 @@ class GlobalResearchTests(unittest.TestCase):
     def test_empty_search_results_are_not_counted_as_failures(self):
         with tempfile.TemporaryDirectory() as home:
             with patch("global_research.harvest_public_metadata", side_effect=[
-                {"status": "empty", "indexed_characters": 0},
-                {"status": "indexed", "indexed_characters": 100},
+                {"provider": "openalex", "status": "empty", "indexed_characters": 0},
+                {"provider": "crossref", "status": "indexed", "indexed_characters": 100},
             ]), patch("global_research.time.sleep"):
                 result = collect_global_research(["medicine"], 25, 2, home)
             self.assertEqual(result["successful_requests"], 1)
