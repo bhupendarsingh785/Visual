@@ -94,6 +94,16 @@ class DevelopmentEngineTests(unittest.TestCase):
         self.assertTrue(expected.issubset(registered))
         self.assertTrue(registered["dev_task_approve"]["risky"])
 
+    def test_javascript_and_shell_syntax_errors_are_detected(self):
+        import shutil
+        write_artifact(self.tid, "broken.js", "const = ;\n", self.home)
+        write_artifact(self.tid, "broken.sh", "if then\n", self.home)
+        result = validate_artifacts(self.tid, self.home)
+        if shutil.which("node"):
+            self.assertTrue(any("JavaScript syntax error" in e for e in result["errors"]))
+        if shutil.which("bash"):
+            self.assertTrue(any("shell syntax error" in e for e in result["errors"]))
+
     def test_secret_pattern_rejected(self):
         with self.assertRaises(ValueError):
             write_artifact(self.tid, "secret.py", "TOKEN='sk-" + "a"*24 + "'", self.home)
