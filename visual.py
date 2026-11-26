@@ -2343,6 +2343,45 @@ def _llm_once(messages, use_tools, smart, tool_names, final=False, cat=None):
     return {"role": "assistant", "content": ("Free AI ki minute/din ki limit poori ho gayi. Thodi der baad dobara, ya ek aur free key "
             "(kisi bhi desh ki) 'visual keys' mein daalo. " if lim else "Dimaag se jud nahi paaya: ") + " | ".join(errs)[:300]}, []
 
+@tool("Configured AI provider ki REAL authenticated live connectivity smoke test. Missing key ko unavailable batata hai; key kabhi print nahi hoti.", {"provider": S("provider naam, optional; khaali = sab configured providers", optional=True)})
+def provider_live_check(provider=""):
+    targets = [provider.strip().lower()] if provider.strip() else list(PROVIDERS)
+    reports = []
+    for p in targets:
+        if p not in PROVIDERS:
+            reports.append({"provider": p, "status": "unknown_provider"})
+            continue
+        key = pkey(p)
+        if not key:
+            reports.append({"provider": p, "status": "unavailable", "reason": "no_configured_key"})
+            continue
+        model = provider_model(p, "chat")
+        payload = {"model": model, "messages": [{"role": "user", "content": "Reply only: OK"}], "max_tokens": 8, "temperature": 0}
+        req = urllib.request.Request(PROVIDERS[p]["base"].rstrip("/") + "/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "VISUAL-provider-health/1.0"})
+        started = time.time()
+        try:
+            with urllib.request.urlopen(req, timeout=25) as response:
+                raw = response.read(12000).decode("utf-8", "replace")
+                data = json.loads(raw)
+                ok = bool(data.get("choices") and isinstance(data["choices"], list))
+                reports.append({"provider": p, "model": model, "status": "passed" if ok else "failed",
+                    "http_status": response.status, "latency_ms": round((time.time()-started)*1000),
+                    "capability": "basic_chat_completion" if ok else "unexpected_response_schema"})
+        except urllib.error.HTTPError as exc:
+            body = exc.read(1500).decode("utf-8", "replace")
+            reason = "auth_failed" if exc.code in (401,403) else ("rate_limited" if exc.code == 429 else ("model_or_endpoint_error" if exc.code in (400,404) else "http_error"))
+            reports.append({"provider": p, "model": model, "status": "failed", "http_status": exc.code,
+                "latency_ms": round((time.time()-started)*1000), "reason": reason,
+                "error_excerpt": strip_html(body)[:180]})
+        except Exception as exc:
+            reports.append({"provider": p, "model": model, "status": "unavailable",
+                "latency_ms": round((time.time()-started)*1000), "reason": type(exc).__name__})
+    return json.dumps({"checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "results": reports, "note": "Only configured keys were tested; each successful call may consume provider quota."},
+        ensure_ascii=False, indent=2)[:10000]
+
 YES = re.compile(r"^\s*(haan|ha|haa|han|yes|y|ok|okay|kar do|karo|theek hai|thik hai|bhej do|chalo|done|hmm+)\b", re.I)
 NO = re.compile(r"^\s*(nahi|nahin|na|no|mat|cancel|ruko|rehne do)\b", re.I)
 
