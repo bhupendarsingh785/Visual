@@ -31,6 +31,14 @@ class PublicMetadataHarvesterTests(unittest.TestCase):
         self.assertEqual(ingest.call_count, 2)
         self.assertGreaterEqual(sleep.call_count, 2)
         self.assertEqual(sleep.call_args_list[-1].args[0], 2.0)
+    @patch("api_harvest.ingest_source", return_value={"status": "indexed", "characters": 1200, "duplicate": True})
+    @patch("api_harvest.add_source", return_value={"source_id": "src_duplicate", "status": "queued"})
+    def test_duplicate_content_is_not_counted_as_new_indexed_characters(self, add, ingest):
+        result = harvest_public_metadata("openalex", "duplicate metadata", 10, "/tmp/visual-test")
+        self.assertEqual(result["indexed_characters"], 0)
+        self.assertEqual(result["fetched_characters"], 1200)
+        self.assertTrue(result["duplicate"])
+
     def test_open_media_and_archive_query_shapes(self):
         from api_harvest import PROVIDERS
         images = PROVIDERS["openverse_images"]["build"]("forest wildlife", 25)
