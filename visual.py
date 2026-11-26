@@ -1091,24 +1091,25 @@ def plugin_file(name, path, content):
 @tool("UPGRADE kadam 4: plugin ki poori jaanch: compile, VISUAL ke saath load (tools judte hain ya nahi), aur test_*.py chalana. Nateeja + galti trace.",
       {"name": S("plugin naam")})
 def plugin_test(name):
+    """Static-only legacy check. Never imports or executes generated plugin code."""
     d = _pdir(name); rep = []
-    if not os.path.exists(os.path.join(d, "plugin.py")): return "❌ plugin.py nahi hai (entry file zaroori)"
-    for f in os.listdir(d):
-        if f.endswith(".py"):
-            r = _run(f'{sys.executable} -m py_compile "{os.path.join(d, f)}"', d, 60)
-            if "exit 0" not in r.splitlines()[0]: rep.append(f"❌ compile {f}: {r[-400:]}")
-    ok, out = _self_check(); rep.append(("✅" if ok else "❌") + " VISUAL ke saath load: " + out[-500:])
-    tests = [f for f in os.listdir(d) if f.startswith("test") and f.endswith(".py")]
-    if not tests: rep.append("❌ koi test_*.py nahi: asli test likho")
-    else:
-        env_cmd = f'cd "{d}" && PYTHONPATH="{d}:{HERE}" VISUAL_SELFTEST=1 {sys.executable} -m unittest discover -p "test*.py" -v 2>&1'
-        r = _run(env_cmd, d, 300); passed = re.search(r"\nOK", r) is not None
-        n = re.search(r"Ran (\d+) test", r); n = int(n.group(1)) if n else 0
-        rep.append(("✅" if passed and n > 0 else "❌") + f" tests: {n} chale\n" + r[-1800:])
+    if not os.path.isfile(os.path.join(d, "plugin.py")):
+        return "❌ plugin.py nahi hai (entry file zaroori)"
+    files = [x for x in os.listdir(d) if x.endswith(".py") and os.path.isfile(os.path.join(d,x))]
+    if not any(x.startswith("test") for x in files):
+        rep.append("❌ koi test_*.py nahi: test file zaroori")
+    for fn in files:
+        try:
+            with open(os.path.join(d,fn),encoding="utf-8") as fh: source=fh.read()
+            compile(source,fn,"exec")
+            rep.append("✅ syntax: "+fn)
+        except Exception as exc:
+            rep.append(f"❌ syntax: {fn}: {type(exc).__name__}: {str(exc)[:250]}")
+    rep.append("⚠️ runtime/import tests yahan nahi chalte. Host-process execution band hai; isolated Docker runner se alag dev_task workspace mein test karein.")
     good = not any(x.startswith("❌") for x in rep)
-    t = getattr(_CTX, "task", None)
-    if t: t["tests_ok"] = good
-    return ("NATEEJA: SAB PASS ✅" if good else "NATEEJA: FAIL ❌ (galti theek karo)") + "\n" + "\n".join(rep)[:6000]
+    t = getattr(_CTX, "_task", None)
+    if t: t["tests_ok"] = False
+    return ("STATIC CHECK PASS (runtime unverified)" if good else "STATIC CHECK FAIL") + "\\n" + "\\n".join(rep)[:6000]
 
 CRITIC_SYS = ("Tum ek bahut sakht senior engineer CRITIC ho (duniya ke best product jaise standard). Tumhara kaam kamiyan pakadna hai, tareef nahi. "
               "SPEC aur code padh kar dekho: kya sab features asli mein bane hain ya sirf naam ke; galti sambhalna; edge cases; suraksha; "
@@ -1217,50 +1218,31 @@ def _run_unittest(d, target, env, timeout=150):
     return res, n, out
 
 def _sandbox_eval(files, spec_tests):
-    """Ek namoone ko alag jagah (asli ~/.visual ko chhue bina) chala kar number do."""
-    import tempfile
-    base = tempfile.mkdtemp(prefix="sangam-"); d = os.path.join(base, "p"); home = os.path.join(base, "home")
-    os.makedirs(d); os.makedirs(home)
-    try:
-        for path, body in files.items():
-            fp = os.path.join(d, path); os.makedirs(os.path.dirname(fp), exist_ok=True)
-            with open(fp, "w", encoding="utf-8") as f: f.write(body)
-        with open(os.path.join(d, "vtest.py"), "w", encoding="utf-8") as f: f.write(VTEST_PY)
-        if spec_tests:
-            with open(os.path.join(d, "spec_check.py"), "w", encoding="utf-8") as f: f.write(spec_tests)
-        ev = {"compile": [], "loads": False, "new_tools": [], "spec": {}, "spec_n": 0, "own_ok": 0, "own_n": 0, "log": ""}
-        if "plugin.py" not in files: ev["log"] = "plugin.py nahi diya"; return ev
-        for path in files:
-            if path.endswith(".py"):
-                try: compile(files[path], path, "exec")
-                except SyntaxError as e: ev["compile"].append(f"{path}:{e.lineno}: {e.msg}")
-        if ev["compile"]: ev["log"] = "SYNTAX: " + "; ".join(ev["compile"]); return ev
-        bad = [pth for pth, body in files.items() if AI_CODE_RISK.search(body)]
-        if bad: ev["log"] = "KHATARNAK CODE (chalaya nahi): " + ", ".join(bad) + " -> " + AI_CODE_RISK.search(files[bad[0]]).group(0)[:60]; return ev
-        env = dict(os.environ); env.update({"VISUAL_SELFTEST": "1", "VISUAL_SANDBOX": "1", "HOME": home, "PYTHONPATH": d + os.pathsep + HERE, "PYTHONDONTWRITEBYTECODE": "1"})
-        try:
-            r = subprocess.run([sys.executable, "-c", "import vtest; print('NEW', ','.join(vtest.NEW_TOOLS))"], cwd=d, env=env,
-                               capture_output=True, text=True, timeout=90)
-            m = re.search(r"^NEW (.*)$", r.stdout, re.M)
-            if m and m.group(1).strip():
-                ev["loads"] = True; ev["new_tools"] = m.group(1).strip().split(",")
-            else:
-                ev["log"] = "LOAD FAIL (VISUAL mein jud nahi paaya / koi @tool nahi): " + (r.stdout + r.stderr)[-1500:]; return ev
-        except subprocess.TimeoutExpired:
-            ev["log"] = "LOAD TIMEOUT (import par atak gaya)"; return ev
-        logs = []
-        if spec_tests:
-            res, n, out = _run_unittest(d, "spec_check", env); ev["spec"] = res; ev["spec_n"] = n
-            if any(v != "ok" for v in res.values()) or n == 0: logs.append("SPEC TESTS:\n" + out[-2500:])
-        own = [p for p in files if re.match(r"(.*/)?test\w*\.py$", p)]
-        if own:
-            res2, n2, out2 = _run_unittest(d, "discover", env)
-            ev["own_n"] = len(res2) or n2; ev["own_ok"] = sum(1 for v in res2.values() if v == "ok")
-            if ev["own_ok"] < ev["own_n"]: logs.append("APNE TESTS:\n" + out2[-1500:])
-        ev["log"] = "\n".join(logs)[-4000:]
+    """Fail closed: never execute generated code in the VISUAL host process."""
+    ev = {"compile": [], "loads": False, "new_tools": [], "spec": {},
+          "spec_n": 0, "own_ok": 0, "own_n": 0, "log": ""}
+    if not isinstance(files, dict) or "plugin.py" not in files:
+        ev["log"] = "plugin.py nahi diya"
         return ev
-    finally:
-        shutil.rmtree(base, ignore_errors=True)
+    for path, body in files.items():
+        if not isinstance(path, str) or not isinstance(body, str):
+            ev["log"] = "invalid file entry"
+            return ev
+        normalized = path.replace("\\\\", "/")
+        if os.path.isabs(path) or ".." in normalized.split("/"):
+            ev["log"] = "unsafe artifact path: " + path[:120]
+            return ev
+        if path.endswith(".py"):
+            try:
+                compile(body, path, "exec")
+            except SyntaxError as exc:
+                ev["compile"].append(f"{path}:{exc.lineno}: {exc.msg}")
+    if ev["compile"]:
+        ev["log"] = "SYNTAX: " + "; ".join(ev["compile"])
+        return ev
+    ev["log"] = ("BLOCKED: legacy in-process execution disabled. Static syntax passed; "
+                 "runtime is UNVERIFIED. Use the isolated development-task runner.")
+    return ev
 
 def _score(ev, valid_tests):
     if not ev or not ev.get("loads"): return 0.0
