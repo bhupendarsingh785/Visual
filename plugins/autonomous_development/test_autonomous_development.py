@@ -39,6 +39,18 @@ class DevelopmentEngineTests(unittest.TestCase):
             transition(self.tid, "completed", "agent tries self-approval", actor="agent", home=self.home)
         self.assertEqual(transition(self.tid, "completed", "owner approved", actor="owner", home=self.home), "completed")
 
+    def test_workspace_change_after_runtime_test_invalidates_approval(self):
+        transition(self.tid, "planning", home=self.home)
+        transition(self.tid, "implementing", home=self.home)
+        transition(self.tid, "validating", home=self.home)
+        write_artifact(self.tid, "main.py", "print(1)\n", self.home)
+        validate_artifacts(self.tid, self.home)
+        record_execution_result(self.tid, {"status":"passed","profile":"python","results":[{"status":"passed"}]}, self.home)
+        write_artifact(self.tid, "main.py", "print(2)\n", self.home)
+        validate_artifacts(self.tid, self.home)
+        with self.assertRaisesRegex(ValueError, "workspace badla hai"):
+            transition(self.tid, "awaiting_approval", "stale test result", home=self.home)
+
     def test_research_requires_https_and_is_persisted(self):
         with self.assertRaises(ValueError):
             add_research(self.tid, "http://example.com", "bad", "summary", home=self.home)
