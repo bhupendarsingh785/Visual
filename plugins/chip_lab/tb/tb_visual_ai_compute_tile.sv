@@ -28,7 +28,7 @@ module tb_visual_ai_compute_tile;
         if (simd_y !== {16'd44,16'd33,16'd22,16'd11}) $fatal(1,"SIMD add failed");
         if (bnn_matches !== 6'd24) $fatal(1,"XNOR/popcount failed: %0d", bnn_matches);
         simd_op=2'b10; #1;
-        if (simd_y !== {16'd1600,16'd900,16'd400,16'd10}) $fatal(1,"SIMD multiply failed");
+        if (simd_y !== {16'd160,16'd90,16'd40,16'd10}) $fatal(1,"SIMD multiply failed");
         @(negedge clk); neuron_en=1; neuron_current=16'd60;
         @(negedge clk); neuron_current=16'd50;
         @(posedge clk); #1;
