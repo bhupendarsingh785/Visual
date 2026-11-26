@@ -510,6 +510,179 @@
       "quality_notes": [
         "Record tracer, acquisition protocol, scanner, preprocessing and BIDS validation status"
       ]
+    },
+    {
+      "id": "alp_data",
+      "name": "Earth Species Project alp-data",
+      "domains": [
+        "animal_bioacoustics",
+        "animal_communication",
+        "animal_behavior"
+      ],
+      "data_types": [
+        "streamable animal audio datasets",
+        "annotations",
+        "taxonomy metadata"
+      ],
+      "entry_url": "https://github.com/earthspecies/alp-data",
+      "documentation": "https://projects.earthspecies.org/alp-data/latest/datasets-available/",
+      "access_mode": "Python package with per-dataset loaders; dataset-specific upstream access",
+      "license_policy": "Each upstream dataset retains its own license and terms; inspect per-dataset documentation before download or training.",
+      "collection_status": "discovery_only",
+      "download_policy": "No blanket bulk mirror; use per-dataset loader only after upstream rights and checksums verified",
+      "quality_notes": [
+        "Preserve upstream dataset identity and original annotations",
+        "Check subject, site and recording-session leakage",
+        "Validate sample rate, channel count and duration"
+      ]
+    },
+    {
+      "id": "bioacoustic_dataset_index",
+      "name": "Bioacoustics datasets index",
+      "domains": [
+        "animal_bioacoustics",
+        "animal_communication",
+        "animal_behavior",
+        "deep_learning"
+      ],
+      "data_types": [
+        "catalog of animal audio datasets",
+        "taxonomy and duration metadata",
+        "benchmark dataset links"
+      ],
+      "entry_url": "https://bioacoustic-ai.github.io/bioacoustics-datasets/",
+      "access_mode": "Curated index; follow original dataset repositories",
+      "license_policy": "Index entry does not establish underlying dataset license; inspect original repository and recording-level terms.",
+      "collection_status": "discovery_only",
+      "download_policy": "Harvest catalog metadata only; download original datasets only after item-level license and access checks",
+      "quality_notes": [
+        "Check taxonomic coverage and annotation quality",
+        "Record recording hours and geographic coverage",
+        "Avoid mixing benchmark test sets into training"
+      ]
+    },
+    {
+      "id": "crcns",
+      "name": "Collaborative Research in Computational Neuroscience",
+      "domains": [
+        "neuroscience",
+        "brain_imaging",
+        "memory_cognition",
+        "human_motion",
+        "animal_behavior"
+      ],
+      "data_types": [
+        "neural recordings",
+        "electrophysiology",
+        "behavioral task data",
+        "animal and human neuroscience"
+      ],
+      "entry_url": "https://crcns.org/",
+      "access_mode": "Dataset-specific repository access and data-use terms",
+      "license_policy": "Terms and data-use agreements vary by dataset; do not assume open commercial reuse.",
+      "collection_status": "discovery_only",
+      "download_policy": "Metadata-first; honor registration and dataset-specific agreement",
+      "quality_notes": [
+        "Preserve experimental protocol, species, task, electrode metadata and labels",
+        "Check subject/session splits and data-use restrictions"
+      ]
+    },
+    {
+      "id": "neurotycho",
+      "name": "NeuroTycho",
+      "domains": [
+        "neuroscience",
+        "brain_imaging",
+        "learning_intelligence",
+        "human_motion"
+      ],
+      "data_types": [
+        "monkey ECoG",
+        "neural time series",
+        "behavioral task metadata"
+      ],
+      "entry_url": "https://neurotycho.org/",
+      "access_mode": "Dataset portal and dataset-specific download terms",
+      "license_policy": "Verify portal and dataset-specific reuse conditions; animal neural data are not automatically CC0.",
+      "collection_status": "discovery_only",
+      "download_policy": "No automatic downloads until access and license terms are verified",
+      "quality_notes": [
+        "Preserve sampling rate, channel layout, task events and animal/session identity"
+      ]
+    },
+    {
+      "id": "fao_agris",
+      "name": "FAO AGRIS Open Data Set",
+      "domains": [
+        "agriculture",
+        "food_nutrition",
+        "plants_traits_ecology",
+        "agriculture_animal_husbandry"
+      ],
+      "data_types": [
+        "agriculture and food-science research metadata",
+        "full-text links"
+      ],
+      "entry_url": "https://www.fao.org/agris/agris-ods",
+      "access_mode": "Open Data Set download and catalog metadata",
+      "license_policy": "AGRIS ODS metadata is CC BY 4.0; linked full texts retain their own licenses.",
+      "collection_status": "discovery_only",
+      "download_policy": "Metadata may be reused with attribution; inspect linked article and dataset rights separately",
+      "quality_notes": [
+        "Preserve Dublin Core and Data Catalog fields",
+        "Normalize DOI and institutional identifiers",
+        "Do not infer rights for linked full text"
+      ]
+    },
+    {
+      "id": "wri_data",
+      "name": "World Resources Institute Data Explorer",
+      "domains": [
+        "earth_observation",
+        "climate",
+        "water_resources",
+        "energy_systems",
+        "ecosystems_foodwebs"
+      ],
+      "data_types": [
+        "climate",
+        "nature",
+        "land use",
+        "energy",
+        "food and development datasets"
+      ],
+      "entry_url": "https://datasets.wri.org/en/",
+      "access_mode": "Dataset catalog and per-dataset downloads",
+      "license_policy": "Check each dataset's license, attribution and source terms individually.",
+      "collection_status": "discovery_only",
+      "download_policy": "Metadata first; download only after per-dataset terms and file manifest are verified",
+      "quality_notes": [
+        "Record spatial and temporal resolution, units, methodology and uncertainty"
+      ]
+    },
+    {
+      "id": "un_biodiversity_lab",
+      "name": "UN Biodiversity Lab",
+      "domains": [
+        "ecosystems_foodwebs",
+        "animal_taxonomy",
+        "plants_traits_ecology",
+        "earth_observation",
+        "climate"
+      ],
+      "data_types": [
+        "biodiversity layers",
+        "climate and land-use geospatial datasets"
+      ],
+      "entry_url": "https://unbiodiversitylab.org/en/data/",
+      "access_mode": "Dataset catalog and provider-specific geospatial layers",
+      "license_policy": "Licenses vary by data provider and layer; verify each layer's reuse terms.",
+      "collection_status": "discovery_only",
+      "download_policy": "Catalog metadata first; obtain layer-specific terms before downloads",
+      "quality_notes": [
+        "Retain provider, spatial resolution, projection and version",
+        "Respect restricted national workspaces and sensitive species locations"
+      ]
     }
   ],
   "quality_gates": [
