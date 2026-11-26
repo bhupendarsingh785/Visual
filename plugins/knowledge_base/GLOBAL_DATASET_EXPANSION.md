@@ -20,6 +20,10 @@ VISUAL's curated web-page catalog is only a seed list. This registry is a broade
 8. Run quality checks, record errors, support pause/resume, and expose progress/space estimates in the browser panel.
 9. Keep raw data and the searchable index distinct so the index can be rebuilt.
 
+## Resumable download tool
+
+The `knowledge_download_dataset` tool downloads one explicitly supplied official HTTPS file into VISUAL home or Android Download/Documents. It blocks redirects and non-public IPs, supports HTTP Range resume via a retained `.part` file, enforces a configurable byte cap (512 MiB default, 20 GiB hard cap), checks optional SHA-256, and writes a provenance sidecar. It does not crawl a catalog or download every listed source automatically. Confirm the publisher's license and exact manifest URL before invoking it.
+
 ## Phone-first strategy
 
 - Default to catalog metadata + selected API records + small curated documents.
