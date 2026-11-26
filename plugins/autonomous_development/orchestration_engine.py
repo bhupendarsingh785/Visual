@@ -60,17 +60,30 @@ def record(task_id, role, outcome, notes="", home=None):
             if state["role"] == "blocked": state["status"] = "blocked"
     elif role == "security_reviewer":
         if outcome == "pass":
-            if t["status"] == "implementing":
+            try:
+                review = json.loads(notes) if isinstance(notes, str) else notes
+            except Exception:
+                review = {}
+            required_review = {"secrets", "dependencies", "permissions", "sandbox", "data_flow", "auth"}
+            if not isinstance(review, dict) or not required_review.issubset(review) or any(
+                str(review.get(key, "")).lower() not in {"clear", "reviewed", "pass"} for key in required_review
+            ):
+                outcome = "revise"
+                notes = "Security checklist incomplete. Supply JSON statuses for: " + ", ".join(sorted(required_review))
+                state["cycle"] += 1
+                state["role"] = "coder" if state["cycle"] < MAX_CYCLES else "blocked"
+                if state["role"] == "blocked": state["status"] = "blocked"
+            if outcome == "pass" and t["status"] == "implementing":
                 transition(task_id, "validating", "security review accepted; final validation", home=home)
-            validation = validate_artifacts(task_id, home)
+            validation = validate_artifacts(task_id, home) if outcome == "pass" else {"errors": ["security checklist incomplete"], "files": 0}
             digest = workspace_fingerprint(task_id, home)
-            if validation.get("errors") or not validation.get("files") or digest != state.get("workspace_sha256"):
+            if outcome == "pass" and (validation.get("errors") or not validation.get("files") or digest != state.get("workspace_sha256")):
                 state["cycle"] += 1
                 state["role"] = "coder"
                 state["workspace_sha256"] = None
                 outcome = "revise"
                 notes = (str(notes) + "\nFinal validation/hash mismatch; rerun tester and security review.")[:2500]
-            else:
+            elif outcome == "pass":
                 state["status"], state["role"], state["workspace_sha256"] = "awaiting_owner_approval", "owner", digest
         else:
             state["cycle"] += 1
