@@ -68,11 +68,12 @@ def _run_one(docker, workspace, image, argv, timeout):
         "--pids-limit=128", "--memory=768m", "--cpus=1.0",
         "--user=65534:65534",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=128m",
+        "--tmpfs", "/workspace:rw,exec,nosuid,size=256m,uid=65534,gid=65534,mode=0700",
         "-e", "HOME=/tmp", "-e", "TMPDIR=/tmp",
         "-e", "PYTHONDONTWRITEBYTECODE=1",
         "-e", "PYTEST_ADDOPTS=-p no:cacheprovider",
-        "-v", str(workspace) + ":/workspace:ro",
-        "-w", "/workspace", image, *argv,
+        "-v", str(workspace) + ":/input:ro",
+        image, "sh", "-c", "cp -a /input/. /workspace/ && cd /workspace && exec \"$@\"", "visual-runner", *argv,
     ]
     env = {"PATH": os.environ.get("PATH", ""), "LANG": "C.UTF-8"}
     try:
