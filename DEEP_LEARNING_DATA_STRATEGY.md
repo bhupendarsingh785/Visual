@@ -56,3 +56,32 @@ The project owner has explicitly chosen GitHub as the storage platform. Do not s
 - Run a small baseline fine-tune only on suitable compute, record configuration and checkpoint hash, then compare held-out metrics and regressions.
 - CI must pass on Python 3.11, 3.13 and 3.14; collection smoke tests must respect request budgets and backoff.
 - No claim of complete collection, trained model, error-free system or available storage capacity without artifacts and verification proving it.
+
+## Expanded global research map and verified source registry (2026-11-26)
+
+The collector's research map now contains 100 subject keys. The priority source registry is `plugins/knowledge_base/research_sources_registry.json` and currently records 15 authoritative portals or repositories across biodiversity, animal bioacoustics, marine ecosystems, neuroscience, medicine, earth observation, AI datasets and scholarly metadata. Registry entries are discovery leads, not harvested-data claims.
+
+High-priority source-specific constraints:
+- GBIF exposes documented taxonomy and occurrence APIs, but records carry different licenses and data-quality uncertainty; preserve source attribution and uncertainty.
+- OBIS offers marine biodiversity records and large GeoParquet exports. Its integrated export is CC BY-NC, and source datasets can have different licenses; do not treat the entire export as commercial-training material.
+- The Museum für Naturkunde Berlin Animal Sound Archive has a large collection; GBIF's occurrence record lists CC BY 4.0, but linked audio-file reuse must be checked separately with the archive.
+- Xeno-canto requires API v3 access credentials and each recording has its own Creative Commons license; non-commercial and share-alike terms are common.
+- iNaturalist explicitly warns against treating its API as a bulk-scraping channel. Observation records and media have distinct licenses, and presence-only observations are subject to observer bias.
+- OpenNeuro provides BIDS-formatted MRI, PET, MEG, EEG and iEEG datasets; human-subject privacy, consent and dataset-level checks remain mandatory.
+- NEMAR hosts EEG, MEG, iEEG and EMG datasets with per-dataset license filters; do not assume all hosted datasets are public domain.
+- Allen Brain Map resources are governed by Allen Institute terms and citation policy, not a blanket CC0 declaration.
+
+Evidence used to seed this registry includes official GBIF API and terms documentation, OBIS data access and policy pages, the Museum für Naturkunde Berlin archive, Xeno-canto API information, iNaturalist developer guidance, OpenNeuro documentation, NEMAR dataset discovery, NIH BRAIN archive guidance and Allen Institute terms. Re-check source terms at collection time because policies and datasets can change.
+
+## Accuracy and provenance protocol
+
+1. Store raw provider response separately from normalized records; never overwrite the source payload with a model-generated interpretation.
+2. Keep exact source URL, source ID, retrieval timestamp, dataset version, license evidence, attribution, checksum and parser version.
+3. Validate identifiers, taxonomic names, timestamps, units, coordinates, modality and schema; quarantine invalid or contradictory records.
+4. Mark uncertain, inferred, missing and human-annotated fields distinctly. Never convert uncertainty into ground truth.
+5. For animal audio/video, preserve original media and recording context; validate species label confidence, recorder, sample rate, duration, habitat, date and location precision.
+6. For human brain/clinical data, require privacy, consent, de-identification and applicable data-use approvals before ingestion or training.
+7. Split model datasets by subject/individual, recording session, location, source or study as appropriate to prevent train/test leakage.
+8. Generate a validation report with accepted, rejected, duplicate, unknown-license and human-review counts. Do not silently discard failures.
+9. Run regression tests on parsers and provider connectors; verify database integrity and artifact checksums after every collection.
+10. Do not claim training readiness until a reviewed corpus manifest, sample audit, baseline evaluation and reproducible training run exist.
