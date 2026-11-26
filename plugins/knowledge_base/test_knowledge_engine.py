@@ -48,7 +48,7 @@ class KnowledgeBaseTests(unittest.TestCase):
         with patch("knowledge_engine._public_url", side_effect=ValueError("private target blocked")):
             with self.assertRaises(ValueError):
                 handler.redirect_request(request, None, 302, "Found", {}, "https://127.0.0.1/admin")
-    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
+    def test_nonstandard_https_port_is_rejected(self):\n        from knowledge_engine import _public_url\n        with self.assertRaises(ValueError):\n            _public_url("https://docs.example.org:8443/data")\n\n    def test_original_request_is_revalidated_before_network_access(self):\n        from knowledge_engine import _open_public\n        from urllib.request import Request\n        with patch("knowledge_engine._public_url", side_effect=ValueError("private host")):\n            with self.assertRaises(ValueError):\n                _open_public(Request("https://127.0.0.1/private"), timeout=1)\n\n    def test_sqlite_connection_closes_after_context(self):\n        from knowledge_engine import _connect\n        with _connect(self.home) as db:\n            db.execute("SELECT 1")\n        with self.assertRaises(Exception):\n            db.execute("SELECT 1")\n    @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
     def test_add_ingest_search_and_deduplicate(self, _url):
         source = add_source("https://docs.example.org/python", "CC-BY", "python", self.home)
         with patch("knowledge_engine._robots_allowed", return_value=True), patch("knowledge_engine._open_public", return_value=Response()):
@@ -64,7 +64,7 @@ class KnowledgeBaseTests(unittest.TestCase):
     @patch("knowledge_engine._public_url", return_value=("https://docs.example.org/python", "docs.example.org"))
     def test_robots_disallow_prevents_fetch(self, _url):
         source = add_source("https://docs.example.org/python", home=self.home)
-        with patch("knowledge_engine._robots_allowed", return_value=False), patch("knowledge_engine.urllib.request.urlopen") as fetch:
+        with patch("knowledge_engine._robots_allowed", return_value=False), patch("knowledge_engine._open_public") as fetch:
             result = ingest_source(source["source_id"], self.home)
         self.assertEqual(result["status"], "blocked")
         fetch.assert_not_called()
