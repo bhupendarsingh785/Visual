@@ -1,7 +1,7 @@
 """Hardware-aware runtime tools for VISUAL."""
 import json
 from engine import hardware_profile, optimization_plan, create_onnx_session
-from compute_fabric import compute_fabric_profile, compute_fabric_plan
+from compute_fabric import compute_fabric_plan
 
 _SESSIONS = {}
 
@@ -17,10 +17,11 @@ def hardware_optimization_plan(workload="llm",ram_budget_mb=0):
 
 @tool("Discover the actual CPU/GPU/NPU training and inference backends, then plan safe workload placement. Does not start jobs or install drivers.",
       {"workload":S("training, inference, llm, vision, audio, or general"),
-       "training":B("True to include training-specific preflight checks"),
+       "training":S("true or false; include training-specific preflight checks"),
        "memory_budget_gb":N("Optional advisory memory budget in GB; 0 means unspecified")})
-def hardware_compute_fabric_plan(workload="inference",training=False,memory_budget_gb=0):
-    return json.dumps(compute_fabric_plan(workload,training,memory_budget_gb),ensure_ascii=False,indent=2)[:18000]
+def hardware_compute_fabric_plan(workload="inference",training="false",memory_budget_gb=0):
+    enabled = str(training).strip().lower() in ("1","true","yes","on")
+    return json.dumps(compute_fabric_plan(workload,enabled,memory_budget_gb),ensure_ascii=False,indent=2)[:18000]
 
 @tool("Initialize a local ONNX model with optimized graph and actually available execution providers. This creates a session but does not execute or benchmark inference.",
       {"model_path":S("absolute .onnx path inside ~/.visual/models, Android Download or Documents"),
