@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-from autonomous_development_engine import create_task, write_artifact, get_task
+from autonomous_development_engine import create_task, write_artifact, get_task, record_execution_result
 from orchestration_engine import start, record, approve
 
 class OrchestrationTests(unittest.TestCase):
