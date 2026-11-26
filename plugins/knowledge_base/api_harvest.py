@@ -8,7 +8,9 @@ import urllib.error
 import urllib.parse
 from knowledge_engine import add_source, ingest_source
 
-_LAST_REQUEST = {}\n\nPROVIDERS = {
+_LAST_REQUEST = {}
+
+PROVIDERS = {
     "openalex": {
         "base": "https://api.openalex.org/works",
         "license": "CC0 metadata; linked full text has separate rights",
@@ -64,7 +66,22 @@ _LAST_REQUEST = {}\n\nPROVIDERS = {
         "base": "https://export.arxiv.org/api/query",
         "license": "arXiv metadata CC0; paper files have per-paper licenses",
         "topic": "scientific-preprint-metadata",
+        "delay": 3.0,
         "build": lambda q, n: {"search_query": "all:" + q, "start": 0, "max_results": n},
+    },
+    "europe_pmc": {
+        "base": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+        "license": "Publication metadata public; full text and article reuse rights vary by record",
+        "topic": "biomedical-publication-metadata",
+        "delay": 0.5,
+        "build": lambda q, n: {"query": q, "format": "json", "pageSize": n, "resultType": "lite"},
+    },
+    "wikidata": {
+        "base": "https://www.wikidata.org/w/api.php",
+        "license": "Wikidata structured data CC0; follow API usage policy",
+        "topic": "structured-knowledge-graph-metadata",
+        "delay": 1.0,
+        "build": lambda q, n: {"action": "wbsearchentities", "search": q, "language": "en", "format": "json", "limit": n},
     },
 }
 
@@ -84,10 +101,28 @@ def harvest_public_metadata(provider, query, limit=10, home=None):
     if queued["status"] == "indexed":
         return {"provider": key, "status": "already_indexed",
                 "source_id": queued["source_id"], "url": url}
-    # arXiv asks bulk clients to keep requests at least three seconds apart.
-    if key == "arxiv":
-        time.sleep(3.0)
-    result = ingest_source(queued["source_id"], home)
+    # Respect conservative per-provider pacing.
+    delay = float(cfg.get("delay", 0.25))
+    now = time.monotonic()
+    last = _LAST_REQUEST.get(key, 0.0)
+    if now - last < delay:
+        time.sleep(delay - (now - last))
+    _LAST_REQUEST[key] = time.monotonic()
+    # These explicit API connectors follow API terms and rate limits, not website crawling.
+    # General page ingestion still checks robots.txt by default.
+    for attempt in range(3):
+        try:
+            result = ingest_source(queued["source_id"], home, respect_robots=False)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (429, 500, 502, 503, 504) or attempt == 2:
+                raise
+            retry_after = exc.headers.get("Retry-After") if exc.headers else None
+            try:
+                wait = min(30.0, max(1.0, float(retry_after)))
+            except (TypeError, ValueError):
+                wait = 2.0 ** (attempt + 1)
+            time.sleep(wait)
     return {
         "provider": key, "query": query, "requested_records_max": limit,
         "status": result.get("status"), "source_id": queued["source_id"],
