@@ -651,7 +651,7 @@ def project_files(project):
         for x in fs: out.append(os.path.relpath(os.path.join(d, x), root))
     return "\n".join(sorted(out)[:300]) or "khaali"
 
-@tool("Project folder mein command chalao (test, build, python app.py, npm test, git...). Bina pooche chalta hai; khatarnak command apne aap rukte hain.",
+@tool("Project folder mein shell command chalao. Ye powerful action hai aur har baar owner approval maangta hai.",
       {"project": S("project"), "command": S("shell command"), "timeout": N("second, default 300", optional=True)}, risky=True)
 def project_run(project, command, timeout=300):
     return _run(command, _proj(project), int(timeout or 300))
@@ -1031,7 +1031,7 @@ def self_edit(path, old, new):
         return "FAIL, badlav wapas le liya (koi nuksaan nahi). Galti:\n" + out
     return f"badlav save + test pass. Ab self_restart chalao.\n{out[-300:]}"
 
-@tool("Upgrade ke baad VISUAL ko restart karo taaki naya code chalu ho (GitHub par bhi bhejta hai). Owner ko bata do ki 5 second mein wapas aaunga.",
+@tool("Upgrade ke baad VISUAL ko local restart karo. GitHub par code publish nahi karta; release alag approval ke saath karo.",
       {"note": S("kya upgrade hua (commit message)", optional=True)}, risky=True)
 def self_restart(note="self upgrade"):
     ok, out = _self_check()
