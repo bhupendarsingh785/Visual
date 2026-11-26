@@ -4,7 +4,7 @@ VISUAL's curated web-page catalog is only a seed list. This registry is a broade
 
 ## Registry
 
-- `datasets_catalog.json` lists 55+ public dataset families across research, health, education, programming, standards, biodiversity, climate, geospatial, humanities, economics, agriculture and India-specific public data.
+- `datasets_catalog.json` currently lists 148 public dataset entries across research, health, education, programming, standards, biodiversity, climate, geospatial, humanities, economics, agriculture and India-specific public data.
 - Each entry records access pattern, region, approximate size class and a license/rights warning.
 - Entries are disabled by default. Listing a dataset does not mean it has been downloaded, verified, or approved for reuse.
 
