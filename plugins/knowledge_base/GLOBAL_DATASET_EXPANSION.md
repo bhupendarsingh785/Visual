@@ -38,7 +38,7 @@ The knowledge base is retrieval-augmented context, not model-weight training. It
 
 ## Bounded API metadata harvesting
 
-`knowledge_harvest_public_metadata` now searches the official public APIs for OpenAlex, Crossref, and Zenodo. It accepts a provider, a search query, and a record limit (1-25), then indexes the returned JSON response in the local Knowledge Base through the existing provenance-aware ingestion path.
+`knowledge_harvest_public_metadata` searches 11 allowlisted public APIs: OpenAlex, Crossref, Zenodo, GBIF, NASA CMR, Hugging Face Datasets, PubMed, Stack Exchange, arXiv, Europe PMC, and Wikidata. It accepts a provider, query and record limit (1-25), then indexes bounded public search metadata through the provenance-aware ingestion path. Provider-specific pacing is conservative: Crossref public queries are spaced above one second, Zenodo search is paced below 30 requests/minute, PubMed is kept below unauthenticated E-utilities limits, arXiv uses a three-second delay, and Europe PMC/Wikidata have explicit delays. Retry-After and bounded exponential retry are used for transient HTTP 429/5xx responses.
 
 This is an initial acquisition path for searchable scholarly and dataset metadata, not a full repository mirror. It does not download article full text, Zenodo file payloads, OpenAlex snapshots, or every paginated result. Those require separate license-aware manifest discovery, cursor/resumption, storage preflight, and bulk-transfer stages. Each provider's license and access policy remains authoritative.
 
@@ -48,9 +48,9 @@ The metadata harvester allowlist additionally includes GBIF occurrence search an
 
 ## One-command multi-domain research collection
 
-`knowledge_collect_global_research` provides a bounded multi-domain metadata collection run. The domain map includes medicine/public health, biology, ancient history/archaeology, education/teaching, coding/software engineering, AI/deep learning, agents/tool use, developer tools, mathematics, physics, chemistry, agriculture, climate, space, engineering, energy, economics, law, languages, culture, geography, environment, oceans, disasters, cybersecurity, business, sports, and India-focused research.
+`knowledge_collect_global_research` provides a rotating, resumable multi-domain metadata collection run. Its domain map spans medicine, biology, veterinary science, wildlife, history, archaeology, education, software, AI, deep learning, computer vision, multimodal AI, human behaviour, motion capture, facial movement, speech/audio, neuroscience, psychology, robotics, semiconductor manufacturing, materials science, agriculture, climate, space, engineering, energy, economics, law, languages, environment, oceans, cybersecurity, public policy and India-focused research.
 
-The default run is capped at 20 API requests (hard cap 30); each request asks for at most 25 results. This is intentionally bounded so users can repeat runs, inspect provenance and failures, and avoid runaway bandwidth. Search results are metadata, not all underlying papers/files. For old/ancient knowledge, searches target archaeology, manuscripts, historical archives, epigraphy, oral history, and cultural heritage; dates and item rights must be checked at record level.
+Each run is capped at 300 provider-query API tasks, with up to 25 metadata records requested per task. The task queue rotates by offset so scheduled runs explore different domain/provider combinations. GitHub Actions schedules this workflow every six hours and retains the collection report and SQLite index as a 30-day artifact. A task count is not a record count: actual returned, indexed and failed requests are reported separately. Search results are metadata, not all underlying papers/files.
 
 ## Data, RAG, and deep-learning training are separate
 
