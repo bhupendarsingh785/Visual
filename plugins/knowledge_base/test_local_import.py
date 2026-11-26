@@ -13,7 +13,8 @@ class LocalImportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             home = root / ".visual"
-            source = root / "sample.jsonl.gz"
+            home.mkdir(parents=True, exist_ok=True)
+            source = home / "sample.jsonl.gz"
             rows = [
                 {"id": "1", "title": "Python programming", "body": "Python functions and classes are reusable programming structures."},
                 {"id": "2", "title": "Neural networks", "body": "Neural networks learn patterns from training data using optimization."},
