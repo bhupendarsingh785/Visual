@@ -51,9 +51,6 @@ def record(task_id, role, outcome, notes="", home=None):
             if validation.get("errors") or not validation.get("files") or evidence.get("status") != "passed" or evidence.get("workspace_sha256") != digest:
                 outcome = "revise"
                 notes = (str(notes) + "\nTester gate failed: static errors, missing isolated runtime pass, or stale workspace hash.")[:2500]
-                state["cycle"] += 1
-                state["role"] = "coder" if state["cycle"] < MAX_CYCLES else "blocked"
-                if state["role"] == "blocked": state["status"] = "blocked"
             else:
                 state["workspace_sha256"] = digest
                 state["role"] = "security_reviewer"
