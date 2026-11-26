@@ -51,3 +51,9 @@ def dev_task_files(task_id):
       {"task_id":S("task id")})
 def dev_task_validate(task_id):
     return json.dumps(validate_artifacts(task_id,globals().get("HOME")),ensure_ascii=False,indent=2)
+
+
+@tool("Validated development task ko owner approval ke baad completed mark karo. Ye approval-gated action hai.",
+      {"task_id":S("task id"),"approval_note":S("owner review/approval note")},risky=True)
+def dev_task_approve(task_id,approval_note):
+    return transition(task_id,"completed",approval_note,actor="owner",home=globals().get("HOME"))
