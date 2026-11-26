@@ -10,13 +10,13 @@ import re
 from pathlib import Path
 
 ALLOWED_LICENSES = {
-    "cc0", "cc0 1.0", "cc-by", "cc-by-4.0", "cc by 4.0",
+    "cc0", "cc01.0", "ccby", "ccby4.0", "ccby4",
     "public domain", "us government work",
 }
 MIN_CHARS = 300
 
 def _license_key(value):
-    return re.sub(r"[^a-z0-9. ]+", "", str(value or "").lower()).strip()
+    return re.sub(r"[^a-z0-9.]+", "", str(value or "").lower())
 
 def _split_for_id(identifier):
     bucket = int(hashlib.sha256(identifier.encode("utf-8")).hexdigest()[:8], 16) % 100
