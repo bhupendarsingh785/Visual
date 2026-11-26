@@ -1,5 +1,6 @@
 """VISUAL Autonomous Development tools: durable planning, research ledger and artifact workspaces."""
 import json
+from execution_engine import run_manifest, run_profile
 from autonomous_development_engine import (
     add_research, create_task, get_task, list_artifacts, list_tasks,
     transition, validate_artifacts, write_artifact,
@@ -57,3 +58,16 @@ def dev_task_validate(task_id):
       {"task_id":S("task id"),"approval_note":S("owner review/approval note")},risky=True)
 def dev_task_approve(task_id,approval_note):
     return transition(task_id,"completed",approval_note,actor="owner",home=globals().get("HOME"))
+
+
+@tool("Task code ko isolated Docker container mein Python/Node test profile se run karo. Docker/image missing ho to code phone par execute nahi hoga; tool unavailable report karega.",
+      {"task_id":S("task id"),"profile":S("python ya node"),"timeout":N("seconds, max 600",optional=True)})
+def dev_task_run_tests(task_id,profile,timeout=600):
+    return json.dumps(run_profile(task_id,profile,globals().get("HOME"),timeout),ensure_ascii=False,indent=2)[:12000]
+
+
+@tool("Task ke declared tests ko isolated container mein run karo. manifest_json mein profile aur argv arrays honge; shell command strings allowed nahi.",
+      {"task_id":S("task id"),"manifest_json":S("JSON: {\"profile\":\"python|node\",\"commands\":[[\"python\",\"-m\",\"unittest\"]] }"),"timeout":N("seconds, max 600",optional=True)})
+def dev_task_run_manifest(task_id,manifest_json,timeout=600):
+    manifest=json.loads(manifest_json)
+    return json.dumps(run_manifest(task_id,manifest,globals().get("HOME"),timeout),ensure_ascii=False,indent=2)[:12000]
