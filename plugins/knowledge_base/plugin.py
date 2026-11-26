@@ -56,13 +56,13 @@ def knowledge_download_dataset(url, destination, max_bytes=536870912, expected_s
     return json.dumps(download_dataset(url, destination, max_bytes, expected_sha256, globals().get("HOME")), ensure_ascii=False)[:12000]
 
 
-@tool("OpenAlex, Crossref, Zenodo, Hugging Face, PubMed, Stack Exchange, arXiv, GBIF ya NASA ke official public API se bounded research/dataset metadata khojo aur VISUAL local Knowledge Base mein index karo. Har run mein adhiktam 25 metadata records; yeh full-text ya poora repository download nahi karta.", 
-      {"provider": S("openalex, crossref, or zenodo"), "query": S("topic, title, author, DOI, or dataset keywords"), "limit": S("1-25 records; default 10")}, risky=True)
+@tool("OpenAlex, Crossref, Zenodo, Hugging Face, PubMed, Europe PMC, Wikidata, Stack Exchange, arXiv, GBIF ya NASA ke official public API se bounded research/dataset metadata khojo aur VISUAL local Knowledge Base mein index karo. Har run mein adhiktam 25 metadata records; yeh full-text ya poora repository download nahi karta.", 
+      {"provider": S("openalex, crossref, zenodo, huggingface, pubmed, europe_pmc, wikidata, stackoverflow, arxiv, gbif, nasa_cmr"), "query": S("topic, title, author, DOI, or dataset keywords"), "limit": S("1-25 records; default 10")}, risky=True)
 def knowledge_harvest_public_metadata(provider, query, limit=10):
     return json.dumps(harvest_public_metadata(provider, query, limit, globals().get("HOME")), ensure_ascii=False)[:12000]
 
 
-@tool("VISUAL ke liye ek hi run mein medicine, biology, veterinary, wildlife, ancient history, teacher education, coding, AI, agents, developer tools, science, engineering, agriculture, climate, space, law, economy, languages, culture, cybersecurity aur anya domains ke official public APIs se metadata collect aur local index karo. Default sabhi domains ka controlled batch; max 300 API requests per run. Yeh metadata harvesting hai, full archive mirror ya model training nahi.", 
+@tool("VISUAL ke liye ek hi run mein medicine, biology, veterinary, wildlife, ancient history, teacher education, coding, AI, agents, developer tools, science, engineering, agriculture, climate, space, law, economy, languages, culture, cybersecurity aur anya domains ke official public APIs se metadata collect aur local index karo. Default sabhi domains ka controlled batch; max 300 API requests per run. Retry-after, per-provider pacing aur duplicate checks enabled hain. Yeh metadata harvesting hai, full archive mirror ya model training nahi.", 
       {"topics": S("optional comma-separated topic keys; blank = all available domains"), "per_request": S("1-25 metadata records per API request; default 5"), "max_requests": S("1-30 API requests per run; default 100")}, risky=True)
 def knowledge_collect_global_research(topics="", per_request=5, max_requests=20):
     selected = [x.strip() for x in str(topics).split(",") if x.strip()]
