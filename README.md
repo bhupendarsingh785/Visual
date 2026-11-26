@@ -194,6 +194,13 @@ Key kabhi GitHub par mat daalna; wo sirf `~/.visual/` mein rehti hai.
 - `visual remote` creates an email-OTP-protected Cloudflare Quick Tunnel to this phone's existing browser chat panel. The AI agent, tools and local data remain on the phone.
 - Keep Termux and the tunnel running; Ctrl+C stops the link. Every start creates a new temporary URL. See `docs/REMOTE_BROWSER_BRIDGE.md`.
 
+## ChatGPT se phone par VISUAL control (private relay)
+- Naya allowlisted bridge: phone par `visual control --check`, phir `visual control`.
+- ChatGPT command ko private `visual-data` repository ke `visual-command` issue label ke through queue karta hai; phone hi actual tool chalata hai aur result issue comment mein lautata hai.
+- Is pehle version mein sirf `knowledge_collect_global_research` aur `knowledge_status` allowed hain. Koi shell/Python/arbitrary tool execution nahi.
+- Account, private repository, issue author, command expiry, nonce, bounded arguments aur local idempotency state verify hote hain. Detail: `docs/CHATGPT_CONTROL_BRIDGE.md`.
+- Yeh existing `visual remote` browser tunnel se alag hai. Phone par bridge process chalu rehna aur GitHub CLI login hona zaroori hai.
+
 ## Sach (seemaayein)
 - Hamesha "Hey VISUAL" sunne wala wake-word abhi nahi: orb dabao ya `visual voice` chalao.
 - Screen control ke liye Wi-Fi + wireless debugging chahiye (bina root ke yahi tarika hai).
