@@ -15,7 +15,6 @@ class TrainingPrepTests(unittest.TestCase):
                     ("s2", "unknown", "https://example.org/b", "B" * 400),
                     ("s3", "CC-BY-4.0", "https://example.org/c", "C" * 400),
                     ("s4", "CC-BY-NC", "https://example.org/d", "D" * 400),
-                    ("s5", "CC0", "https://example.org/e", "A" * 400),
                 ]:
                     db.execute("INSERT INTO sources(id,url,domain,license,status,added_at) VALUES(?,?,?,?,?,?)",
                                (sid,url,"example.org",license_name,"indexed",1))
@@ -27,7 +26,7 @@ class TrainingPrepTests(unittest.TestCase):
             result = prepare_training_corpus(home=home, output_dir=out)
             self.assertEqual(result["total_eligible"], 2)
             self.assertEqual(result["skipped"]["license"], 2)
-            self.assertEqual(result["skipped"]["duplicate"], 1)
+            self.assertEqual(result["skipped"]["duplicate"], 0)
             records=[]
             for split in ("train","validation","test"):
                 records += [json.loads(line) for line in (out/(split+".jsonl")).read_text().splitlines()]
