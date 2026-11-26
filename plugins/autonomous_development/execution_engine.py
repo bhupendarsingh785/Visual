@@ -35,7 +35,7 @@ MAX_OUTPUT = 12000
 def _finish(task_id, report, home=None):
     from autonomous_development_engine import record_execution_result
     record_execution_result(task_id, report, home)
-    return report
+    return _finish(task_id, report, home)
 
 
 def _workspace(task_id, home=None):
@@ -71,7 +71,7 @@ def _run_one(docker, workspace, image, argv, timeout):
         "-e", "HOME=/tmp", "-e", "TMPDIR=/tmp",
         "-e", "PYTHONDONTWRITEBYTECODE=1",
         "-e", "PYTEST_ADDOPTS=-p no:cacheprovider",
-        "-v", str(workspace) + ":/workspace:rw",
+        "-v", str(workspace) + ":/workspace:ro",
         "-w", "/workspace", image, *argv,
     ]
     env = {"PATH": os.environ.get("PATH", ""), "LANG": "C.UTF-8"}
