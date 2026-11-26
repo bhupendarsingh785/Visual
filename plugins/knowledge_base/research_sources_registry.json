@@ -853,6 +853,134 @@
         "Keep ISCO/industry classifications, units, population and survey method",
         "Separate modelled estimates from national observed statistics"
       ]
+    },
+    {
+      "id": "nvidia_tensorrt",
+      "name": "NVIDIA TensorRT Documentation",
+      "domains": [
+        "deep_learning",
+        "multimodal_ai",
+        "computer_vision"
+      ],
+      "data_types": [
+        "inference optimization",
+        "quantization",
+        "kernel selection",
+        "GPU deployment",
+        "LLM inference"
+      ],
+      "entry_url": "https://docs.nvidia.com/deeplearning/tensorrt/latest/",
+      "access_mode": "official documentation and code samples",
+      "license_policy": "Documentation and SDK components have NVIDIA-specific terms; check each software license before redistribution or use.",
+      "collection_status": "discovery_only",
+      "download_policy": "documentation metadata and selected pages; respect product and software licenses",
+      "quality_notes": [
+        "Record TensorRT, CUDA, driver, GPU and precision versions",
+        "Benchmark on target hardware; do not generalize vendor performance claims"
+      ]
+    },
+    {
+      "id": "riscv_specs",
+      "name": "RISC-V Ratified Specifications",
+      "domains": [
+        "computer_science_methods",
+        "semiconductor_research",
+        "open_hardware",
+        "electronics_circuits"
+      ],
+      "data_types": [
+        "instruction set architecture",
+        "privileged architecture",
+        "profiles",
+        "platform and system architecture specifications"
+      ],
+      "entry_url": "https://docs.riscv.org/",
+      "access_mode": "official ratified specifications and versioned PDFs",
+      "license_policy": "Specification copyright and trademark notices apply; retain version and terms when storing copies.",
+      "collection_status": "discovery_only",
+      "download_policy": "index specification metadata and permitted documents; preserve ratification status and version",
+      "quality_notes": [
+        "Distinguish ratified specifications from drafts",
+        "Record ISA extension and profile versions exactly"
+      ]
+    },
+    {
+      "id": "ros2_docs",
+      "name": "ROS 2 Documentation",
+      "domains": [
+        "robotics_agents",
+        "robotics_perception_control",
+        "robotics_motion",
+        "engineering_methods"
+      ],
+      "data_types": [
+        "robot middleware",
+        "communication",
+        "navigation",
+        "control",
+        "hardware interfaces",
+        "simulation"
+      ],
+      "entry_url": "https://docs.ros.org/",
+      "access_mode": "official documentation, package APIs and versioned distributions",
+      "license_policy": "Documentation and package licenses differ; verify per repository/package before copying code.",
+      "collection_status": "discovery_only",
+      "download_policy": "index docs and package metadata; preserve ROS distribution and package version",
+      "quality_notes": [
+        "Record distro, middleware, RMW implementation and hardware platform",
+        "Separate simulation evidence from physical robot tests"
+      ]
+    },
+    {
+      "id": "moveit2_docs",
+      "name": "MoveIt 2 Documentation",
+      "domains": [
+        "robotics_agents",
+        "robotics_perception_control",
+        "robotics_motion"
+      ],
+      "data_types": [
+        "motion planning",
+        "manipulation",
+        "kinematics",
+        "3D perception",
+        "robot control"
+      ],
+      "entry_url": "https://moveit.picknik.ai/",
+      "access_mode": "official docs, tutorials, concepts and API references",
+      "license_policy": "Documentation and source repositories carry their own license notices; verify before redistribution.",
+      "collection_status": "discovery_only",
+      "download_policy": "documentation metadata and selected permitted examples",
+      "quality_notes": [
+        "Record ROS 2 distro, MoveIt version, robot model and planning pipeline",
+        "Validate collision models, frames, limits and controller interface"
+      ]
+    },
+    {
+      "id": "nvidia_isaac_ros",
+      "name": "NVIDIA Isaac ROS",
+      "domains": [
+        "robotics_agents",
+        "robotics_perception_control",
+        "computer_vision",
+        "multimodal_ai"
+      ],
+      "data_types": [
+        "robot perception",
+        "localization",
+        "mapping",
+        "manipulation",
+        "accelerated ROS 2 pipelines"
+      ],
+      "entry_url": "https://developer.nvidia.com/isaac/ros",
+      "access_mode": "official docs, repositories, package releases and example workflows",
+      "license_policy": "Each repository, package, model and dataset has its own license and terms; inspect before use.",
+      "collection_status": "discovery_only",
+      "download_policy": "metadata first; selected packages after hardware compatibility and license review",
+      "quality_notes": [
+        "Record Jetson/GPU, JetPack, CUDA, ROS 2 and Isaac ROS versions",
+        "Keep throughput and latency benchmarks tied to exact device and workload"
+      ]
     }
   ],
   "quality_gates": [
