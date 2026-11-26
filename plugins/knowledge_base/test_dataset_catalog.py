@@ -14,10 +14,11 @@ class DatasetCatalogTests(unittest.TestCase):
         self.assertEqual(sum(item.get("enabled") is True for item in entries), 0)
         names = [item["name"] for item in entries]
         self.assertEqual(len(names), len(set(names)))
-        required = ("name", "topic", "url", "access", "license", "size_class", "coverage", "enabled")
+        required = ("name", "topic", "url", "access", "license", "size_class", "coverage")
         for item in entries:
             for key in required:
                 self.assertTrue(item.get(key), f"{item.get('name', '<unnamed>')} missing {key}")
+            self.assertIsInstance(item.get("enabled"), bool)
             self.assertTrue(item["url"].startswith("https://"), item["name"])
 
 
