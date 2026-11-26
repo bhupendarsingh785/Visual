@@ -71,8 +71,8 @@ def _summary(results, errors, attempted, topics):
     return {
         "topics": topics,
         "requests_attempted": attempted,
-        "successful_requests": len(results),
-        "failed_requests": len(errors),
+        "successful_requests": sum(1 for x in results if x.get("status") in ("indexed", "already_indexed")),
+        "failed_requests": len(errors) + sum(1 for x in results if x.get("status") not in ("indexed", "already_indexed")),
         "indexed_characters": sum(int(x.get("indexed_characters", 0)) for x in results),
         "results": results,
         "errors": errors,
