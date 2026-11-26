@@ -5,6 +5,7 @@ from catalog import queue_catalog, collect_catalog
 from local_import import import_local_file
 from bulk_download import download_dataset
 from api_harvest import harvest_public_metadata
+from global_research import collect_global_research
 
 @tool("Public HTTPS source ko VISUAL Knowledge Base mein queue karo. Sirf wahi source add karo jiska public access aur reuse license/terms acceptable ho.",
       {"url": S("public HTTPS documentation/article URL"), "license": S("license/terms label; unknown if not known"), "topic": S("coding, python, android, ai, security, etc.")})
@@ -59,3 +60,10 @@ def knowledge_download_dataset(url, destination, max_bytes=536870912, expected_s
       {"provider": S("openalex, crossref, or zenodo"), "query": S("topic, title, author, DOI, or dataset keywords"), "limit": S("1-25 records; default 10")}, risky=True)
 def knowledge_harvest_public_metadata(provider, query, limit=10):
     return json.dumps(harvest_public_metadata(provider, query, limit, globals().get("HOME")), ensure_ascii=False)[:12000]
+
+
+@tool("VISUAL ke liye ek hi run mein medicine, biology, ancient history, teacher education, coding, AI, agents, developer tools, science, engineering, agriculture, climate, space, law, economy, languages, culture, cybersecurity aur anya domains ke official public APIs se metadata collect aur local index karo. Default sabhi domains ka controlled batch; max 30 API requests per run. Yeh metadata harvesting hai, full archive mirror ya model training nahi.", 
+      {"topics": S("optional comma-separated topic keys; blank = all 27 domains"), "per_request": S("1-25 metadata records per API request; default 5"), "max_requests": S("1-30 API requests per run; default 20")}, risky=True)
+def knowledge_collect_global_research(topics="", per_request=5, max_requests=20):
+    selected = [x.strip() for x in str(topics).split(",") if x.strip()]
+    return json.dumps(collect_global_research(selected, per_request, max_requests, globals().get("HOME")), ensure_ascii=False)[:24000]
