@@ -296,6 +296,7 @@ def validate_artifacts(task_id, home=None):
         elif p.suffix in {".js", ".mjs", ".cjs"}:
             if not node:
                 report["checks_unavailable"].append("Node.js syntax check")
+                report["errors"].append(f"{p.relative_to(ws)}: Node.js validator unavailable")
             else:
                 try:
                     result = subprocess.run([node, "--check", str(p)], capture_output=True, text=True, timeout=10)
@@ -308,6 +309,7 @@ def validate_artifacts(task_id, home=None):
         elif p.suffix == ".sh":
             if not bash:
                 report["checks_unavailable"].append("Bash syntax check")
+                report["errors"].append(f"{p.relative_to(ws)}: Bash validator unavailable")
             else:
                 try:
                     result = subprocess.run([bash, "-n", str(p)], capture_output=True, text=True, timeout=10)
