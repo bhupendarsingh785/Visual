@@ -112,6 +112,54 @@ DOMAIN_QUERIES = {
     "sports science biomechanics exercise physiology",
     "sports analytics open data"
   ],
+  "human_behavior": [
+    "human behavior everyday activities social interaction behavioral science open dataset",
+    "human action recognition walking running sitting standing hand movements gestures"
+  ],
+  "speech_voice": [
+    "multilingual speech corpus spontaneous conversation speech recognition open dataset",
+    "prosody laughter crying emotion speech voice activity dataset"
+  ],
+  "facial_expression": [
+    "facial expression action units gaze head pose emotion recognition dataset",
+    "face gesture non-identifying landmark movement research dataset"
+  ],
+  "memory_cognition": [
+    "human memory cognition attention learning decision making psychology dataset",
+    "episodic memory autobiographical memory cognitive task open research data"
+  ],
+  "social_science": [
+    "sociology social networks demographics migration public survey dataset",
+    "anthropology ethnography oral history community behavior open data"
+  ],
+  "social_platforms": [
+    "public social media trends platform governance content moderation research dataset",
+    "public online communities discussion network misinformation research dataset"
+  ],
+  "robotics_motion": [
+    "robotics human robot interaction motion capture manipulation dataset",
+    "human pose estimation gait locomotion biomechanics open dataset"
+  ],
+  "manufacturing": [
+    "manufacturing industrial engineering predictive maintenance machine sensor dataset",
+    "factory process quality control CNC robotics semiconductor production research data"
+  ],
+  "mechanical": [
+    "mechanical engineering fluid dynamics thermodynamics vibration materials dataset",
+    "machine components CAD finite element simulation engineering open data"
+  ],
+  "electrical_electronics": [
+    "electrical engineering power electronics circuits semiconductor devices dataset",
+    "microelectronics chip fabrication testing reliability open research data"
+  ],
+  "transport": [
+    "transportation traffic pedestrian mobility public transit open data",
+    "vehicle dynamics autonomous driving road safety dataset"
+  ],
+  "construction": [
+    "construction engineering building materials structural health monitoring dataset",
+    "architecture infrastructure bridge civil engineering open data"
+  ],
   "india": [
     "India public health agriculture census education",
     "India history languages geography"
