@@ -11,7 +11,7 @@ from pathlib import Path
 
 ALLOWED_LICENSES = {
     "cc0", "cc01.0", "ccby", "ccby4.0", "ccby4",
-    "public domain", "us government work",
+    "publicdomain", "usgovernmentwork",
 }
 MIN_CHARS = 300
 
