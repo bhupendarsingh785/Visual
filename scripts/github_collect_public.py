@@ -2,7 +2,6 @@
 import json
 import os
 import sqlite3
-from datetime import datetime, timezone
 from pathlib import Path
 from global_research import collect_global_research
 from knowledge_engine import knowledge_stats
@@ -16,7 +15,7 @@ result = collect_global_research(
     per_request=int(os.environ.get("VISUAL_PER_REQUEST", "25")),
     max_requests=int(os.environ.get("VISUAL_MAX_REQUESTS", "300")),
     home=home,
-    offset=int(os.environ.get("VISUAL_TASK_OFFSET", str((datetime.now(timezone.utc).timetuple().tm_yday * 2400) + ((datetime.now(timezone.utc).hour // 6) * 300)))),
+    offset=int(os.environ["VISUAL_TASK_OFFSET"]) if os.environ.get("VISUAL_TASK_OFFSET") else None,
 )
 after_stats = knowledge_stats(home)
 result["collection_delta"] = {
