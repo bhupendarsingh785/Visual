@@ -17,7 +17,7 @@ PROFILES = {
     "python": {
         "image": "python:3.12-slim",
         "commands": [
-            ["python", "-m", "compileall", "-q", "."],
+            ["python", "-c", "import pathlib,sys; files=list(pathlib.Path(\".\").rglob(\"test*.py\")); print(\"Discovered tests:\",len(files)); sys.exit(0 if files else 3)"],
             ["python", "-m", "unittest", "discover", "-v"],
         ],
     },
