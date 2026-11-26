@@ -99,10 +99,11 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
     def run_validation():
         model.eval()
         total = 0.0
-        count = 0
+        sample_count = 0
+        batch_count = 0
         with torch.no_grad():
             for batch in validation_loader:
-                if count >= limits["validation_steps"]:
+                if batch_count >= limits["validation_steps"]:
                     break
                 if time.monotonic() - started >= limits["max_seconds"]:
                     return None
@@ -115,23 +116,27 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                     raise FloatingPointError("Non-finite validation loss")
                 batch_size = int(targets.shape[0]) if getattr(targets, "ndim", 0) > 0 else 1
                 total += float(loss.detach().item()) * batch_size
-                count += batch_size
-        if not count:
+                sample_count += batch_size
+                batch_count += 1
+                if time.monotonic() - started >= limits["max_seconds"]:
+                    return None
+        if not sample_count:
             if time.monotonic() - started >= limits["max_seconds"]:
                 return None
             raise ValueError("validation_loader produced no batches")
-        return total / count
+        return total / sample_count
 
     try:
         for epoch in range(limits["epochs"]):
             model.train()
             train_total = 0.0
-            train_count = 0
+            train_samples = 0
+            train_steps = 0
             for batch in train_loader:
                 if time.monotonic() - started >= limits["max_seconds"]:
                     stopped_reason = "time_limit"
                     break
-                if train_count >= limits["max_steps_per_epoch"]:
+                if train_steps >= limits["max_steps_per_epoch"]:
                     break
                 if not isinstance(batch, (tuple, list)) or len(batch) < 2:
                     raise ValueError("Each batch must contain (inputs, targets)")
@@ -144,9 +149,11 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), limits["gradient_clip_norm"])
                 optimizer.step()
-                train_total += float(loss.detach().item())
-                train_count += 1
-            if not train_count:
+                batch_size = int(targets.shape[0]) if getattr(targets, "ndim", 0) > 0 else 1
+                train_total += float(loss.detach().item()) * batch_size
+                train_samples += batch_size
+                train_steps += 1
+            if not train_steps:
                 if stopped_reason != "time_limit":
                     raise ValueError("train_loader produced no batches")
                 break
@@ -157,9 +164,10 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
                 break
             record = {
                 "epoch": epoch + 1,
-                "train_loss": train_total / train_count,
+                "train_loss": train_total / train_samples,
                 "validation_loss": validation_loss,
-                "steps": train_count,
+                "steps": train_steps,
+                "training_samples": train_samples,
                 "elapsed_seconds": round(time.monotonic() - started, 3),
             }
             history.append(record)
@@ -192,6 +200,8 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
     except Exception:
         if best_state is not None:
             model.load_state_dict(best_state)
+            if best_optimizer is not None:
+                optimizer.load_state_dict(best_optimizer)
         raise
 
     if best_state is not None:
@@ -208,4 +218,7 @@ def run_training(model, train_loader, validation_loader, optimizer, loss_fn,
         "elapsed_seconds": round(time.monotonic() - started, 3),
         "limits": limits,
         "distributed_training": False,
+        "training_updates": sum(item["steps"] for item in history),
+        "validation_is_sample_weighted": True,
+        "validation_steps_unit": "batches",
     }
