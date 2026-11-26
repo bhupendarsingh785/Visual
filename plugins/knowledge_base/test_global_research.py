@@ -1,3 +1,4 @@
+import tempfile
 import unittest
 from unittest.mock import patch
 from global_research import DOMAIN_QUERIES, collect_global_research
@@ -15,6 +16,20 @@ class GlobalResearchTests(unittest.TestCase):
         self.assertEqual(result["requests_attempted"], 3)
         self.assertEqual(result["successful_requests"], 3)
         self.assertEqual(harvest.call_count, 3)
+
+    def test_manual_runs_persist_and_rotate_task_cursor(self):
+        with tempfile.TemporaryDirectory() as home:
+            providers = []
+            def record(provider, query, limit, root, topic=None):
+                providers.append(provider)
+                return {"status": "indexed", "indexed_characters": 100}
+            with patch("global_research.harvest_public_metadata", side_effect=record), patch("global_research.time.sleep"):
+                first = collect_global_research(["medicine"], 25, 1, home)
+                second = collect_global_research(["medicine"], 25, 1, home)
+            self.assertEqual(providers, ["openalex", "crossref"])
+            self.assertEqual(first["task_offset"], 0)
+            self.assertEqual(second["task_offset"], 1)
+            self.assertEqual(second["next_task_offset"], 2)
 
     def test_unknown_topic_rejected(self):
         with self.assertRaises(ValueError):
