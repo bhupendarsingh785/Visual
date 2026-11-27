@@ -9,6 +9,8 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
+
+import requests
 from urllib.parse import urlparse
 
 import h5py
@@ -89,19 +91,32 @@ def download(event: str, detector: str, url: str) -> dict:
         raise
 
 
+class BoundedTimeoutSession(requests.Session):
+    """Ensure every GWOSC API request has a finite connect/read timeout."""
+    def request(self, method, url, **kwargs):
+        kwargs.setdefault("timeout", (10, 45))
+        return super().request(method, url, **kwargs)
+
+
 def main() -> int:
     ROOT.mkdir(parents=True, exist_ok=True)
     files, errors, event_results = [], [], []
     total_bytes = 0
+    session = BoundedTimeoutSession()
     for event in EVENTS:
+        print(f"Discovering GWOSC strain files for {event}", flush=True)
         try:
-            urls = get_event_urls(event, duration=DURATION_SECONDS, sample_rate=SAMPLE_RATE_HZ, format="hdf5")
+            urls = get_event_urls(
+                event, duration=DURATION_SECONDS, sample_rate=SAMPLE_RATE_HZ,
+                format="hdf5", session=session, pagesize=100
+            )
             selected = []
             for url in urls:
                 base = Path(urlparse(url).path).name
                 detector = "H1" if base.startswith("H-") else "L1" if base.startswith("L-") else "V1" if base.startswith("V-") else None
                 if detector in DETECTORS and detector not in {x["detector"] for x in selected}:
                     selected.append({"detector": detector, "url": url})
+            print(f"{event}: {len(selected)} detector files discovered", flush=True)
             if not selected:
                 errors.append({"event": event, "stage": "discovery", "error": "No matching 32-second 4 kHz HDF5 files returned"})
                 event_results.append({"event": event, "status": "no_matching_files"})
@@ -119,6 +134,7 @@ def main() -> int:
                         continue
                     files.append(record)
                     succeeded.append(item["detector"])
+                    print(f"Downloaded {event} {item['detector']}: {record['bytes']} bytes; HDF5 and SHA-256 validated", flush=True)
                     total_bytes += record["bytes"]
                 except Exception as exc:
                     errors.append({"event": event, "detector": item["detector"], "stage": "download_or_validation", "error": str(exc)[:500]})
