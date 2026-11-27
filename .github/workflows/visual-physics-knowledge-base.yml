@@ -54,6 +54,14 @@ jobs:
           VISUAL_PHYSICS_RAW_DIR: physics-raw-data/gwosc-events
         run: python scripts/physics/collect_gwosc_events.py
 
+      - name: Restore HEPData incremental collection cursor
+        uses: actions/cache@v4
+        with:
+          path: physics-raw-data/hepdata/query_cursor.json
+          key: ${{ runner.os }}-visual-hepdata-cursor-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-visual-hepdata-cursor-
+
       - name: Acquire HEPData particle physics tables
         continue-on-error: true
         env:
