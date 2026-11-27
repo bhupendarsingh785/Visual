@@ -37,21 +37,35 @@ jobs:
       - name: Validate manifest and file checksums
         run: |
           python - <<'PY'
-          import hashlib, json
+          import csv, hashlib, json
           from pathlib import Path
           root = Path("physics-raw-data/hepdata")
           m = json.loads((root / "manifest.json").read_text())
           assert m["downloaded_file_count"] == len(m["files"])
           total = 0
+          parsed_csv = 0
+          nonempty_rows = 0
           for item in m["files"]:
               p = (root / item["path"]).resolve()
               assert p.is_relative_to(root.resolve()), f"path escapes dataset root: {item['path']}"
-              assert p.is_file() and p.stat().st_size == item["bytes"]
-              assert hashlib.sha256(p.read_bytes()).hexdigest() == item["sha256"]
-              total += item["bytes"]
+              assert p.is_file() and p.stat().st_size == item["bytes"] > 0
+              payload = p.read_bytes()
+              assert hashlib.sha256(payload).hexdigest() == item["sha256"]
+              assert p.suffix.lower() == ".csv", f"unexpected format: {p.name}"
+              text = payload.decode("utf-8-sig", errors="strict")
+              rows = list(csv.reader(text.splitlines(), strict=True))
+              useful_rows = sum(1 for row in rows if any(cell.strip() for cell in row))
+              assert useful_rows > 0, f"empty/unparseable CSV: {item['path']}"
+              parsed_csv += 1
+              nonempty_rows += useful_rows
+              total += len(payload)
           assert total == m["total_bytes"]
-          print("HEPData tables:", len(m["files"]), "bytes:", total)
-          print("Checksums: OK")
+          assert parsed_csv == m["downloaded_file_count"] == len(m["files"])
+          assert m["downloaded_record_ids"] and not m["failed_record_ids"]
+          print("HEPData CSV files parsed:", parsed_csv)
+          print("Non-empty CSV rows:", nonempty_rows)
+          print("Verified bytes:", total)
+          print("Portable paths, UTF-8, CSV syntax and SHA-256: OK")
           PY
       - name: Upload data and provenance
         uses: actions/upload-artifact@v4
