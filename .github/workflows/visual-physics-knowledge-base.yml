@@ -44,8 +44,8 @@ jobs:
         continue-on-error: true
         env:
           VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-          VISUAL_PHYSICS_MAX_FILE_BYTES: "134217728"
-          VISUAL_PHYSICS_MAX_TOTAL_BYTES: "536870912"
+          VISUAL_PHYSICS_MAX_FILE_BYTES: "536870912"
+          VISUAL_PHYSICS_MAX_TOTAL_BYTES: "2147483648"
         run: python scripts/physics/collect_physics_sources.py
 
       - name: Acquire multi-event measured GWOSC strain
