@@ -1000,14 +1000,16 @@
       ],
       "entry_url": "https://opendata.cern.ch/",
       "api_docs": "https://opendata.cern/docs/",
-      "access_mode": "Dataset catalogue and downloadable experiment releases; formats and software vary by experiment and data level",
+      "access_mode": "Invenio REST records API and DOI-linked file downloads; CMS/ATLAS/ALICE/LHCb data products",
       "license_policy": "Use each dataset's stated open license, DOI, citation and collaboration conditions; preserve required software environment and provenance.",
-      "collection_status": "discovery_only",
-      "download_policy": "Index metadata first; bulk event data only after storage, dataset-level license, software dependencies and checksum/manifest review.",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Save search records and DOI metadata; download a file only after exact record license and file-size review; preserve experiment software environment and data level",
       "quality_notes": [
         "Distinguish education, analysis and full research data levels",
         "Retain experiment, run, detector, trigger, calibration and simulation metadata",
-        "Large datasets require experiment-specific analysis software"
+        "Large datasets require experiment-specific analysis software",
+        "Data levels 1-4 have different scientific content and software requirements",
+        "Do not treat a portal record or educational sample as a full raw-detector dataset"
       ]
     },
     {
@@ -1182,14 +1184,16 @@
       ],
       "entry_url": "https://opendata.ukaea.uk/",
       "api_docs": "https://github.com/ukaea/fair-mast",
-      "access_mode": "Open data portal and documented FAIR-MAST data access",
-      "license_policy": "Verify each campaign/record license and citation; respect access policy and data provider attribution.",
-      "collection_status": "discovery_only",
-      "download_policy": "Begin with shot metadata and selected diagnostics; bulk time-series downloads require per-campaign license, byte-size and checksum review.",
+      "access_mode": "Public anonymous S3 bucket for Parquet metadata and Zarr diagnostic payloads; HTTPS endpoint https://s3.echo.stfc.ac.uk",
+      "license_policy": "FAIR-MAST public archive and metadata are CC BY-SA 4.0 except where noted; retain service and publication citations",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Bounded shot/signal acquisition from public S3; retain campaign, shot, diagnostic group, calibration, timebase and ingestion commit",
       "quality_notes": [
         "Retain shot number, diagnostic, channel, units and time base",
         "Keep calibration and missing-data masks",
-        "Do not merge different machine campaigns without schema mapping"
+        "Do not merge different machine campaigns without schema mapping",
+        "Level 2 is calibrated/interpolated/processed and must not be confused with Level 1 source data",
+        "Level 2 shot files can be regenerated and replaced; preserve ingestion timestamp and commit_url"
       ]
     },
     {
@@ -1249,7 +1253,6 @@
       "name": "IAEA LiveChart of Nuclides / ENSDF",
       "domains": [
         "physics_atomic_nuclear_particle",
-        "physics_atomic_nuclear_particle",
         "physics_plasma_fusion"
       ],
       "data_types": [
@@ -1275,8 +1278,7 @@
       "name": "IceCube IceTracks-DR2",
       "domains": [
         "physics_atomic_nuclear_particle",
-        "physics_astronomy_cosmology",
-        "physics_atomic_nuclear_particle"
+        "physics_astronomy_cosmology"
       ],
       "data_types": [
         "observed track-like neutrino candidate events",
@@ -1301,8 +1303,6 @@
       "id": "esa_gaia_dr3",
       "name": "ESA Gaia Data Release 3",
       "domains": [
-        "physics_astronomy_cosmology",
-        "physics_astronomy_cosmology",
         "physics_astronomy_cosmology"
       ],
       "data_types": [
@@ -1354,7 +1354,6 @@
       "id": "nasa_mast",
       "name": "Mikulski Archive for Space Telescopes (MAST)",
       "domains": [
-        "physics_astronomy_cosmology",
         "physics_astronomy_cosmology",
         "space"
       ],
