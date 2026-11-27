@@ -93,14 +93,20 @@ def main() -> int:
     ROOT.mkdir(parents=True, exist_ok=True)
     client = Client(verbose=True)
     cursor_file = ROOT / "query_cursor.json"
-    cursor = json.loads(cursor_file.read_text()) if cursor_file.exists() else {"next_query": 0}
+    cursor = json.loads(cursor_file.read_text()) if cursor_file.exists() else {"next_query": 0, "pending_retry": [], "completed_ids": []}
     start = int(cursor.get("next_query", 0)) % len(QUERIES)
     selected = QUERIES[start:] + QUERIES[:start]
 
-    found = []
+    # Retry records that failed in the previous run before discovering new IDs.
+    completed = set(str(x) for x in cursor.get("completed_ids", []))
+    pending = [(str(x.get("topic", "retry")), str(x["id"]))
+               for x in cursor.get("pending_retry", []) if x.get("id")]
+    found = [(topic, record_id) for topic, record_id in pending if record_id not in completed]
     query_log = []
-    seen = set()
+    seen = {record_id for _, record_id in found} | completed
     for name, query in selected:
+        if len(found) >= MAX_RECORDS:
+            break
         try:
             ids = client.find(
                 query, ids="hepdata", format=list,
@@ -198,7 +204,14 @@ def main() -> int:
         ]
     }
     (ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    cursor_file.write_text(json.dumps({"next_query": (start + max(1, len(query_log))) % len(QUERIES)}, indent=2))
+    pending_retry = [{"topic": topic, "id": record_id}
+                     for topic, record_id in found if record_id not in set(downloaded_ids)]
+    completed_ids = list(dict.fromkeys(list(completed) + downloaded_ids))[-5000:]
+    cursor_file.write_text(json.dumps({
+        "next_query": (start + max(1, len(query_log))) % len(QUERIES),
+        "pending_retry": pending_retry,
+        "completed_ids": completed_ids
+    }, indent=2))
     print(json.dumps({
         "requested_records": len(requested_ids),
         "downloaded_records": len(downloaded_ids),
