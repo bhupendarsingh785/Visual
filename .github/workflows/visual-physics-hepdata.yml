@@ -44,7 +44,8 @@ jobs:
           assert m["downloaded_file_count"] == len(m["files"])
           total = 0
           for item in m["files"]:
-              p = Path(item["path"])
+              p = (root / item["path"]).resolve()
+              assert p.is_relative_to(root.resolve()), f"path escapes dataset root: {item['path']}"
               assert p.is_file() and p.stat().st_size == item["bytes"]
               assert hashlib.sha256(p.read_bytes()).hexdigest() == item["sha256"]
               total += item["bytes"]
