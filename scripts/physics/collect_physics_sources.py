@@ -355,18 +355,49 @@ def collect_optimade_mp():
 
 
 def collect_ukaea_catalog_docs():
-    # The UKAEA states that its old catalogue API is being refreshed; preserve official public S3 docs.
-    url = "https://raw.githubusercontent.com/ukaea/fair-mast/main/README.md"
-    payload = get_bytes(url, timeout=90)
-    text = payload.decode("utf-8", errors="strict")
-    if "s3.echo.stfc.ac.uk" not in text and "public S3" not in text:
-        raise RuntimeError("FAIR-MAST repository README did not contain the expected public-data access guidance")
-    files = [save_bytes("ukaea-fair-mast", "fair_mast_public_data_access_README.md", url, payload,
-        license_text="Documentation repository license; data releases retain per-release license and citation",
-        citation="UKAEA FAIR-MAST public data access documentation, GitHub ukaea/fair-mast",
-        source_type="source access documentation (not tokamak diagnostic measurements)", validation={"utf8": True, "expected_s3_reference": True})]
-    return files, {"status": "official access documentation collected",
-                   "limitation": "UKAEA says legacy catalogue API is being refreshed; actual MAST diagnostic payload requires the current public S3 catalogue and release-specific licensing"}
+    """Acquire public MAST metadata plus a real Level-2 diagnostic signal sample."""
+    import pandas as pd
+    import xarray as xr
+
+    base = "https://s3.echo.stfc.ac.uk/mast/fairmast-meta"
+    files = []
+    for name in ("l2_shots.parquet", "l2_sources.parquet", "l2_signals/signals_30421.parquet"):
+        url = f"{base}/{name}"
+        payload = get_bytes(url, timeout=180)
+        # Read the Parquet footer/schema before accepting the original file.
+        frame = pd.read_parquet(io.BytesIO(payload))
+        if frame.empty:
+            raise RuntimeError(f"FAIR-MAST metadata table is empty: {name}")
+        files.append(save_bytes("ukaea-fair-mast", name.replace("/", "__"), url, payload,
+            license_text="FAIR-MAST archive and metadata: CC BY-SA 4.0; cite FAIR-MAST and linked papers",
+            citation="UKAEA FAIR-MAST MAST Data Catalog; public Level-2 metadata",
+            source_type="tokamak shot/source/signal metadata in Parquet",
+            validation={"parquet_readable": True, "rows": len(frame), "columns": list(frame.columns)}))
+
+    shot_id = 30421
+    shot_url = f"https://s3.echo.stfc.ac.uk/mast/level2/shots/{shot_id}.zarr"
+    ds = xr.open_zarr(shot_url, group="summary", consolidated=False)
+    selected = [name for name in ("ip", "plasma_current", "beta_pol", "beta_normal") if name in ds.data_vars]
+    if not selected:
+        selected = list(ds.data_vars)[:5]
+    if not selected:
+        raise RuntimeError("FAIR-MAST Zarr summary group has no data variables")
+    frame = ds[selected].to_dataframe().reset_index()
+    csv_payload = frame.to_csv(index=False).encode("utf-8")
+    if len(csv_payload) > 30 * 1024 * 1024:
+        raise RuntimeError("FAIR-MAST extracted signal table exceeds 30 MiB")
+    check = validate_csv(csv_payload)
+    files.append(save_bytes("ukaea-fair-mast", f"shot_{shot_id}_level2_summary_signals.csv",
+        shot_url, csv_payload,
+        license_text="FAIR-MAST archive data: CC BY-SA 4.0; cite FAIR-MAST and linked papers",
+        citation="UKAEA FAIR-MAST MAST Data Catalog, Level-2 shot 30421 summary diagnostics",
+        source_type="processed experimental tokamak diagnostic measurements",
+        validation={"zarr_opened": True, "shot_id": shot_id, "variables": selected, **check}))
+    return files, {"metadata_files": 3, "shot_id": shot_id, "actual_signal_csv": True,
+                   "signal_variables": selected, "csv_rows": len(frame),
+                   "level": "Level 2 processed/calibrated/interpolated data",
+                   "license": "CC BY-SA 4.0",
+                   "citation": "FAIR-MAST; Jackson et al., SoftwareX 27 (2024) 101869; Jackson et al., IEEE TPS (2025), DOI:10.1109/TPS.2025.3583419"}
 
 
 def main() -> int:
