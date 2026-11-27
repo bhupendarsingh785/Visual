@@ -87,7 +87,11 @@ jobs:
                                   "manifest_error": str(exc)})
           verified, failures, total = [], [], 0
           for item in entries:
-              for record in item.get("files", []):
+              records = item.get("files", []) or [
+                  record for source in item.get("sources", [])
+                  for record in source.get("files", [])
+              ]
+              for record in records:
                   rel = record.get("path") or record.get("file")
                   if not rel:
                       continue
@@ -101,13 +105,25 @@ jobs:
                       if expected:
                           actual = hashlib.sha256(p.read_bytes()).hexdigest()
                           assert actual == expected, f"SHA-256 mismatch: {rel}"
+                      if p.suffix.lower() in {".csv", ".tsv"}:
+                          import csv, io
+                          text = p.read_text(encoding="utf-8-sig")
+                          rows = list(csv.reader(io.StringIO(text), delimiter="\\t" if p.suffix.lower() == ".tsv" else ",", strict=True))
+                          assert any(any(cell.strip() for cell in row) for row in rows), f"empty table: {rel}"
                       if p.suffix.lower() == ".zip":
                           with zipfile.ZipFile(p) as z:
                               assert z.testzip() is None, f"ZIP CRC failure: {rel}"
+                              assert all(not Path(n).is_absolute() and ".." not in Path(n).parts for n in z.namelist()), f"unsafe ZIP paths: {rel}"
                       if p.suffix.lower() in {".sqlite", ".db"}:
                           con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
                           try: assert con.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
                           finally: con.close()
+                      if p.suffix.lower() in {".h5", ".hdf5"}:
+                          import h5py, numpy as np
+                          with h5py.File(p, "r") as h:
+                              datasets = []
+                              h.visititems(lambda n, o: datasets.append(n) if isinstance(o, h5py.Dataset) else None)
+                              assert datasets, f"HDF5 has no datasets: {rel}"
                       verified.append({"path": p.relative_to(root).as_posix(), "bytes": size, "sha256": expected})
                       total += size
                   except Exception as exc:
