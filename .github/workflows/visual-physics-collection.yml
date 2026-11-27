@@ -48,7 +48,7 @@ jobs:
       - name: Collect physics topics across public research providers
         env:
           PYTHONPATH: plugins/knowledge_base
-          VISUAL_TOPICS: physics,physics_classical_mechanics,physics_fluids,physics_thermodynamics,physics_electromagnetism,physics_waves_optics,physics_modern,physics_atomic_nuclear_particle,physics_condensed_matter,physics_plasma_fusion,physics_astronomy_cosmology,physics_geophysics_biophysics,physics_computational_experimental
+          VISUAL_TOPICS: physics,physics_hot_frontier_2026,physics_classical_mechanics,physics_fluids,physics_thermodynamics,physics_electromagnetism,physics_waves_optics,physics_modern,physics_atomic_nuclear_particle,physics_condensed_matter,physics_plasma_fusion,physics_astronomy_cosmology,physics_geophysics_biophysics,physics_computational_experimental
           VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '300' }}
           VISUAL_PER_REQUEST: "25"
         run: python scripts/github_collect_public.py
