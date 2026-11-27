@@ -76,6 +76,103 @@ DOMAIN_QUERIES = {
   "robotics_agents": [ "robot learning manipulation navigation embodied AI agent benchmarks", "autonomous agents planning tool use reinforcement learning robotics", "robot kinematics forward inverse dynamics Jacobian trajectory planning motion planning", "robot manipulation grasp planning tactile sensing dexterous hands force control", "mobile robot localization mapping SLAM visual inertial odometry navigation planning", "legged robotics locomotion gait generation balance whole body control contact dynamics", "robot learning imitation learning reinforcement learning sim to real domain randomization", "human robot interaction intent prediction proxemics shared autonomy safety", "robot operating system ROS2 middleware DDS simulation Gazebo Isaac Lab interoperability", "robot perception RGB D lidar radar event cameras sensor fusion calibration", "industrial robotics safety PLC machine vision collaborative robots inspection automation", "robot benchmarks reproducibility real world evaluation failure recovery"],
   "ancient_civilizations": ["ancient civilizations archaeology epigraphy artifacts trade technology", "historical engineering architecture metallurgy inventions manuscripts"],
 
+  "physics": [
+    "physics fundamentals mechanics kinematics dynamics Newton laws work energy momentum gravitation waves optics thermodynamics electromagnetism modern physics open education",
+    "physics research frontier theoretical experimental computational physics mathematical methods measurement uncertainty laboratory experiments",
+    "classical mechanics analytical mechanics Lagrangian Hamiltonian rigid body rotation oscillations nonlinear dynamics",
+    "fluid mechanics hydrostatics hydrodynamics viscosity turbulence boundary layers Navier Stokes CFD experiments",
+    "thermodynamics statistical mechanics kinetic theory entropy ensembles phase transitions heat engines",
+    "electromagnetism electrostatics magnetostatics Maxwell equations electromagnetic waves antennas transmission lines",
+    "optics geometrical optics wave optics interference diffraction polarization lasers fiber optics photonics",
+    "acoustics sound waves resonance musical acoustics ultrasonics noise vibration experimental data",
+    "special relativity general relativity spacetime tensors gravitational waves black holes cosmology",
+    "quantum mechanics wave functions operators Schrödinger equation angular momentum spin perturbation theory",
+    "atomic molecular nuclear physics spectroscopy atomic structure molecular spectra nuclear reactions radioactivity",
+    "particle physics standard model quantum field theory collider experiments neutrinos antimatter particle detector data",
+    "condensed matter solid state physics crystal lattices band theory semiconductors superconductivity magnetism",
+    "plasma physics magnetohydrodynamics fusion tokamak stellarator plasma diagnostics instabilities",
+    "astrophysics stellar evolution exoplanets galaxies high energy astrophysics observational astronomy",
+    "geophysics seismology Earth's interior geomagnetism gravity field planetary physics",
+    "biophysics biomechanics medical physics radiation physics imaging instrumentation",
+    "computational physics numerical methods Monte Carlo finite difference finite element molecular dynamics",
+    "experimental physics laboratory methods calibration uncertainty propagation sensors detectors metrology",
+    "applied physics materials physics nanophysics surface physics thin films photonics quantum devices",
+    "physics education demonstrations conceptual misconceptions worked examples problem solving curriculum"
+  ],
+  "physics_classical_mechanics": [
+    "introductory mechanics units dimensions vectors scalars coordinate systems position displacement speed velocity acceleration graphs",
+    "Newton laws free body diagrams friction tension normal force inclined planes circular motion drag",
+    "work energy power conservation laws potential kinetic energy collisions impulse momentum center of mass",
+    "rotational motion torque angular momentum moment of inertia rolling motion gyroscope precession",
+    "gravitation Kepler laws orbital mechanics satellites escape velocity tides gravitational potential",
+    "simple harmonic motion pendulums coupled oscillators resonance damping driven oscillations chaos",
+    "Lagrangian mechanics Hamiltonian mechanics generalized coordinates constraints variational principles"
+  ],
+  "physics_fluids": [
+    "fluid statics pressure buoyancy Pascal principle Archimedes principle manometers",
+    "fluid dynamics continuity Bernoulli Euler equations viscosity Poiseuille flow Reynolds number",
+    "Navier Stokes equations turbulence boundary layers wakes vortices drag lift aerodynamics",
+    "computational fluid dynamics CFD finite volume methods mesh convergence validation benchmark datasets"
+  ],
+  "physics_thermodynamics": [
+    "temperature heat calorimetry thermal expansion specific heat latent heat conduction convection radiation",
+    "laws of thermodynamics entropy enthalpy Gibbs free energy Helmholtz free energy thermodynamic potentials",
+    "kinetic theory ideal gases real gases equations of state Maxwell Boltzmann distribution",
+    "statistical mechanics microcanonical canonical grand canonical ensembles partition functions phase transitions",
+    "heat engines refrigerators Carnot cycle Stirling Otto Diesel Rankine cycles efficiency"
+  ],
+  "physics_electromagnetism": [
+    "electric charge Coulomb law electric fields potential Gauss law capacitors dielectrics",
+    "electric current circuits Ohm Kirchhoff RC RL RLC circuits AC impedance resonance",
+    "magnetic fields Biot Savart Ampere law Faraday induction Lenz law inductance transformers",
+    "Maxwell equations electromagnetic waves waveguides antennas transmission lines radiation"
+  ],
+  "physics_waves_optics": [
+    "wave motion superposition standing waves beats Doppler effect dispersion group velocity",
+    "sound acoustics resonance ultrasound noise measurement psychoacoustics",
+    "reflection refraction Snell law mirrors lenses optical instruments ray tracing",
+    "interference diffraction polarization coherence Fourier optics lasers holography fiber optics"
+  ],
+  "physics_modern": [
+    "special relativity Lorentz transformations time dilation length contraction relativistic energy momentum",
+    "general relativity equivalence principle curved spacetime Einstein field equations gravitational lensing",
+    "quantum mechanics wave particle duality uncertainty principle Schrödinger equation operators",
+    "quantum measurement entanglement tunneling spin angular momentum perturbation approximation"
+  ],
+  "physics_atomic_nuclear_particle": [
+    "atomic physics hydrogen atom fine structure hyperfine structure Zeeman Stark effects spectroscopy",
+    "molecular physics rotational vibrational electronic spectra molecular collisions",
+    "nuclear physics binding energy radioactive decay fission fusion nuclear models",
+    "particle physics Standard Model quarks leptons gauge bosons neutrinos antimatter collider experiments"
+  ],
+  "physics_condensed_matter": [
+    "solid state physics crystal structures reciprocal lattice phonons band theory electronic transport",
+    "semiconductor physics pn junction diodes transistors MOSFET carrier transport optoelectronics",
+    "superconductivity BCS theory Josephson effect topological materials quantum Hall effect",
+    "magnetism spin systems phase transitions nanomaterials surfaces defects"
+  ],
+  "physics_plasma_fusion": [
+    "plasma physics Debye shielding plasma frequency kinetic theory magnetohydrodynamics",
+    "plasma waves instabilities confinement diagnostics tokamak stellarator inertial confinement fusion",
+    "fusion reactions Lawson criterion energy balance plasma heating magnetic confinement"
+  ],
+  "physics_astronomy_cosmology": [
+    "astrophysics stellar structure nucleosynthesis supernova neutron stars black holes",
+    "galaxies active galactic nuclei dark matter dark energy large scale structure",
+    "cosmology Big Bang cosmic microwave background inflation expansion observational constraints",
+    "exoplanet detection planetary atmospheres orbital dynamics gravitational wave astronomy"
+  ],
+  "physics_geophysics_biophysics": [
+    "geophysics seismology seismic waves Earth's interior geomagnetism gravity and geodesy",
+    "biophysics molecular motors membranes protein folding electrophysiology biomechanics",
+    "medical physics radiation dosimetry radiotherapy diagnostic imaging MRI CT ultrasound"
+  ],
+  "physics_computational_experimental": [
+    "computational physics numerical integration ODE PDE solvers Monte Carlo molecular dynamics",
+    "finite difference finite element spectral methods computational electromagnetics computational quantum physics",
+    "experimental design laboratory instrumentation sensors detectors calibration uncertainty propagation",
+    "metrology significant figures error analysis reproducibility data acquisition scientific visualization"
+  ],
   "india": ["India public health agriculture census education", "India history languages geography"],
   "animal_taxonomy": ["global animal taxonomy species subspecies taxonomy phylogeny open datasets", "invertebrates vertebrates mammals birds reptiles amphibians fish taxonomy"],
   "animal_morphology": ["animal morphology anatomy body size shape coloration pattern pigmentation", "animal development sexual dimorphism seasonal plumage coat morphology variation"],
