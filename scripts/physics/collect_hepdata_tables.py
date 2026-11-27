@@ -13,7 +13,7 @@ from pathlib import Path
 
 from hepdata_cli.api import Client
 
-ROOT = Path(os.environ.get("VISUAL_PHYSICS_RAW_DIR", "physics-raw-data/hepdata"))
+ROOT = Path(os.environ.get("VISUAL_PHYSICS_RAW_DIR", "physics-raw-data/hepdata")).resolve()
 MAX_RECORDS = int(os.environ.get("VISUAL_HEPDATA_MAX_RECORDS", "20"))
 MAX_BYTES = int(os.environ.get("VISUAL_HEPDATA_MAX_BYTES", str(1024 * 1024 * 1024)))
 MAX_MATCHES_PER_QUERY = int(os.environ.get("VISUAL_HEPDATA_MAX_MATCHES_PER_QUERY", "100"))
