@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -50,6 +52,36 @@ def flatten_files(value):
         p = Path(value)
         if p.is_file():
             yield p
+
+def sanitize_artifact_paths(root: Path, records: list[dict]) -> None:
+    """Rename downloaded paths to portable names before artifact upload.
+
+    File contents and SHA-256 digests are unchanged. The original HEPData
+    filenames remain recorded in each manifest entry for provenance.
+    """
+    invalid = re.compile(r'[<>:"/\\\\|?*\\x00-\\x1f]')
+    used = set()
+    for record in records:
+        old = Path(record["path"])
+        relative = old.relative_to(root)
+        safe_parts = []
+        for part in relative.parts:
+            safe = invalid.sub("_", part).rstrip(" .") or "unnamed"
+            if safe.upper() in {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}:
+                safe = "_" + safe
+            safe_parts.append(safe)
+        target = root.joinpath(*safe_parts)
+        key = str(target).casefold()
+        if key in used or (target.exists() and target != old):
+            target = target.with_name(f"{target.stem}_{sha256(old)[:10]}{target.suffix}")
+            key = str(target).casefold()
+        used.add(key)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target != old:
+            shutil.move(str(old), str(target))
+        record["original_path"] = str(old)
+        record["path"] = str(target)
+        record["sha256"] = sha256(target)
 
 def main() -> int:
     ROOT.mkdir(parents=True, exist_ok=True)
@@ -133,8 +165,13 @@ def main() -> int:
             failed_ids.append(record_id)
         time.sleep(3.0)
 
+    # GitHub artifact paths must be portable across Windows/Linux filesystems.
+    # HEPData titles can contain angle brackets, colons, and other forbidden
+    # characters. Sanitize names while preserving originals and file hashes.
+    sanitize_artifact_paths(ROOT, files)
+
     manifest = {
-        "schema_version": 2,
+        "schema_version": 3,
         "source": "HEPData",
         "source_url": "https://www.hepdata.net/",
         "source_docs": "https://hepdata.readthedocs.io/",
