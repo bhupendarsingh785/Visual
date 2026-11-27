@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Incremental HEPData physics-table acquisition for VISUAL.
-
-Downloads machine-readable CSV tables from HEPData for a rotating set of
-particle/high-energy physics queries. This is one source-specific tranche,
-not a claim of complete Physics coverage.
-"""
+"""Rate-limited, resumable HEPData CSV acquisition for VISUAL."""
 from __future__ import annotations
 
 import hashlib
@@ -17,8 +12,9 @@ from pathlib import Path
 from hepdata_cli.api import Client
 
 ROOT = Path(os.environ.get("VISUAL_PHYSICS_RAW_DIR", "physics-raw-data/hepdata"))
-MAX_RECORDS = int(os.environ.get("VISUAL_HEPDATA_MAX_RECORDS", "60"))
+MAX_RECORDS = int(os.environ.get("VISUAL_HEPDATA_MAX_RECORDS", "20"))
 MAX_BYTES = int(os.environ.get("VISUAL_HEPDATA_MAX_BYTES", str(1024 * 1024 * 1024)))
+MAX_MATCHES_PER_QUERY = int(os.environ.get("VISUAL_HEPDATA_MAX_MATCHES_PER_QUERY", "100"))
 QUERIES = [
     ("particle_collisions", 'collision'),
     ("standard_model", '"standard model"'),
@@ -68,9 +64,12 @@ def main() -> int:
     seen = set()
     for name, query in selected:
         try:
-            ids = client.find(query, ids="hepdata", format=list)
+            ids = client.find(
+                query, ids="hepdata", format=list,
+                max_matches=MAX_MATCHES_PER_QUERY, matches_per_page=10
+            )
             ids = [str(x) for x in (ids or [])]
-            fresh = [x for x in ids if x not in seen]
+            fresh = [x for x in ids if x and x not in seen]
             seen.update(fresh)
             found.extend((name, x) for x in fresh)
             query_log.append({"topic": name, "query": query, "ids_found": len(ids), "new_ids": len(fresh), "status": "ok"})
@@ -78,56 +77,94 @@ def main() -> int:
             query_log.append({"topic": name, "query": query, "status": "error", "error": str(exc)[:500]})
         if len(found) >= MAX_RECORDS:
             break
-        time.sleep(1.0)
+        time.sleep(2.0)
 
     found = found[:MAX_RECORDS]
-    ids = [record_id for _, record_id in found]
-    downloads = {}
+    requested_ids = [record_id for _, record_id in found]
     errors = []
-    if ids:
-        try:
-            downloads = client.download(
-                ids, ids="hepdata", file_format="csv",
-                download_dir=str(ROOT / "tables")
-            ) or {}
-        except Exception as exc:
-            errors.append({"stage": "download", "error": str(exc)[:1000]})
-
     files = []
     total_bytes = 0
-    for path in sorted(set(flatten_files(downloads))):
-        size = path.stat().st_size
-        total_bytes += size
-        if total_bytes > MAX_BYTES:
-            path.unlink(missing_ok=True)
-            errors.append({"stage": "budget", "file": str(path), "error": "Per-run byte budget exceeded; remaining files omitted"})
-            continue
-        files.append({"path": str(path), "bytes": size, "sha256": sha256(path), "format": path.suffix.lstrip(".")})
+    downloaded_ids = []
+    failed_ids = []
+
+    # Download records individually so one HTTP 429 does not discard all
+    # successful records. Backoff is deliberately conservative.
+    for topic, record_id in found:
+        success = False
+        for attempt in range(5):
+            try:
+                result = client.download(
+                    [record_id], ids="hepdata", file_format="csv",
+                    download_dir=str(ROOT / "tables")
+                ) or {}
+                paths = list(flatten_files(result))
+                if not paths:
+                    raise RuntimeError("HEPData returned no local table files")
+                record_files = []
+                record_bytes = 0
+                for path in sorted(set(paths)):
+                    size = path.stat().st_size
+                    record_bytes += size
+                    record_files.append({
+                        "path": str(path), "bytes": size, "sha256": sha256(path),
+                        "format": path.suffix.lstrip("."), "hepdata_record_id": record_id,
+                        "topic": topic
+                    })
+                if total_bytes + record_bytes > MAX_BYTES:
+                    for item in record_files:
+                        Path(item["path"]).unlink(missing_ok=True)
+                    errors.append({"stage": "budget", "record_id": record_id, "error": "Per-run byte budget reached"})
+                    success = True
+                    break
+                files.extend(record_files)
+                total_bytes += record_bytes
+                downloaded_ids.append(record_id)
+                success = True
+                break
+            except Exception as exc:
+                message = str(exc)
+                if attempt == 4:
+                    errors.append({"stage": "download", "record_id": record_id, "error": message[:700]})
+                else:
+                    delay = min(60, 5 * (2 ** attempt))
+                    print(f"Retrying HEPData record {record_id} after {delay}s: {message[:200]}", flush=True)
+                    time.sleep(delay)
+        if not success:
+            failed_ids.append(record_id)
+        time.sleep(3.0)
 
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source": "HEPData",
         "source_url": "https://www.hepdata.net/",
         "source_docs": "https://hepdata.readthedocs.io/",
         "collection_type": "machine_readable_published_particle_physics_tables",
         "query_log": query_log,
-        "requested_record_ids": ids,
+        "requested_record_ids": requested_ids,
+        "downloaded_record_ids": downloaded_ids,
+        "failed_record_ids": failed_ids,
         "downloaded_file_count": len(files),
         "total_bytes": total_bytes,
         "files": files,
         "errors": errors,
-        "license_policy": "HEPData is an open-access repository; individual record licenses and citation instructions must be retained and checked before redistribution. This workflow downloads research tables for local research use and does not relicense them.",
+        "license_policy": "Retain each record's license and citation metadata; check record-level reuse terms before redistribution. This collector does not relicense source data.",
         "limitations": [
-            "HEPData covers publication-associated high-energy/particle physics tables, not every Physics discipline.",
-            "A search match is not proof that every table in a publication was deposited.",
-            "This run is bounded by record and byte budgets; it is incremental, not a complete mirror."
+            "HEPData covers publication-associated high-energy and particle-physics tables, not every Physics discipline.",
+            "Search results do not guarantee every table from a publication is deposited.",
+            "This is a bounded incremental acquisition run, not a complete HEPData mirror."
         ]
     }
-    out = ROOT / "manifest.json"
-    out.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (ROOT / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     cursor_file.write_text(json.dumps({"next_query": (start + max(1, len(query_log))) % len(QUERIES)}, indent=2))
-    print(json.dumps({k: manifest[k] for k in ("requested_record_ids", "downloaded_file_count", "total_bytes", "errors")}, indent=2))
-    return 0 if not errors and (not ids or files) else 1
+    print(json.dumps({
+        "requested_records": len(requested_ids),
+        "downloaded_records": len(downloaded_ids),
+        "downloaded_files": len(files),
+        "total_bytes": total_bytes,
+        "failed_records": len(failed_ids),
+        "errors": errors
+    }, indent=2), flush=True)
+    return 0 if files else 1
 
 if __name__ == "__main__":
     sys.exit(main())
