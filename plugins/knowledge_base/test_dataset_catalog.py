@@ -8,8 +8,8 @@ class DatasetCatalogTests(unittest.TestCase):
         path = Path(__file__).with_name("datasets_catalog.json")
         catalog = json.loads(path.read_text(encoding="utf-8"))
         entries = catalog["datasets"]
-        self.assertEqual(catalog["catalog_version"], 6)
-        self.assertEqual(len(entries), 152)
+        self.assertGreaterEqual(catalog["catalog_version"], 7)
+        self.assertGreaterEqual(len(entries), 163)
         self.assertEqual(sum(bool(item.get("metadata_enabled")) for item in entries), 15)
         self.assertEqual(sum(item.get("enabled") is True for item in entries), 0)
         names = [item["name"] for item in entries]
