@@ -1,5 +1,5 @@
 {
-  "catalog_version": 7,
+  "catalog_version": 8,
   "purpose": "Discovery registry for large public datasets. Registry entries are leads, not blanket permission to download or reuse.",
   "download_policy": {
     "require_license_review": true,
@@ -1965,6 +1965,54 @@
       "enabled": false,
       "metadata_enabled": false,
       "notes": "Physics research dataset candidate. Hubble, JWST, TESS and other mission observations; preserve proposal, instrument, calibration pipeline and product version. Enable full downloads only after item-level license, attribution, storage, manifest and checksum review."
+    },
+    {
+      "name": "IAEA LiveChart of Nuclides (ENSDF)",
+      "topic": "physics-nuclear-data",
+      "url": "https://nds.iaea.org/relnsd/v1/data",
+      "access": "CSV REST API; ground_states, levels, gammas, decay_rads, fission yields",
+      "license": "IAEA data citation and reuse guidance; preserve field-specific attribution",
+      "size_class": "small-to-large",
+      "coverage": "global",
+      "enabled": false,
+      "metadata_enabled": false,
+      "notes": "Source-specific bounded collector queries all ground states; preserve ENSDF references, units, uncertainties, extraction date and distinguish metastable states."
+    },
+    {
+      "name": "IceCube IceTracks-DR2 (2008-2022)",
+      "topic": "physics-neutrino-events",
+      "url": "https://doi.org/10.7910/DVN/MMIIZA",
+      "access": "Harvard Dataverse DOI API; 41 files in release",
+      "license": "CC0 1.0; cite DOI 10.7910/DVN/MMIIZA",
+      "size_class": "large",
+      "coverage": "14 years of IceCube track-like neutrino candidates",
+      "enabled": false,
+      "metadata_enabled": false,
+      "notes": "A bounded collector selects readme and small event-season CSV files. Full release is approximately 3.4 GB; do not mark full release complete until all files, uptime lists and IRFs are downloaded and validated."
+    },
+    {
+      "name": "ESA Gaia DR3 TAP sample",
+      "topic": "physics-astronomy-catalogues",
+      "url": "https://gea.esac.esa.int/tap-server/tap/sync",
+      "access": "ADQL TAP query; CSV/VOTable",
+      "license": "Gaia data use and acknowledgement policy; cite Gaia DR3",
+      "size_class": "small",
+      "coverage": "global sky catalogue",
+      "enabled": false,
+      "metadata_enabled": false,
+      "notes": "Bounded 100-row sample with source_id, RA/Dec, parallax, proper motion and photometry. Preserve query, coordinate frame, units and quality flags."
+    },
+    {
+      "name": "Materials Project OPTIMADE structures sample",
+      "topic": "physics-computational-materials",
+      "url": "https://optimade.materialsproject.org/v1/structures",
+      "access": "Public OPTIMADE REST API for bounded structure queries; primary Materials Project API requires API key",
+      "license": "Verify provider terms and record-level citation; public Materials Project structures commonly CC BY 4.0",
+      "size_class": "small-to-large",
+      "coverage": "inorganic materials",
+      "enabled": false,
+      "metadata_enabled": false,
+      "notes": "OPTIMADE is a bounded structure-access path, not the full Materials Project API/property corpus. Preserve calculation provenance and structure metadata."
     }
   ],
   "expansion_note": "Expanded cross-domain public dataset discovery registry. Disabled by default; no dataset is claimed downloaded. See GLOBAL_DATASET_EXPANSION.md for safe acquisition pipeline.",
