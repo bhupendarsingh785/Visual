@@ -130,7 +130,13 @@ def collect_cern_open_data():
     obj = json.loads(payload.decode("utf-8"))
     hits = obj.get("hits", {}).get("hits", [])
     if not hits:
-        raise RuntimeError("CERN Open Data API returned no CMS dataset records")
+        query = "CMS"
+        url = "https://opendata.cern.ch/api/records/?" + urllib.parse.urlencode({"q": query, "size": 20})
+        payload = get_bytes(url, timeout=120)
+        obj = json.loads(payload.decode("utf-8"))
+        hits = obj.get("hits", {}).get("hits", [])
+    if not hits:
+        raise RuntimeError("CERN Open Data API returned no CMS records")
     metadata_file = save_bytes("cern-open-data", "cms_dataset_search_records.json", url, payload,
         license_text="Portal datasets are generally released under open licenses; verify each record's exact license before reuse",
         citation="CERN Open Data Portal, CMS dataset records API; query: " + query,
