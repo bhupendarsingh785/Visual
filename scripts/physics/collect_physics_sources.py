@@ -122,6 +122,61 @@ def attempt(results: list, topic: str, source: str, fn) -> None:
                           "error": str(exc)[:500]}, ensure_ascii=False), flush=True)
 
 
+
+def collect_cern_open_data():
+    query = "experiment:CMS AND type:Dataset"
+    url = "https://opendata.cern.ch/api/records/?" + urllib.parse.urlencode({"q": query, "size": 20})
+    payload = get_bytes(url, timeout=120)
+    obj = json.loads(payload.decode("utf-8"))
+    hits = obj.get("hits", {}).get("hits", [])
+    if not hits:
+        raise RuntimeError("CERN Open Data API returned no CMS dataset records")
+    metadata_file = save_bytes("cern-open-data", "cms_dataset_search_records.json", url, payload,
+        license_text="Portal datasets are generally released under open licenses; verify each record's exact license before reuse",
+        citation="CERN Open Data Portal, CMS dataset records API; query: " + query,
+        source_type="CERN CMS collision-data record metadata",
+        validation={"json": True, "records": len(hits)})
+    files = [metadata_file]
+    downloaded = []
+    for hit in hits:
+        record_id = hit.get("id")
+        source = hit.get("metadata") or hit.get("_source", {}).get("metadata") or {}
+        license_items = source.get("rights") or source.get("license") or []
+        license_text = json.dumps(license_items, ensure_ascii=False) if license_items else ""
+        # Dataset file licenses are record-specific; only acquire files where
+        # the record metadata explicitly identifies a CC0/open data license.
+        license_lower = license_text.lower()
+        if not any(token in license_lower for token in ("cc0", "creative commons zero", "public domain")):
+            continue
+        file_list = hit.get("files") or hit.get("_source", {}).get("files") or []
+        if isinstance(file_list, dict):
+            file_list = file_list.get("entries", [])
+        for entry in file_list:
+            key = entry.get("key") or entry.get("filename")
+            size = int(entry.get("size") or 0)
+            if not key or size <= 0 or size > 15 * 1024 * 1024:
+                continue
+            file_url = f"https://opendata.cern.ch/api/records/{record_id}/files/{urllib.parse.quote(key, safe='')}/content"
+            try:
+                data = get_bytes(file_url, timeout=180)
+                if size and len(data) != size:
+                    raise RuntimeError(f"CERN file size mismatch for {key}: {len(data)} != {size}")
+                files.append(save_bytes("cern-open-data", f"record-{record_id}-{Path(key).name}",
+                    file_url, data, license_text=license_text,
+                    citation=source.get("title", "CERN Open Data CMS dataset") + f"; record {record_id}",
+                    source_type="CERN released CMS dataset file",
+                    validation={"nonempty": True, "expected_size": size, "size_matches": len(data) == size}))
+                downloaded.append({"record_id": record_id, "file": key, "bytes": len(data)})
+                break
+            except Exception:
+                continue
+        if downloaded:
+            break
+    return files, {"query": query, "records_found": len(hits), "dataset_files_downloaded": len(downloaded),
+                   "downloaded": downloaded, "note": "Metadata saved for all hits; only first small record file with explicit CC0/public-domain metadata is acquired"}
+
+
+
 def collect_nist_asd():
     files = []
     details = {"database": "NIST Atomic Spectra Database", "query_type": "spectral lines",
@@ -318,6 +373,7 @@ def main() -> int:
     ROOT.mkdir(parents=True, exist_ok=True)
     results = []
     tasks = [
+        ("particle_physics", "CERN Open Data Portal", collect_cern_open_data),
         ("atomic_physics", "NIST Atomic Spectra Database", collect_nist_asd),
         ("nuclear_physics", "IAEA LiveChart / ENSDF", collect_iaea),
         ("particle_physics", "Particle Data Group 2026", collect_pdg),
