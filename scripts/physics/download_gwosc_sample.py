@@ -28,7 +28,7 @@ def download(url: str, target: Path) -> dict:
                     raise RuntimeError(f"File exceeds {MAX_FILE_BYTES} byte safety ceiling")
                 digest.update(block); out.write(block)
         with temp.open("rb") as handle: magic = handle.read(8)
-        if magic != b"\\x89HDF\\r\\n\\x1a\\n":
+        if magic != b"\x89HDF\r\n\x1a\n":
             raise RuntimeError(f"Payload is not HDF5: {url}")
         temp.replace(target)
         return {"url": url, "file": str(target), "bytes": total,
@@ -50,7 +50,7 @@ def main() -> int:
             target = ROOT / Path(urlparse(url).path).name
             if target.exists() and target.stat().st_size:
                 payload = target.read_bytes()
-                if payload[:8] == b"\\x89HDF\\r\\n\\x1a\\n":
+                if payload[:8] == b"\x89HDF\r\n\x1a\n":
                     records.append({"url": url, "file": str(target), "bytes": len(payload),
                                     "sha256": hashlib.sha256(payload).hexdigest(),
                                     "format": "HDF5", "validation": "existing payload revalidated"})
