@@ -38,7 +38,7 @@ jobs:
       - name: Search and download machine-readable physics tables
         env:
           VISUAL_PHYSICS_RAW_DIR: physics-raw-data/hepdata
-          VISUAL_HEPDATA_MAX_RECORDS: "60"
+          VISUAL_HEPDATA_MAX_RECORDS: "20"
           VISUAL_HEPDATA_MAX_BYTES: "1073741824"
         run: python scripts/physics/collect_hepdata_tables.py
       - name: Validate manifest and file checksums
