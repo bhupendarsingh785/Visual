@@ -1,0 +1,53 @@
+name: VISUAL NIST physics reference data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-nist-physics-data.yml
+      - scripts/physics/download_nist_constants.py
+  workflow_dispatch:
+  schedule:
+    - cron: "37 5 1 */2 *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-nist-physics-data
+  cancel-in-progress: false
+
+jobs:
+  acquire-nist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download NIST CODATA reference values
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/nist-codata
+        run: python scripts/physics/download_nist_constants.py
+      - name: Verify file and SHA-256
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path("physics-raw-data/nist-codata")
+          m = json.loads((root / "manifest.json").read_text())
+          p = Path(m["file"])
+          assert p.is_file() and p.stat().st_size == m["bytes"]
+          assert hashlib.sha256(p.read_bytes()).hexdigest() == m["sha256"]
+          assert "Planck constant" in p.read_text()
+          print("Verified NIST bytes:", m["bytes"])
+          print("SHA-256: OK")
+          PY
+      - name: Upload original reference data and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-physics-nist-codata-\${{ github.run_id }}
+          path: physics-raw-data/nist-codata/
+          if-no-files-found: error
+          retention-days: 30
