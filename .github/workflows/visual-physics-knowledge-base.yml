@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install common acquisition and validation dependencies
-        run: python -m pip install --disable-pip-version-check requests h5py numpy gwosc==0.8.3 astroquery
+        run: python -m pip install --disable-pip-version-check requests h5py numpy gwosc==0.8.3 astroquery pandas pyarrow xarray zarr s3fs
 
       - name: Acquire NIST CODATA fundamental constants
         continue-on-error: true
