@@ -135,7 +135,7 @@ def main() -> int:
     # successful records. Backoff is deliberately conservative.
     for topic, record_id in found:
         success = False
-        for attempt in range(5):
+        for attempt in range(3):
             try:
                 result = client.download(
                     [record_id], ids="hepdata", file_format="csv",
@@ -167,15 +167,15 @@ def main() -> int:
                 break
             except Exception as exc:
                 message = str(exc)
-                if attempt == 4:
+                if attempt == 2:
                     errors.append({"stage": "download", "record_id": record_id, "error": message[:700]})
                 else:
-                    delay = min(60, 5 * (2 ** attempt))
+                    delay = min(10, 2 * (2 ** attempt))
                     print(f"Retrying HEPData record {record_id} after {delay}s: {message[:200]}", flush=True)
                     time.sleep(delay)
         if not success:
             failed_ids.append(record_id)
-        time.sleep(3.0)
+        time.sleep(1.0)
 
     # GitHub artifact paths must be portable across Windows/Linux filesystems.
     # HEPData titles can contain angle brackets, colons, and other forbidden
