@@ -1,6 +1,11 @@
 name: VISUAL Physics deep data - HEPData
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-physics-hepdata.yml
+      - scripts/physics/collect_hepdata_tables.py
   workflow_dispatch:
   schedule:
     - cron: "41 */6 * * *"
