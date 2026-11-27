@@ -59,7 +59,7 @@ def sanitize_artifact_paths(root: Path, records: list[dict]) -> None:
     File contents and SHA-256 digests are unchanged. The original HEPData
     filenames remain recorded in each manifest entry for provenance.
     """
-    invalid = re.compile(r'[<>:"/\\\\|?*\\x00-\\x1f]')
+    invalid = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
     used = set()
     for record in records:
         old = Path(record["path"])
