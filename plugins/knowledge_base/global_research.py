@@ -99,6 +99,28 @@ DOMAIN_QUERIES = {
     "applied physics materials physics nanophysics surface physics thin films photonics quantum devices",
     "physics education demonstrations conceptual misconceptions worked examples problem solving curriculum"
   ],
+  "physics_hot_frontier_2026": [
+    "2025 2026 physics research frontier quantum computing quantum simulation quantum error correction quantum networks quantum sensing",
+    "2025 2026 quantum materials moire materials twisted bilayer graphene correlated electrons topological phases spin liquids",
+    "2025 2026 unconventional superconductivity high temperature superconductors hydride superconductors nickelates cuprates experiments",
+    "2025 2026 fusion energy tokamak stellarator plasma turbulence transport disruption mitigation magnet confinement experiments",
+    "2025 2026 inertial confinement fusion laser plasma physics high energy density physics laboratory astrophysics",
+    "2025 2026 gravitational wave astronomy LIGO Virgo KAGRA O4 O5 compact binary mergers neutron stars black holes data analysis",
+    "2025 2026 dark matter axions WIMPs dark photons direct detection underground detectors astrophysical constraints",
+    "2025 2026 neutrino physics neutrino mass oscillations mass ordering neutrinoless double beta decay neutrino astronomy",
+    "2025 2026 particle physics Higgs precision measurements long lived particles flavour anomalies collider phenomenology",
+    "2025 2026 cosmology Hubble tension early dark energy cosmic microwave background large scale structure weak lensing",
+    "2025 2026 astronomy exoplanet atmospheres JWST time domain astronomy fast radio bursts gravitational lensing transient surveys",
+    "2025 2026 AI for physics scientific machine learning neural operators physics informed neural networks surrogate models symbolic regression",
+    "2025 2026 materials discovery computational physics density functional theory atomistic machine learning interatomic potentials",
+    "2025 2026 photonics metasurfaces integrated photonics quantum photonics ultrafast optics attosecond science",
+    "2025 2026 plasma accelerators laser wakefield particle acceleration beam physics advanced accelerators",
+    "2025 2026 nuclear physics rare isotope beams nuclear astrophysics equation of state neutron rich matter",
+    "2025 2026 topological quantum matter Majorana modes quantum Hall fractional Chern insulators quantum spin liquids",
+    "2025 2026 precision measurement optical clocks atom interferometry quantum sensors tests of fundamental physics",
+    "2025 2026 high energy astrophysics multimessenger astronomy cosmic rays gamma rays neutrinos black hole imaging",
+    "2025 2026 climate physics atmospheric radiation cloud microphysics turbulence Earth energy balance open datasets"
+  ],
   "physics_classical_mechanics": [
     "introductory mechanics units dimensions vectors scalars coordinate systems position displacement speed velocity acceleration graphs",
     "Newton laws free body diagrams friction tension normal force inclined planes circular motion drag",
