@@ -1248,9 +1248,9 @@
       "id": "iaea_livechart_ensdf",
       "name": "IAEA LiveChart of Nuclides / ENSDF",
       "domains": [
-        "nuclear_physics",
-        "atomic_nuclear_particle",
-        "plasma_fusion"
+        "physics_atomic_nuclear_particle",
+        "physics_atomic_nuclear_particle",
+        "physics_plasma_fusion"
       ],
       "data_types": [
         "evaluated ground states",
@@ -1274,9 +1274,9 @@
       "id": "icecube_icetracks_dr2",
       "name": "IceCube IceTracks-DR2",
       "domains": [
-        "neutrino_physics",
-        "astronomy_cosmology",
-        "particle_physics"
+        "physics_atomic_nuclear_particle",
+        "physics_astronomy_cosmology",
+        "physics_atomic_nuclear_particle"
       ],
       "data_types": [
         "observed track-like neutrino candidate events",
@@ -1301,9 +1301,9 @@
       "id": "esa_gaia_dr3",
       "name": "ESA Gaia Data Release 3",
       "domains": [
-        "astronomy_cosmology",
-        "astrophysics",
-        "stellar_physics"
+        "physics_astronomy_cosmology",
+        "physics_astronomy_cosmology",
+        "physics_astronomy_cosmology"
       ],
       "data_types": [
         "astrometric catalogue",
@@ -1327,10 +1327,10 @@
       "id": "nist_atomic_spectra_asd",
       "name": "NIST Atomic Spectra Database",
       "domains": [
-        "atomic_physics",
-        "spectroscopy",
-        "plasma_fusion",
-        "astronomy_cosmology"
+        "physics_atomic_nuclear_particle",
+        "physics_waves_optics",
+        "physics_plasma_fusion",
+        "physics_astronomy_cosmology"
       ],
       "data_types": [
         "spectral lines",
@@ -1354,9 +1354,9 @@
       "id": "nasa_mast",
       "name": "Mikulski Archive for Space Telescopes (MAST)",
       "domains": [
-        "astronomy_cosmology",
-        "astrophysics",
-        "space_science"
+        "physics_astronomy_cosmology",
+        "physics_astronomy_cosmology",
+        "space"
       ],
       "data_types": [
         "HST and JWST observations",
@@ -1380,9 +1380,9 @@
       "id": "materials_project_optimade",
       "name": "Materials Project via OPTIMADE",
       "domains": [
-        "condensed_matter",
+        "physics_condensed_matter",
         "materials_science",
-        "computational_physics"
+        "physics_computational_experimental"
       ],
       "data_types": [
         "crystal structures",
