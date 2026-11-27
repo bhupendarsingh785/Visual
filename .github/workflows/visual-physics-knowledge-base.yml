@@ -40,95 +40,13 @@ jobs:
           VISUAL_PHYSICS_RAW_DIR: physics-raw-data/nist-codata
         run: python scripts/physics/download_nist_constants.py
 
-      - name: Acquire selected NIST Atomic Spectra line data
+      - name: Acquire atomic, nuclear, particle, materials, astronomy, fusion and neutrino source tranche
         continue-on-error: true
         env:
           VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_nist_asd
-          files, details = collect_nist_asd()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire IAEA LiveChart evaluated nuclear data
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_iaea
-          files, details = collect_iaea()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire PDG 2026 machine-readable SQLite database
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_pdg
-          files, details = collect_pdg()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire public NOMAD processed material archives
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_nomad
-          files, details = collect_nomad()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire IceCube IceTracks-DR2 public event sample
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_icecube
-          files, details = collect_icecube()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire ESA Gaia DR3 astrometric sample
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_gaia
-          files, details = collect_gaia()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire NASA MAST public observation catalogue sample
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_mast
-          files, details = collect_mast()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire Materials Project OPTIMADE public structure subset
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_optimade_mp
-          files, details = collect_optimade_mp()
-          print({"files": len(files), "details": details})
-          PY
-
-      - name: Acquire UKAEA FAIR-MAST public data access documentation
-        continue-on-error: true
-        env:
-          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
-        run: python - <<'PY'
-          from scripts.physics.collect_physics_sources import collect_ukaea_catalog_docs
-          files, details = collect_ukaea_catalog_docs()
-          print({"files": len(files), "details": details})
-          PY
+          VISUAL_PHYSICS_MAX_FILE_BYTES: "134217728"
+          VISUAL_PHYSICS_MAX_TOTAL_BYTES: "536870912"
+        run: python scripts/physics/collect_physics_sources.py
 
       - name: Acquire multi-event measured GWOSC strain
         continue-on-error: true
@@ -158,6 +76,7 @@ jobs:
               try:
                   m = json.loads(manifest_path.read_text(encoding="utf-8"))
                   entries.append({"manifest": manifest_path.relative_to(root).as_posix(),
+                                  "base": manifest_path.parent.relative_to(root).as_posix(),
                                   "schema_version": m.get("schema_version"),
                                   "source": m.get("source") or m.get("dataset") or m.get("collection_type"),
                                   "files": m.get("files", []),
@@ -172,7 +91,7 @@ jobs:
                   rel = record.get("path") or record.get("file")
                   if not rel:
                       continue
-                  p = (manifest_path.parent / rel).resolve()
+                  p = (root / item.get("base", ".") / rel).resolve()
                   try:
                       assert p.is_relative_to(root.resolve()), f"path escapes data root: {rel}"
                       assert p.is_file(), f"missing file: {rel}"
