@@ -1,0 +1,63 @@
+name: VISUAL Physics deep data - GWOSC event strain
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-physics-gwosc-events.yml
+      - scripts/physics/collect_gwosc_events.py
+  workflow_dispatch:
+  schedule:
+    - cron: "13 6 * * 2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-physics-gwosc-events
+  cancel-in-progress: false
+
+jobs:
+  collect-gwosc-events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install GWOSC client and HDF5 validator
+        run: python -m pip install --disable-pip-version-check gwosc==0.8.3 h5py numpy
+      - name: Discover and download event-centred measured strain data
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/gwosc-events
+        run: python scripts/physics/collect_gwosc_events.py
+      - name: Validate manifest, portable paths, HDF5 structure and SHA-256
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path("physics-raw-data/gwosc-events").resolve()
+          m = json.loads((root / "manifest.json").read_text())
+          assert m["actual_file_count"] == len(m["files"]) > 0, m
+          total = 0
+          for item in m["files"]:
+              p = (root / item["path"]).resolve()
+              assert p.is_relative_to(root), f"path escapes dataset root: {item['path']}"
+              assert p.is_file() and p.stat().st_size == item["bytes"]
+              assert hashlib.sha256(p.read_bytes()).hexdigest() == item["sha256"]
+              assert p.read_bytes()[:8] == bytes.fromhex("894844460d0a1a0a")
+              total += item["bytes"]
+          assert total == m["total_bytes"]
+          assert all(m["validation_summary"].values()), m["validation_summary"]
+          print("GWOSC event files:", len(m["files"]))
+          print("Verified bytes:", total)
+          print("Portable paths, HDF5 signatures, structure and SHA-256: OK")
+          PY
+      - name: Upload measured data and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-physics-gwosc-events-${{ github.run_id }}
+          path: physics-raw-data/gwosc-events/
+          if-no-files-found: error
+          retention-days: 30
