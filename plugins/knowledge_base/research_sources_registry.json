@@ -1,6 +1,6 @@
 {
   "registry_version": 1,
-  "updated_on": "2026-11-26",
+  "updated_on": "2026-11-27",
   "purpose": "Curated authoritative discovery registry for VISUAL. Entries are research leads, not blanket permission to download, redistribute, or train on content.",
   "collection_policy": {
     "default_mode": "metadata_first",
@@ -980,6 +980,268 @@
       "quality_notes": [
         "Record Jetson/GPU, JetPack, CUDA, ROS 2 and Isaac ROS versions",
         "Keep throughput and latency benchmarks tied to exact device and workload"
+      ]
+    },
+    {
+      "id": "cern_open_data",
+      "name": "CERN Open Data Portal",
+      "domains": [
+        "physics",
+        "physics_atomic_nuclear_particle",
+        "physics_modern",
+        "physics_computational_experimental"
+      ],
+      "data_types": [
+        "LHC collision events",
+        "simulated events",
+        "detector data",
+        "analysis software",
+        "documentation"
+      ],
+      "entry_url": "https://opendata.cern.ch/",
+      "api_docs": "https://opendata.cern/docs/",
+      "access_mode": "Dataset catalogue and downloadable experiment releases; formats and software vary by experiment and data level",
+      "license_policy": "Use each dataset's stated open license, DOI, citation and collaboration conditions; preserve required software environment and provenance.",
+      "collection_status": "discovery_only",
+      "download_policy": "Index metadata first; bulk event data only after storage, dataset-level license, software dependencies and checksum/manifest review.",
+      "quality_notes": [
+        "Distinguish education, analysis and full research data levels",
+        "Retain experiment, run, detector, trigger, calibration and simulation metadata",
+        "Large datasets require experiment-specific analysis software"
+      ]
+    },
+    {
+      "id": "hepdata",
+      "name": "HEPData",
+      "domains": [
+        "physics",
+        "physics_atomic_nuclear_particle",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Machine-readable experimental tables",
+        "Digitized publication plots",
+        "High-energy physics measurements",
+        "Uncertainty and correlation tables"
+      ],
+      "entry_url": "https://www.hepdata.net/",
+      "api_docs": "https://hepdata.net/about",
+      "access_mode": "Searchable repository and record-level downloads/API",
+      "license_policy": "Check record-level license and citation; preserve publication DOI and table-level metadata.",
+      "collection_status": "discovery_only",
+      "download_policy": "Collect record metadata and table manifests first; download reusable records with attribution and rate limits.",
+      "quality_notes": [
+        "Preserve statistical and systematic uncertainties separately",
+        "Retain binning, units, covariance and analysis notes",
+        "Do not flatten multi-dimensional tables into untyped text"
+      ]
+    },
+    {
+      "id": "gwosc",
+      "name": "Gravitational Wave Open Science Center",
+      "domains": [
+        "physics",
+        "physics_astronomy_cosmology",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Calibrated gravitational-wave strain",
+        "Event catalogues",
+        "Detector state and data-quality segments",
+        "Tutorials and analysis software"
+      ],
+      "entry_url": "https://gwosc.org/",
+      "api_docs": "https://gwosc.org/documentation/",
+      "access_mode": "Public catalogue, API and event/segment data downloads",
+      "license_policy": "Follow GWOSC data-use and citation guidance; preserve detector, observing run, calibration version and data quality.",
+      "collection_status": "discovery_only",
+      "download_policy": "Start with event metadata and selected event windows; large strain archives require storage preflight and checksums.",
+      "quality_notes": [
+        "Preserve sample rate, GPS time, detector identity and calibration",
+        "Keep injection, noise and astrophysical event labels distinct",
+        "Record data-quality vetoes and observing-run version"
+      ]
+    },
+    {
+      "id": "nasa_ads",
+      "name": "NASA Astrophysics Data System",
+      "domains": [
+        "physics",
+        "physics_astronomy_cosmology",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Astronomy and physics bibliographic records",
+        "Abstracts",
+        "Citation graph",
+        "Open-access full-text links"
+      ],
+      "entry_url": "https://ui.adsabs.harvard.edu/",
+      "api_docs": "https://adsabs.harvard.edu/help/api/",
+      "access_mode": "Search API and bibliographic metadata; full-text rights vary by linked publisher/repository",
+      "license_policy": "Respect ADS API terms and the rights of linked full text; metadata reuse and article reuse are not interchangeable.",
+      "collection_status": "discovery_only",
+      "download_policy": "Use API metadata and open-access links; do not mirror publisher full text without a valid license.",
+      "quality_notes": [
+        "Preserve bibcode, DOI, arXiv identifier and publication status",
+        "Deduplicate preprint and journal versions without losing version links"
+      ]
+    },
+    {
+      "id": "nist_physics_reference",
+      "name": "NIST Physical Measurement and Reference Data",
+      "domains": [
+        "physics",
+        "physics_atomic_nuclear_particle",
+        "physics_condensed_matter",
+        "physics_computational_experimental"
+      ],
+      "data_types": [
+        "Physical constants",
+        "Atomic and molecular spectra",
+        "Nuclear data",
+        "Radiation dosimetry",
+        "Material and condensed-matter reference data"
+      ],
+      "entry_url": "https://www.nist.gov/pml",
+      "api_docs": "https://www.nist.gov/pml/data",
+      "access_mode": "Curated reference databases, tables and documented services",
+      "license_policy": "Check each NIST database's terms, citation and any third-party notices; record retrieval date and dataset version.",
+      "collection_status": "discovery_only",
+      "download_policy": "Prefer structured tables and documented endpoints; preserve units, uncertainty, conditions and reference citations.",
+      "quality_notes": [
+        "Never strip units or uncertainty from physical constants",
+        "Store temperature, pressure, isotope and measurement conditions",
+        "Track recommended values separately from historical measurements"
+      ]
+    },
+    {
+      "id": "materials_project",
+      "name": "Materials Project",
+      "domains": [
+        "physics",
+        "physics_condensed_matter",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Computed crystal structures",
+        "Density functional theory properties",
+        "Electronic and magnetic properties",
+        "Materials phase stability and APIs"
+      ],
+      "entry_url": "https://materialsproject.org/",
+      "api_docs": "https://docs.materialsproject.org/",
+      "access_mode": "Documented API and dataset downloads; account/API key may be required",
+      "license_policy": "Follow Materials Project terms, attribution and API policies; preserve calculation provenance and upstream data rights.",
+      "collection_status": "discovery_only",
+      "download_policy": "Metadata first; use bounded queries and download only selected records after terms, rate limits and storage checks.",
+      "quality_notes": [
+        "Keep calculation settings, functional, convergence and source identifiers",
+        "Distinguish computed predictions from experimental measurements"
+      ]
+    },
+    {
+      "id": "nomad_repository",
+      "name": "NOMAD Laboratory",
+      "domains": [
+        "physics",
+        "physics_condensed_matter",
+        "physics_computational_experimental",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "First-principles simulation inputs and outputs",
+        "Materials science computational data",
+        "Electronic structure and atomistic calculations",
+        "Metadata and workflows"
+      ],
+      "entry_url": "https://nomad-lab.eu/",
+      "api_docs": "https://nomad-lab.eu/prod/v1/docs/",
+      "access_mode": "Repository search and API; record-level archives",
+      "license_policy": "Check entry-level access and license metadata and cite original data producers.",
+      "collection_status": "discovery_only",
+      "download_policy": "Index archive metadata first; download selected open entries only with provenance, checksums and storage preflight.",
+      "quality_notes": [
+        "Preserve code, version, input parameters and workflow provenance",
+        "Validate parsed quantities and units against original calculation files"
+      ]
+    },
+    {
+      "id": "ukaea_fair_mast",
+      "name": "UKAEA FAIR-MAST Open Data",
+      "domains": [
+        "physics",
+        "physics_plasma_fusion",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Tokamak diagnostic time series",
+        "Fusion plasma experiment metadata",
+        "Machine and shot records",
+        "Zarr/Parquet research data"
+      ],
+      "entry_url": "https://opendata.ukaea.uk/",
+      "api_docs": "https://github.com/ukaea/fair-mast",
+      "access_mode": "Open data portal and documented FAIR-MAST data access",
+      "license_policy": "Verify each campaign/record license and citation; respect access policy and data provider attribution.",
+      "collection_status": "discovery_only",
+      "download_policy": "Begin with shot metadata and selected diagnostics; bulk time-series downloads require per-campaign license, byte-size and checksum review.",
+      "quality_notes": [
+        "Retain shot number, diagnostic, channel, units and time base",
+        "Keep calibration and missing-data masks",
+        "Do not merge different machine campaigns without schema mapping"
+      ]
+    },
+    {
+      "id": "pdg_review",
+      "name": "Particle Data Group Review of Particle Physics",
+      "domains": [
+        "physics",
+        "physics_atomic_nuclear_particle",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Particle properties",
+        "Particle listings",
+        "Standard Model reviews",
+        "Experimental averages and uncertainty summaries"
+      ],
+      "entry_url": "https://pdg.lbl.gov/",
+      "api_docs": "https://pdg.lbl.gov/",
+      "access_mode": "Public review pages, tables and downloadable reference material",
+      "license_policy": "Preserve PDG citation and review edition; verify terms before redistributing complete tables or documents.",
+      "collection_status": "discovery_only",
+      "download_policy": "Collect bibliographic metadata and structured reference tables where permitted; store edition/year with every value.",
+      "quality_notes": [
+        "Record confidence level, uncertainty convention and fit assumptions",
+        "Do not mix values from different PDG editions without version labels"
+      ]
+    },
+    {
+      "id": "icecube_open_data",
+      "name": "IceCube Neutrino Observatory Open Data",
+      "domains": [
+        "physics",
+        "physics_atomic_nuclear_particle",
+        "physics_astronomy_cosmology",
+        "physics_hot_frontier_2026"
+      ],
+      "data_types": [
+        "Neutrino event samples",
+        "Detector simulation and response",
+        "Event-level educational and research datasets",
+        "Analysis examples"
+      ],
+      "entry_url": "https://icecube.wisc.edu/data-releases/",
+      "api_docs": "https://icecube.wisc.edu/data-releases/",
+      "access_mode": "Release-specific downloadable datasets and documentation",
+      "license_policy": "Check release-specific data-use and citation requirements; preserve collaboration documentation and selection definitions.",
+      "collection_status": "discovery_only",
+      "download_policy": "Use explicitly released samples; no scraping of internal collaboration data; verify size, checksum and analysis software.",
+      "quality_notes": [
+        "Keep event selection, detector configuration and livetime metadata",
+        "Separate simulated and observed events",
+        "Preserve background estimates and systematic uncertainties"
       ]
     }
   ],
