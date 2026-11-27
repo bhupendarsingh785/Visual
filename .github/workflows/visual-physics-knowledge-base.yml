@@ -1,0 +1,241 @@
+name: VISUAL Physics Knowledge Base - complete source tranche
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-physics-knowledge-base.yml
+      - scripts/physics/collect_physics_sources.py
+      - scripts/physics/collect_hepdata_tables.py
+      - scripts/physics/collect_gwosc_events.py
+      - scripts/physics/download_nist_constants.py
+  workflow_dispatch:
+  schedule:
+    - cron: "23 7 * * 3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-physics-knowledge-base
+  cancel-in-progress: false
+
+jobs:
+  acquire-physics-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install common acquisition and validation dependencies
+        run: python -m pip install --disable-pip-version-check requests h5py numpy gwosc==0.8.3 astroquery
+
+      - name: Acquire NIST CODATA fundamental constants
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/nist-codata
+        run: python scripts/physics/download_nist_constants.py
+
+      - name: Acquire selected NIST Atomic Spectra line data
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_nist_asd
+          files, details = collect_nist_asd()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire IAEA LiveChart evaluated nuclear data
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_iaea
+          files, details = collect_iaea()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire PDG 2026 machine-readable SQLite database
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_pdg
+          files, details = collect_pdg()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire public NOMAD processed material archives
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_nomad
+          files, details = collect_nomad()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire IceCube IceTracks-DR2 public event sample
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_icecube
+          files, details = collect_icecube()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire ESA Gaia DR3 astrometric sample
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_gaia
+          files, details = collect_gaia()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire NASA MAST public observation catalogue sample
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_mast
+          files, details = collect_mast()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire Materials Project OPTIMADE public structure subset
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_optimade_mp
+          files, details = collect_optimade_mp()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire UKAEA FAIR-MAST public data access documentation
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/source-collections
+        run: python - <<'PY'
+          from scripts.physics.collect_physics_sources import collect_ukaea_catalog_docs
+          files, details = collect_ukaea_catalog_docs()
+          print({"files": len(files), "details": details})
+          PY
+
+      - name: Acquire multi-event measured GWOSC strain
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/gwosc-events
+        run: python scripts/physics/collect_gwosc_events.py
+
+      - name: Acquire HEPData particle physics tables
+        continue-on-error: true
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/hepdata
+          VISUAL_HEPDATA_MAX_RECORDS: "60"
+          VISUAL_HEPDATA_MAX_BYTES: "1073741824"
+        run: |
+          python -m pip install --disable-pip-version-check hepdata-cli
+          python scripts/physics/collect_hepdata_tables.py
+
+      - name: Validate all downloaded payloads and create unified Knowledge Base index
+        if: always()
+        run: |
+          python - <<'PY'
+          import csv, hashlib, json, sqlite3, zipfile
+          from pathlib import Path
+          root = Path("physics-raw-data")
+          entries = []
+          for manifest_path in sorted(root.rglob("manifest.json")):
+              try:
+                  m = json.loads(manifest_path.read_text(encoding="utf-8"))
+                  entries.append({"manifest": manifest_path.relative_to(root).as_posix(),
+                                  "schema_version": m.get("schema_version"),
+                                  "source": m.get("source") or m.get("dataset") or m.get("collection_type"),
+                                  "files": m.get("files", []),
+                                  "file_count": m.get("downloaded_file_count", m.get("actual_file_count", len(m.get("files", [])))),
+                                  "errors": m.get("errors", [])})
+              except Exception as exc:
+                  entries.append({"manifest": manifest_path.relative_to(root).as_posix(),
+                                  "manifest_error": str(exc)})
+          verified, failures, total = [], [], 0
+          for item in entries:
+              for record in item.get("files", []):
+                  rel = record.get("path") or record.get("file")
+                  if not rel:
+                      continue
+                  p = (manifest_path.parent / rel).resolve()
+                  try:
+                      assert p.is_relative_to(root.resolve()), f"path escapes data root: {rel}"
+                      assert p.is_file(), f"missing file: {rel}"
+                      size = p.stat().st_size
+                      assert size == record.get("bytes", size), f"size mismatch: {rel}"
+                      expected = record.get("sha256")
+                      if expected:
+                          actual = hashlib.sha256(p.read_bytes()).hexdigest()
+                          assert actual == expected, f"SHA-256 mismatch: {rel}"
+                      if p.suffix.lower() == ".zip":
+                          with zipfile.ZipFile(p) as z:
+                              assert z.testzip() is None, f"ZIP CRC failure: {rel}"
+                      if p.suffix.lower() in {".sqlite", ".db"}:
+                          con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+                          try: assert con.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+                          finally: con.close()
+                      verified.append({"path": p.relative_to(root).as_posix(), "bytes": size, "sha256": expected})
+                      total += size
+                  except Exception as exc:
+                      failures.append({"path": str(rel), "error": str(exc)})
+          # Also verify the standalone CODATA manifest, whose schema uses one file field.
+          codata = root / "nist-codata" / "manifest.json"
+          if codata.exists():
+              m = json.loads(codata.read_text())
+              p = (Path(".") / m["file"]).resolve()
+              try:
+                  assert p.is_file() and p.stat().st_size == m["bytes"]
+                  assert hashlib.sha256(p.read_bytes()).hexdigest() == m["sha256"]
+                  verified.append({"path": p.relative_to(Path(".").resolve()).as_posix(),
+                                   "bytes": p.stat().st_size, "sha256": m["sha256"]})
+                  total += p.stat().st_size
+              except Exception as exc: failures.append({"path": m.get("file"), "error": str(exc)})
+          index = {
+              "schema_version": 1,
+              "knowledge_base": "VISUAL Physics Knowledge Base",
+              "source_manifests": entries,
+              "verified_files": verified,
+              "verified_file_count": len(verified),
+              "verified_bytes": total,
+              "validation_failures": failures,
+              "validation_pass": not failures,
+              "notes": [
+                  "A missing source manifest means that source did not complete in this run.",
+                  "No empty or unavailable source is represented as a successful data download.",
+                  "This artifact is an incremental tranche, not a complete mirror of the named global archives.",
+                  "Source-specific citations, licenses and limitations are preserved in the individual manifests."
+              ]
+          }
+          out = root / "physics_knowledge_base_index.json"
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(index, indent=2), encoding="utf-8")
+          print(json.dumps({"manifests": len(entries), "verified_files": len(verified),
+                            "verified_bytes": total, "validation_failures": failures,
+                            "validation_pass": not failures}, indent=2))
+          if failures:
+              raise SystemExit(1)
+          PY
+
+      - name: Upload Physics Knowledge Base tranche and validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-physics-knowledge-base-${{ github.run_id }}
+          path: physics-raw-data/
+          if-no-files-found: warn
+          retention-days: 30
