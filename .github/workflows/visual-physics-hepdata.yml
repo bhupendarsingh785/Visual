@@ -1,0 +1,56 @@
+name: VISUAL Physics deep data - HEPData
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-physics-hepdata
+  cancel-in-progress: false
+
+jobs:
+  collect-hepdata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install HEPData official client
+        run: python -m pip install --disable-pip-version-check hepdata-cli
+      - name: Search and download machine-readable physics tables
+        env:
+          VISUAL_PHYSICS_RAW_DIR: physics-raw-data/hepdata
+          VISUAL_HEPDATA_MAX_RECORDS: "60"
+          VISUAL_HEPDATA_MAX_BYTES: "1073741824"
+        run: python scripts/physics/collect_hepdata_tables.py
+      - name: Validate manifest and file checksums
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path("physics-raw-data/hepdata")
+          m = json.loads((root / "manifest.json").read_text())
+          assert m["downloaded_file_count"] == len(m["files"])
+          total = 0
+          for item in m["files"]:
+              p = Path(item["path"])
+              assert p.is_file() and p.stat().st_size == item["bytes"]
+              assert hashlib.sha256(p.read_bytes()).hexdigest() == item["sha256"]
+              total += item["bytes"]
+          assert total == m["total_bytes"]
+          print("HEPData tables:", len(m["files"]), "bytes:", total)
+          print("Checksums: OK")
+          PY
+      - name: Upload data and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-physics-hepdata-${{ github.run_id }}
+          path: physics-raw-data/hepdata/
+          if-no-files-found: error
+          retention-days: 30
