@@ -47,7 +47,7 @@ jobs:
       - name: Upload original reference data and provenance
         uses: actions/upload-artifact@v4
         with:
-          name: visual-physics-nist-codata-\${{ github.run_id }}
+          name: visual-physics-nist-codata-${{ github.run_id }}
           path: physics-raw-data/nist-codata/
           if-no-files-found: error
           retention-days: 30
