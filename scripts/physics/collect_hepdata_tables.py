@@ -62,8 +62,14 @@ def sanitize_artifact_paths(root: Path, records: list[dict]) -> None:
     invalid = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
     used = set()
     for record in records:
-        old = Path(record["path"])
-        relative = old.relative_to(root)
+        root = Path(root).resolve()
+        old = Path(record["path"]).resolve()
+        try:
+            relative = old.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(
+                f"HEPData download path escapes collection root: {old} (root: {root})"
+            ) from exc
         safe_parts = []
         for part in relative.parts:
             safe = invalid.sub("_", part).rstrip(" .") or "unnamed"
