@@ -1243,6 +1243,163 @@
         "Separate simulated and observed events",
         "Preserve background estimates and systematic uncertainties"
       ]
+    },
+    {
+      "id": "iaea_livechart_ensdf",
+      "name": "IAEA LiveChart of Nuclides / ENSDF",
+      "domains": [
+        "nuclear_physics",
+        "atomic_nuclear_particle",
+        "plasma_fusion"
+      ],
+      "data_types": [
+        "evaluated ground states",
+        "nuclear levels",
+        "gamma transitions",
+        "decay radiations",
+        "fission yields"
+      ],
+      "entry_url": "https://nucleus.iaea.org/Pages/livechart-of-nuclides-av.aspx",
+      "api_docs": "https://iaea-nds.github.io/lc_api_notebook/",
+      "access_mode": "CSV REST API; fields=ground_states,levels,gammas,decay_rads,fission yields",
+      "license_policy": "Preserve IAEA source attribution and release/retrieval context; check field-specific reuse guidance",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Bounded nuclide or ground-state queries; preserve extraction date, units, uncertainties and ENSDF references",
+      "quality_notes": [
+        "Evaluated nuclear data, not raw detector measurements",
+        "Distinguish ground states, metastable states, decay branches and radiation types"
+      ]
+    },
+    {
+      "id": "icecube_icetracks_dr2",
+      "name": "IceCube IceTracks-DR2",
+      "domains": [
+        "neutrino_physics",
+        "astronomy_cosmology",
+        "particle_physics"
+      ],
+      "data_types": [
+        "observed track-like neutrino candidate events",
+        "uptime/good-run lists",
+        "effective areas",
+        "smearing matrices",
+        "release documentation"
+      ],
+      "entry_url": "https://icecube.wisc.edu/science/data-releases/",
+      "api_docs": "https://dataverse.harvard.edu/api/",
+      "access_mode": "Harvard Dataverse DOI dataset API and per-file download",
+      "license_policy": "IceTracks-DR2 dataset CC0 1.0; retain DOI citation and version",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Select event-season files, readme, uptime and IRFs; do not claim complete release unless all 41 files are verified",
+      "quality_notes": [
+        "Release spans 2008-2022 and is intended for time-integrated point-source searches",
+        "Do not combine with IceTracks-DR1",
+        "Preserve version, event selection, detector configuration and livetime"
+      ]
+    },
+    {
+      "id": "esa_gaia_dr3",
+      "name": "ESA Gaia Data Release 3",
+      "domains": [
+        "astronomy_cosmology",
+        "astrophysics",
+        "stellar_physics"
+      ],
+      "data_types": [
+        "astrometric catalogue",
+        "photometry",
+        "proper motions",
+        "parallax",
+        "spectroscopy metadata"
+      ],
+      "entry_url": "https://gea.esac.esa.int/archive/",
+      "api_docs": "https://www.cosmos.esa.int/web/gaia-users/archive/programmatic-access",
+      "access_mode": "ESA TAP/ADQL query and CSV/VOTable results",
+      "license_policy": "Follow Gaia archive acknowledgement and data-use policy; preserve DR version and query",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Bounded ADQL queries with explicit row limits; preserve coordinate frame, units, flags and query",
+      "quality_notes": [
+        "Catalogue subset is not raw telescope telemetry",
+        "Parallax and astrometric solution quality flags must be retained"
+      ]
+    },
+    {
+      "id": "nist_atomic_spectra_asd",
+      "name": "NIST Atomic Spectra Database",
+      "domains": [
+        "atomic_physics",
+        "spectroscopy",
+        "plasma_fusion",
+        "astronomy_cosmology"
+      ],
+      "data_types": [
+        "spectral lines",
+        "energy levels",
+        "transition probabilities",
+        "wavelengths",
+        "bibliographic references"
+      ],
+      "entry_url": "https://physics.nist.gov/asd",
+      "api_docs": "https://physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html",
+      "access_mode": "Documented CGI search form with ASCII, CSV or tab-delimited output",
+      "license_policy": "NIST ASD terms; cite database version and retrieval date; verify reuse terms",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Query spectra and wavelength ranges; no blanket full-database mirror",
+      "quality_notes": [
+        "Preserve observed vs Ritz wavelength distinction",
+        "Keep units, uncertainty, transition classifications and references"
+      ]
+    },
+    {
+      "id": "nasa_mast",
+      "name": "Mikulski Archive for Space Telescopes (MAST)",
+      "domains": [
+        "astronomy_cosmology",
+        "astrophysics",
+        "space_science"
+      ],
+      "data_types": [
+        "HST and JWST observations",
+        "TESS products",
+        "images",
+        "spectra",
+        "observation metadata"
+      ],
+      "entry_url": "https://archive.stsci.edu/",
+      "api_docs": "https://archive.stsci.edu/datadownloads.html",
+      "access_mode": "MAST REST API and astroquery.mast; public products can be retrieved anonymously",
+      "license_policy": "Mission/product-specific rights and acknowledgement; preserve proposal, instrument, calibration pipeline and product version",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Query public products; download only bounded selected files after checking size and product rights",
+      "quality_notes": [
+        "Observation metadata is not equivalent to the science image/spectrum payload",
+        "Preserve calibration and instrument context"
+      ]
+    },
+    {
+      "id": "materials_project_optimade",
+      "name": "Materials Project via OPTIMADE",
+      "domains": [
+        "condensed_matter",
+        "materials_science",
+        "computational_physics"
+      ],
+      "data_types": [
+        "crystal structures",
+        "computed materials properties",
+        "chemical formulae",
+        "structure metadata"
+      ],
+      "entry_url": "https://materialsproject.org/",
+      "api_docs": "https://docs.materialsproject.org/downloading-data/using-the-api/getting-started",
+      "access_mode": "Materials Project API key for primary API; public OPTIMADE endpoint for bounded structure queries",
+      "license_policy": "Verify current provider and record-level license and citation; retain calculation provenance",
+      "collection_status": "active_bounded_acquisition",
+      "download_policy": "Use public OPTIMADE subset without credentials; full Materials Project API requires user API key",
+      "quality_notes": [
+        "OPTIMADE structure subset is not a full Materials Project property database",
+        "Preserve functional, calculation settings, convergence and provenance"
+      ]
     }
   ],
   "quality_gates": [
