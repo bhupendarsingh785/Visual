@@ -85,8 +85,8 @@ def sanitize_artifact_paths(root: Path, records: list[dict]) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
         if target != old:
             shutil.move(str(old), str(target))
-        record["original_path"] = str(old)
-        record["path"] = str(target)
+        record["original_path"] = relative.as_posix()
+        record["path"] = target.relative_to(root).as_posix()
         record["sha256"] = sha256(target)
 
 def main() -> int:
