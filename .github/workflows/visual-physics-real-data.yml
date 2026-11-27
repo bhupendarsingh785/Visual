@@ -1,6 +1,11 @@
 name: VISUAL real Physics data acquisition
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-physics-real-data.yml
+      - scripts/physics/download_gwosc_sample.py
   workflow_dispatch:
   schedule:
     - cron: "17 4 * * 1"
