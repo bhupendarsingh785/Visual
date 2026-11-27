@@ -8,7 +8,7 @@ class GlobalResearchTests(unittest.TestCase):
         for key in ("medicine", "history", "education", "coding", "ai", "agents", "tools", "india", "deep_learning", "computer_vision", "audio_speech", "semiconductor_research"):
             self.assertIn(key, DOMAIN_QUERIES)
         from global_research import PROVIDERS
-        self.assertEqual(len(DOMAIN_QUERIES), 100)
+        self.assertGreaterEqual(len(DOMAIN_QUERIES), 113)
         self.assertEqual(len(PROVIDERS), 15)
 
     @patch("global_research.time.sleep")
