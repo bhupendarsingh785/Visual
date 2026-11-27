@@ -7,6 +7,7 @@ Every source is isolated: a failed/blocked source does not erase successful down
 from __future__ import annotations
 
 import csv
+csv.field_size_limit(2**31 - 1)
 import hashlib
 import io
 import json
@@ -263,8 +264,7 @@ def collect_nomad():
             "results": {"material": "*"},
             "run": {"system[-1]": {"atoms": "*"}}
         },
-        "pagination": {"page_size": 10}
-    }
+            }
     payload = post_bytes(url, body, timeout=240)
     zcheck = validate_zip(payload)
     files = [save_bytes("nomad", "tio2_processed_archives_sample.zip", url, payload,
@@ -287,7 +287,7 @@ def collect_icecube():
         df = item.get("dataFile", {})
         label = item.get("label") or df.get("filename") or ""
         size = int(df.get("filesize") or 0)
-        if label.lower().endswith("readme.txt") or (label.endswith("_exp.csv") and size <= 20*1024*1024):
+        if label.lower().endswith("readme.txt") or (label.lower().endswith(".csv") and any(t in label.lower() for t in ("exp", "event", "track")) and "sim" not in label.lower() and size <= 40*1024*1024):
             selected.append({"id": df.get("id"), "label": label, "size": size, "md5": (df.get("md5") or {})})
     selected = selected[:8]
     files = []
@@ -309,7 +309,7 @@ def collect_icecube():
         raise RuntimeError("No eligible IceCube files found within per-file budget")
     return files, {"doi": doi, "version": data[0].get("versionNumber") if data else None,
                    "available_files": len(data), "selected_files": len(files),
-                   "selection": "Readme plus experimental event CSV files <=20 MiB; not full 3.4 GB release"}
+                   "selection": "Readme plus selected experimental/event/track CSV files <=40 MiB; not full 3.4 GB release"}
 
 
 def collect_gaia():
@@ -382,7 +382,12 @@ def collect_ukaea_catalog_docs():
 
     shot_id = 30421
     shot_url = f"https://s3.echo.stfc.ac.uk/mast/level2/shots/{shot_id}.zarr"
-    ds = xr.open_zarr(shot_url, group="summary", consolidated=False)
+    try:
+        ds = xr.open_zarr(shot_url, group="summary", consolidated=False)
+    except Exception:
+        ds = xr.open_zarr(shot_url, consolidated=False)
+    if not ds.data_vars:
+        ds = xr.open_zarr(shot_url, consolidated=False)
     selected = [name for name in ("ip", "plasma_current", "beta_pol", "beta_normal") if name in ds.data_vars]
     if not selected:
         selected = list(ds.data_vars)[:5]
