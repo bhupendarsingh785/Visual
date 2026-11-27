@@ -1,0 +1,82 @@
+name: VISUAL physics deep collection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/visual-physics-collection.yml
+      - plugins/knowledge_base/global_research.py
+  workflow_dispatch:
+    inputs:
+      max_requests:
+        description: "Provider queries for this physics batch (1-300)"
+        required: false
+        type: number
+        default: 300
+  schedule:
+    - cron: "43 */3 * * *"
+
+permissions:
+  contents: read
+
+env:
+  VISUAL_HOME: ${{ github.workspace }}/.visual
+
+concurrency:
+  group: visual-physics-deep-collection
+  cancel-in-progress: false
+
+jobs:
+  collect-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore cumulative VISUAL knowledge index
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.visual
+          key: visual-kb-physics-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            visual-kb-physics-${{ runner.os }}-
+            visual-kb-${{ runner.os }}-
+      - name: Collect physics topics across public research providers
+        env:
+          PYTHONPATH: plugins/knowledge_base
+          VISUAL_TOPICS: physics,physics_classical_mechanics,physics_fluids,physics_thermodynamics,physics_electromagnetism,physics_waves_optics,physics_modern,physics_atomic_nuclear_particle,physics_condensed_matter,physics_plasma_fusion,physics_astronomy_cosmology,physics_geophysics_biophysics,physics_computational_experimental
+          VISUAL_MAX_REQUESTS: ${{ inputs.max_requests || '300' }}
+          VISUAL_PER_REQUEST: "25"
+        run: python scripts/github_collect_public.py
+      - name: Verify SQLite knowledge index
+        run: |
+          test -s "$VISUAL_HOME/knowledge.sqlite3"
+          python - <<'PY'
+          import sqlite3, os
+          p = os.path.join(os.environ["VISUAL_HOME"], "knowledge.sqlite3")
+          db = sqlite3.connect(p)
+          result = db.execute("PRAGMA integrity_check").fetchone()[0]
+          print("SQLite integrity:", result)
+          if result != "ok":
+              raise SystemExit("SQLite integrity check failed")
+          for table in ("sources", "documents", "chunks"):
+              print(table, db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+          db.close()
+          PY
+          cp "$VISUAL_HOME/knowledge.sqlite3" ./knowledge.sqlite3
+      - name: Upload physics collection snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-physics-knowledge-${{ github.run_id }}
+          path: |
+            visual-collection-report.json
+            knowledge.sqlite3
+            plugins/knowledge_base/research_sources_registry.json
+            plugins/knowledge_base/datasets_catalog.json
+            DEEP_LEARNING_DATA_STRATEGY.md
+          if-no-files-found: warn
+          retention-days: 30
