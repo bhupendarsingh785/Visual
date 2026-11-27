@@ -48,7 +48,7 @@ jobs:
       - name: Upload original data and provenance
         uses: actions/upload-artifact@v4
         with:
-          name: visual-physics-real-gwosc-\${{ github.run_id }}
+          name: visual-physics-real-gwosc-${{ github.run_id }}
           path: physics-raw-data/gwosc/
           if-no-files-found: error
           retention-days: 30
